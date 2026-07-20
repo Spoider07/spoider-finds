@@ -30,6 +30,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- Scroll-reveal for sections and cards ----
+  const revealEls = document.querySelectorAll(".reveal");
+  const prefersReducedMotionReveal = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (revealEls.length && !prefersReducedMotionReveal && "IntersectionObserver" in window) {
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+    );
+    revealEls.forEach((el) => revealObserver.observe(el));
+  } else {
+    // No IntersectionObserver support (or reduced motion) — just show everything
+    revealEls.forEach((el) => el.classList.add("is-visible"));
+  }
+
   // ---- Scroll-driven "thread" signature element ----
   // The gold line's dash length grows with scroll progress,
   // visually "drawing" a thread down the page.

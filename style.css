@@ -31,6 +31,44 @@
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
+/* =========================================================
+   Scroll-reveal system
+   Elements start slightly lower + faded, and settle into
+   place as they enter the viewport. Staggered children get
+   a small incremental delay via --reveal-delay.
+   ========================================================= */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* Hero entrance (plays once on load, not scroll-triggered) */
+.hero-enter {
+  opacity: 0;
+  transform: translateY(18px);
+  animation: heroEnter 0.9s var(--ease) forwards;
+}
+.hero-enter:nth-child(1) { animation-delay: 0.05s; }
+.hero-enter:nth-child(2) { animation-delay: 0.16s; }
+.hero-enter:nth-child(3) { animation-delay: 0.27s; }
+.hero-enter:nth-child(4) { animation-delay: 0.38s; }
+.hero-enter:nth-child(5) { animation-delay: 0.49s; }
+@keyframes heroEnter {
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter { opacity: 1; transform: none; animation: none; }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -283,6 +321,7 @@ img { max-width: 100%; display: block; }
   transform: translateY(-6px);
   border-color: var(--gold-dim);
   background: var(--surface-hover);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--gold-dim);
 }
 .category-glow {
   position: absolute;
@@ -354,7 +393,11 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   transition: transform 0.3s var(--ease), border-color 0.3s var(--ease);
 }
-.product-card:hover { transform: translateY(-6px); border-color: var(--gold-dim); }
+.product-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--gold-dim);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--gold-dim);
+}
 
 .product-image {
   aspect-ratio: 4 / 3;
