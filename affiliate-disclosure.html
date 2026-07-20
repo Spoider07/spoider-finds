@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Disclosure — Spoider Finds</title>
+  <meta name="description" content="How Spoider Finds earns commission through Amazon Associates and other affiliate programs.">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .legal { max-width: 720px; margin: 0 auto; padding: 110px 24px 100px; }
+    .legal h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.3rem; margin: 36px 0 12px; }
+    .legal p, .legal li { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 12px; }
+    .legal ul { padding-left: 20px; list-style: disc; }
+    .legal .updated { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html#categories">Categories</a>
+        <a href="index.html#featured">Featured</a>
+        <a href="about.html">About</a>
+        <a href="index.html#latest">Latest</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
+      <a href="index.html#categories">Categories</a>
+      <a href="index.html#featured">Featured</a>
+      <a href="about.html">About</a>
+      <a href="index.html#latest">Latest</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="legal">
+      <p class="eyebrow">LEGAL</p>
+      <h1 class="hero-title" style="font-size:2rem; text-align:left;">Affiliate Disclosure</h1>
+      <p class="updated">Last updated: July 2026</p>
+
+      <p>Spoider Finds is a participant in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com.</p>
+
+      <h2>What This Means</h2>
+      <p>When you click a product link on this site and make a qualifying purchase on Amazon, we may earn a small commission — at absolutely no extra cost to you. The price you pay stays exactly the same whether you use our link or go to Amazon directly.</p>
+
+      <h2>Why We Do This</h2>
+      <p>Affiliate commissions help support the time we spend researching, testing, and curating the products featured on Spoider Finds. It allows us to keep the site free and ad-light for everyone.</p>
+
+      <h2>Our Promise</h2>
+      <ul>
+        <li>We only feature products we genuinely believe are worth sharing.</li>
+        <li>Commission potential never determines whether a product is featured.</li>
+        <li>All affiliate links are used transparently — nothing is hidden or disguised.</li>
+      </ul>
+
+      <p>If you have any questions about our affiliate relationships, feel free to <a href="contact.html" style="color:var(--gold);">contact us</a>.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Site</h4>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

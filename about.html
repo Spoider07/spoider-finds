@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Spoider Finds</title>
+  <meta name="description" content="Spoider Finds is a hand-curated thread of the internet's best aesthetic products, from desk setups to fashion to everyday accessories.">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html#categories">Categories</a>
+        <a href="index.html#featured">Featured</a>
+        <a href="about.html">About</a>
+        <a href="index.html#latest">Latest</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
+      <a href="index.html#categories">Categories</a>
+      <a href="index.html#featured">Featured</a>
+      <a href="about.html">About</a>
+      <a href="index.html#latest">Latest</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-top:90px;">
+      <p class="eyebrow center">THE STORY</p>
+      <h1 class="hero-title">Every good find starts with a long scroll.</h1>
+      <p class="hero-sub" style="margin:0 auto;">
+        Spoider Finds began with a simple frustration: Amazon has millions of products, and maybe a
+        few hundred that actually look good, work well, and are worth your money. We spend the hours
+        digging so you don't have to — then pull the best of what we find into one curated thread.
+      </p>
+    </section>
+
+    <section class="trust" id="trust">
+      <p class="eyebrow center">WHAT WE STAND FOR</p>
+      <h2 class="section-title center">A small brand, on purpose.</h2>
+      <div class="trust-grid">
+        <div class="trust-card">
+          <span class="trust-num">01</span>
+          <h3>Taste over trend</h3>
+          <p>We feature things we'd actually buy for ourselves — not whatever is trending for a week and forgotten.</p>
+        </div>
+        <div class="trust-card">
+          <span class="trust-num">02</span>
+          <h3>Slow, not viral</h3>
+          <p>We're building something that lasts, one honest recommendation at a time — not chasing a single viral pin.</p>
+        </div>
+        <div class="trust-card">
+          <span class="trust-num">03</span>
+          <h3>Always disclosed</h3>
+          <p>Every affiliate link is labeled clearly. Read our <a href="affiliate-disclosure.html" style="color:var(--gold);">Affiliate Disclosure</a> for the full picture.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="cta-inner">
+        <h2>Want to say hello?</h2>
+        <p>We read every message.</p>
+        <a href="contact.html" class="btn btn-primary">Get in Touch</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Site</h4>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

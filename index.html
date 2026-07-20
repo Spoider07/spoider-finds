@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spoider Finds — Curated Amazon Finds, Aesthetically Sourced</title>
+  <meta name="description" content="Spoider Finds curates the internet's best aesthetic products — desk setups, fashion, and accessories — so you don't have to dig for them.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Spoider Finds — Curated Amazon Finds, Aesthetically Sourced">
+  <meta property="og:description" content="Curated desk setups, fashion finds, and accessories. Every pick, hand-woven into one thread.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://spoider07.github.io/spoider-finds/">
+  <meta property="og:image" content="assets/images/og-cover.jpg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Spoider Finds — Curated Amazon Finds, Aesthetically Sourced">
+  <meta name="twitter:description" content="Curated desk setups, fashion finds, and accessories. Every pick, hand-woven into one thread.">
+  <meta name="twitter:image" content="assets/images/og-cover.jpg">
+
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================= NAV ================= -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#categories">Categories</a>
+        <a href="#featured">Featured</a>
+        <a href="#trust">About</a>
+        <a href="#latest">Latest</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
+      <a href="#categories">Categories</a>
+      <a href="#featured">Featured</a>
+      <a href="#trust">About</a>
+      <a href="#latest">Latest</a>
+    </nav>
+  </header>
+
+  <!-- thread line that draws down the page -->
+  <svg class="thread" id="thread" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true">
+    <path id="threadPath" d="M2,0 L2,3000" />
+  </svg>
+
+  <main>
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <p class="eyebrow">A THREAD OF GOOD TASTE</p>
+      <h1 class="hero-title">We dig through <em>everything</em>,<br>so you only see <span class="gold-text">the good stuff.</span></h1>
+      <p class="hero-sub">Spoider Finds is a hand-curated thread of Amazon's best aesthetic products — desk setups, fashion, and accessories — pulled from thousands of listings down to the ones actually worth your cart.</p>
+      <div class="hero-actions">
+        <a href="#featured" class="btn btn-primary">See Featured Finds</a>
+        <a href="#categories" class="btn btn-ghost">Browse Categories</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">16+</span><span class="stat-label">Curated Finds</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">4</span><span class="stat-label">Categories</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">100%</span><span class="stat-label">Hand-Picked</span></div>
+      </div>
+    </section>
+
+    <!-- ================= CATEGORIES ================= -->
+    <section class="categories" id="categories">
+      <p class="eyebrow center">EXPLORE</p>
+      <h2 class="section-title center">Four threads. One taste.</h2>
+      <div class="category-grid">
+        <a href="#" class="category-card">
+          <div class="category-glow"></div>
+          <span class="category-icon">⌘</span>
+          <h3>Desk Setup</h3>
+          <p>Minimal workstations, cable management, and ambient lighting picks.</p>
+        </a>
+        <a href="#" class="category-card">
+          <div class="category-glow"></div>
+          <span class="category-icon">◐</span>
+          <h3>Fashion Finds</h3>
+          <p>Understated staples and statement pieces worth the click.</p>
+        </a>
+        <a href="#" class="category-card">
+          <div class="category-glow"></div>
+          <span class="category-icon">✦</span>
+          <h3>Accessories</h3>
+          <p>The small details that quietly upgrade everything else.</p>
+        </a>
+        <a href="#" class="category-card">
+          <div class="category-glow"></div>
+          <span class="category-icon">◆</span>
+          <h3>Amazon Finds</h3>
+          <p>Genuinely surprising products we didn't expect to love.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- ================= FEATURED ================= -->
+    <section class="featured" id="featured">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">HAND-PICKED</p>
+          <h2 class="section-title">Featured this week</h2>
+        </div>
+        <a href="#" class="link-arrow">View all →</a>
+      </div>
+      <div class="product-grid">
+        <article class="product-card">
+          <div class="product-image ph-desk"></div>
+          <div class="product-body">
+            <span class="product-tag">Desk Setup</span>
+            <h3>Warm Glow LED Desk Lamp</h3>
+            <p>Soft, adjustable ambient light that makes any desk feel intentional.</p>
+            <a href="#" class="product-link">View on Amazon →</a>
+          </div>
+        </article>
+        <article class="product-card">
+          <div class="product-image ph-fashion"></div>
+          <div class="product-body">
+            <span class="product-tag">Fashion Finds</span>
+            <h3>Oversized Knit Cardigan</h3>
+            <p>The quiet-luxury layer that goes with absolutely everything.</p>
+            <a href="#" class="product-link">View on Amazon →</a>
+          </div>
+        </article>
+        <article class="product-card">
+          <div class="product-image ph-accessory"></div>
+          <div class="product-body">
+            <span class="product-tag">Accessories</span>
+            <h3>Minimalist Leather Card Holder</h3>
+            <p>Slim, sturdy, and better looking than anything twice the price.</p>
+            <a href="#" class="product-link">View on Amazon →</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================= TRUST ================= -->
+    <section class="trust" id="trust">
+      <p class="eyebrow center">WHY SPOIDER FINDS</p>
+      <h2 class="section-title center">Built on taste, not volume.</h2>
+      <div class="trust-grid">
+        <div class="trust-card">
+          <span class="trust-num">01</span>
+          <h3>Actually tested taste</h3>
+          <p>Every product is chosen because it earned a spot in our own boards first — not because it pays the most commission.</p>
+        </div>
+        <div class="trust-card">
+          <span class="trust-num">02</span>
+          <h3>No noise, no filler</h3>
+          <p>We'd rather post one great find a week than ten mediocre ones. Quality over volume, always.</p>
+        </div>
+        <div class="trust-card">
+          <span class="trust-num">03</span>
+          <h3>Transparent, always</h3>
+          <p>We earn a small commission on qualifying purchases at no extra cost to you. Full disclosure, every time.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LATEST ================= -->
+    <section class="latest" id="latest">
+      <p class="eyebrow center">FRESH OFF THE THREAD</p>
+      <h2 class="section-title center">Latest finds</h2>
+      <div class="latest-list">
+        <a href="#" class="latest-item">
+          <span class="latest-tag">Desk Setup</span>
+          <h3>5 Desk Accessories That Don't Look Like Clutter</h3>
+          <span class="latest-arrow">→</span>
+        </a>
+        <a href="#" class="latest-item">
+          <span class="latest-tag">Amazon Finds</span>
+          <h3>The Under-₹1500 Products We Keep Recommending</h3>
+          <span class="latest-arrow">→</span>
+        </a>
+        <a href="#" class="latest-item">
+          <span class="latest-tag">Fashion Finds</span>
+          <h3>Building a Capsule Wardrobe on Amazon</h3>
+          <span class="latest-arrow">→</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ================= NEWSLETTER / CTA ================= -->
+    <section class="cta">
+      <div class="cta-inner">
+        <h2>New finds land every week.</h2>
+        <p>Follow along on Pinterest — it's where every thread starts.</p>
+        <a href="#" class="btn btn-primary">Follow on Pinterest</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Site</h4>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

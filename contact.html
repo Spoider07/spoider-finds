@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Spoider Finds</title>
+  <meta name="description" content="Get in touch with Spoider Finds — questions, collaborations, or feedback are always welcome.">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html#categories">Categories</a>
+        <a href="index.html#featured">Featured</a>
+        <a href="about.html">About</a>
+        <a href="index.html#latest">Latest</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
+      <a href="index.html#categories">Categories</a>
+      <a href="index.html#featured">Featured</a>
+      <a href="about.html">About</a>
+      <a href="index.html#latest">Latest</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-top:90px;">
+      <p class="eyebrow center">GET IN TOUCH</p>
+      <h1 class="hero-title">Say hello.</h1>
+      <p class="hero-sub" style="margin:0 auto;">
+        Questions about a find, a collaboration idea, or just feedback on the site —
+        drop us a line and we'll get back to you.
+      </p>
+    </section>
+
+    <section class="latest" style="max-width:560px;">
+      <div class="cta-inner" style="padding:44px 30px;">
+        <p style="color:var(--text-secondary); margin-bottom:24px; text-align:center;">
+          Reach us directly at:
+        </p>
+        <p style="text-align:center; font-family:var(--font-display); font-size:1.3rem; margin-bottom:28px;">
+          <a href="mailto:hello@spoiderfinds.com" style="color:var(--gold);">hello@spoiderfinds.com</a>
+        </p>
+        <p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">
+          We typically reply within 2–3 business days.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Site</h4>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
