@@ -39,8 +39,8 @@
    ========================================================= */
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  transform: translateY(16px);
+  transition: opacity 0.45s var(--ease), transform 0.45s var(--ease);
   transition-delay: var(--reveal-delay, 0s);
 }
 .reveal.is-visible {
@@ -137,8 +137,55 @@ img { max-width: 100%; display: block; }
 }
 
 /* =========================================================
-   NAV
+   Ambient background — floating glow orbs + film grain
+   Adds depth and an editorial, premium print-like texture
+   without weighing the page down (pure CSS, no images).
    ========================================================= */
+.ambient-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+.ambient-orb--1 {
+  width: 280px;
+  height: 280px;
+  top: -60px;
+  right: -80px;
+  background: radial-gradient(circle, rgba(201, 168, 118, 0.35), transparent 70%);
+  animation: orbFloat1 14s ease-in-out infinite;
+}
+.ambient-orb--2 {
+  width: 320px;
+  height: 320px;
+  top: 55vh;
+  left: -100px;
+  background: radial-gradient(circle, rgba(201, 168, 118, 0.22), transparent 70%);
+  animation: orbFloat2 18s ease-in-out infinite;
+}
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-24px, 30px); }
+}
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -24px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb { animation: none; }
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 .nav {
   position: sticky;
   top: 0;
@@ -252,6 +299,8 @@ img { max-width: 100%; display: block; }
 }
 
 .btn {
+  position: relative;
+  overflow: hidden;
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 0.92rem;
@@ -260,6 +309,18 @@ img { max-width: 100%; display: block; }
   transition: transform 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
   display: inline-block;
 }
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s var(--ease);
+}
+.btn:hover::before { left: 130%; }
 .btn-primary {
   background: var(--gold);
   color: #0a0a0b;
@@ -403,12 +464,22 @@ img { max-width: 100%; display: block; }
   aspect-ratio: 4 / 3;
   background: linear-gradient(135deg, #1a1a1c, #0a0a0b);
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .product-image::after {
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 30% 30%, var(--gold-dim), transparent 60%);
+}
+.product-icon {
+  position: relative;
+  z-index: 1;
+  font-size: 2.4rem;
+  color: var(--gold);
+  opacity: 0.55;
 }
 
 .product-body { padding: 22px; }
