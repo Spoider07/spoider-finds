@@ -166,6 +166,35 @@ img { max-width: 100%; display: block; }
 }
 
 /* =========================================================
+   Page-load intro overlay
+   A brief brand-mark reveal that plays once per session on
+   first entry to the site, then fades away permanently.
+   ========================================================= */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s var(--ease);
+}
+.page-loader.loader-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.loader-mark-line {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: markDraw 0.8s var(--ease) forwards;
+  animation-delay: 0.1s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-loader { display: none; }
+}
+
+/* =========================================================
    Ambient background — floating glow orbs + film grain
    Adds depth and an editorial, premium print-like texture
    without weighing the page down (pure CSS, no images).

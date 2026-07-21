@@ -32,6 +32,60 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- Page-load intro overlay (once per session) ----
+  const pageLoader = document.getElementById("pageLoader");
+  if (pageLoader) {
+    let alreadyShown = false;
+    try {
+      alreadyShown = sessionStorage.getItem("spoiderLoaderShown") === "1";
+    } catch (e) {
+      // sessionStorage unavailable (privacy mode etc.) — just show it once, harmless
+    }
+
+    if (alreadyShown || prefersReducedMotion) {
+      pageLoader.remove();
+    } else {
+      try {
+        sessionStorage.setItem("spoiderLoaderShown", "1");
+      } catch (e) {
+        /* ignore */
+      }
+      const hideDelay = 650;
+      setTimeout(() => {
+        pageLoader.classList.add("loader-hidden");
+        setTimeout(() => {
+          if (pageLoader.parentNode) pageLoader.remove();
+        }, 700);
+      }, hideDelay);
+    }
+  }
+
+  // ---- Magnetic buttons (fine-pointer / desktop only) ----
+  const supportsHoverFine =
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  if (supportsHoverFine && !prefersReducedMotion) {
+    const magneticButtons = document.querySelectorAll(".btn");
+    const strength = 0.35;
+    const maxDist = 14;
+
+    magneticButtons.forEach((btn) => {
+      btn.addEventListener("mousemove", (e) => {
+        const rect = btn.getBoundingClientRect();
+        const relX = e.clientX - (rect.left + rect.width / 2);
+        const relY = e.clientY - (rect.top + rect.height / 2);
+        const x = Math.max(-maxDist, Math.min(maxDist, relX * strength));
+        const y = Math.max(-maxDist, Math.min(maxDist, relY * strength));
+        btn.style.transition = "transform 0.08s linear";
+        btn.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      btn.addEventListener("mouseleave", () => {
+        btn.style.transition = "transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)";
+        btn.style.transform = "translate(0px, 0px)";
+      });
+    });
+  }
+
   // ---- Hero stat count-up ----
   const statNums = document.querySelectorAll(".stat-num[data-count-to]");
   if (statNums.length && !prefersReducedMotion) {
