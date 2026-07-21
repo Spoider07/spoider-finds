@@ -512,7 +512,7 @@ img { max-width: 100%; display: block; }
 }
 
 .product-image {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 2 / 3;
   background: linear-gradient(135deg, #1a1a1c, #0a0a0b);
   position: relative;
   overflow: hidden;
@@ -521,6 +521,7 @@ img { max-width: 100%; display: block; }
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center top;
   display: block;
   transition: transform 0.5s var(--ease);
 }
