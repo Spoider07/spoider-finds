@@ -39,8 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const target = parseInt(el.getAttribute("data-count-to"), 10);
       const suffix = el.getAttribute("data-suffix") || "";
       el.textContent = "0" + suffix; // safe to reset now that JS is confirmed running
-      const duration = 1100;
-      const startDelay = 650; // let hero-enter settle first
+      const duration = 2000;
+      const startDelay = 500; // let hero-enter settle first
       const startTime = performance.now() + startDelay;
 
       const tick = (now) => {
