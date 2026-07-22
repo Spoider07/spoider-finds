@@ -32,6 +32,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- Nav scroll state (glassmorphism intensify + logo shrink) ----
+  const navEl = document.getElementById("nav");
+  if (navEl) {
+    const updateNavScrollState = () => {
+      navEl.classList.toggle("scrolled", window.scrollY > 40);
+    };
+    updateNavScrollState();
+    window.addEventListener("scroll", updateNavScrollState, { passive: true });
+  }
+
+  // ---- Active nav link tracking (highlights section currently in view) ----
+  const navAnchorLinks = document.querySelectorAll(
+    '.nav-links a[href^="#"], .nav-mobile a[href^="#"]'
+  );
+  if (navAnchorLinks.length && "IntersectionObserver" in window) {
+    const setActiveNavLink = (hash) => {
+      navAnchorLinks.forEach((a) => {
+        a.classList.toggle("active", a.getAttribute("href") === hash);
+      });
+    };
+    const trackedSectionIds = ["categories", "featured", "latest"];
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveNavLink("#" + entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
+    );
+    trackedSectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) sectionObserver.observe(el);
+    });
+  }
+
   // ---- Page-load intro overlay (once per session) ----
   const pageLoader = document.getElementById("pageLoader");
   if (pageLoader) {
