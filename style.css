@@ -381,6 +381,64 @@ img { max-width: 100%; display: block; }
   margin: 0 auto;
   padding: 110px 24px 70px;
   text-align: center;
+  overflow: hidden;
+}
+
+/* =========================================================
+   Aurora — slow-flowing gold-tone glow, contained to the hero
+   only. Replaces the old page-wide ambient orbs.
+   ========================================================= */
+.aurora {
+  position: absolute;
+  inset: -15% -20%;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(70px);
+  opacity: 0.55;
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+}
+.aurora-blob--1 {
+  width: 55%;
+  height: 55%;
+  top: 5%;
+  left: 8%;
+  background: radial-gradient(circle, rgba(232, 199, 102, 0.55), transparent 70%);
+  animation: auroraDrift1 26s ease-in-out infinite alternate;
+}
+.aurora-blob--2 {
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  right: 5%;
+  background: radial-gradient(circle, rgba(201, 168, 118, 0.45), transparent 70%);
+  animation: auroraDrift2 32s ease-in-out infinite alternate;
+}
+.aurora-blob--3 {
+  width: 45%;
+  height: 45%;
+  bottom: 0%;
+  left: 30%;
+  background: radial-gradient(circle, rgba(191, 160, 90, 0.4), transparent 70%);
+  animation: auroraDrift3 22s ease-in-out infinite alternate;
+}
+@keyframes auroraDrift1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(6%, 8%) scale(1.12); }
+}
+@keyframes auroraDrift2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-8%, 5%) scale(1.08); }
+}
+@keyframes auroraDrift3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(5%, -6%) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob { animation: none; }
 }
 .hero-title {
   font-family: var(--font-display);
