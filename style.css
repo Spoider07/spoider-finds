@@ -244,6 +244,22 @@ img { max-width: 100%; display: block; }
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+
+.cursor-particle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-bright), transparent 70%);
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.75;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
 .nav {
   position: sticky;
   top: 0;
@@ -580,6 +596,28 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(135deg, #1a1a1c, #0a0a0b);
   position: relative;
   overflow: hidden;
+}
+.product-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.02) 20%, rgba(201, 168, 118, 0.12) 50%, rgba(255, 255, 255, 0.02) 80%);
+  background-size: 200% 100%;
+  animation: shimmerSlide 1.4s linear infinite;
+  opacity: 1;
+  transition: opacity 0.4s var(--ease);
+}
+.product-image.img-loaded::before {
+  opacity: 0;
+  animation-play-state: paused;
+}
+@keyframes shimmerSlide {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-image::before { animation: none; opacity: 0; }
 }
 .product-image img {
   width: 100%;

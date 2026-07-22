@@ -6,6 +6,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const supportsHoverFine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   // ---- Footer year ----
   const yearEl = document.getElementById("year");
@@ -31,6 +32,45 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  // ---- Cursor-trail particles (fine-pointer / desktop only) ----
+  if (supportsHoverFine && !prefersReducedMotion) {
+    let lastParticleTime = 0;
+    const particleThrottleMs = 45;
+
+    document.addEventListener("mousemove", (e) => {
+      const now = performance.now();
+      if (now - lastParticleTime < particleThrottleMs) return;
+      lastParticleTime = now;
+
+      const particle = document.createElement("div");
+      particle.className = "cursor-particle";
+      particle.style.left = e.clientX + "px";
+      particle.style.top = e.clientY + "px";
+      document.body.appendChild(particle);
+
+      requestAnimationFrame(() => {
+        particle.style.opacity = "0";
+        particle.style.transform = "translate(-50%, -50%) scale(0.3)";
+      });
+
+      setTimeout(() => {
+        if (particle.parentNode) particle.remove();
+      }, 650);
+    });
+  }
+
+  // ---- Product image shimmer (shows until each image finishes loading) ----
+  document.querySelectorAll(".product-image").forEach((wrapper) => {
+    const img = wrapper.querySelector("img");
+    if (!img) return;
+    if (img.complete && img.naturalWidth > 0) {
+      wrapper.classList.add("img-loaded");
+    } else {
+      img.addEventListener("load", () => wrapper.classList.add("img-loaded"));
+      img.addEventListener("error", () => wrapper.classList.add("img-loaded"));
+    }
+  });
 
   // ---- Nav scroll state (glassmorphism intensify + logo shrink) ----
   const navEl = document.getElementById("nav");
@@ -98,9 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- Magnetic buttons (fine-pointer / desktop only) ----
-  const supportsHoverFine =
-    window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-
   if (supportsHoverFine && !prefersReducedMotion) {
     const magneticButtons = document.querySelectorAll(".btn");
     const strength = 0.35;
