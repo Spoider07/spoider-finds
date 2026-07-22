@@ -381,7 +381,6 @@ img { max-width: 100%; display: block; }
   margin: 0 auto;
   padding: 110px 24px 70px;
   text-align: center;
-  overflow: hidden;
 }
 
 /* =========================================================
@@ -390,11 +389,11 @@ img { max-width: 100%; display: block; }
    ========================================================= */
 .aurora {
   position: absolute;
-  inset: -15% -20%;
+  inset: -20% -25% -35% -25%;
   z-index: -1;
   pointer-events: none;
-  filter: blur(70px);
-  opacity: 0.55;
+  filter: blur(90px);
+  opacity: 0.4;
 }
 .aurora-blob {
   position: absolute;
