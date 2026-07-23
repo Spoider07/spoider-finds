@@ -100,7 +100,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   background: var(--bg);
@@ -389,7 +389,7 @@ img { max-width: 100%; display: block; }
    ========================================================= */
 .aurora {
   position: absolute;
-  inset: -20% -25% -35% -25%;
+  inset: -10% -8% -20% -8%;
   z-index: -1;
   pointer-events: none;
   filter: blur(90px);
