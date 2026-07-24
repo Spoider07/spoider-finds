@@ -198,22 +198,16 @@ document.addEventListener("DOMContentLoaded", () => {
       el.textContent = "";
       el.setAttribute("aria-label", text);
 
-      [...text].forEach((char, i) => {
+      // Split by word (not letter) — far fewer animating elements = smooth
+      // even on low-end devices. Keeps spaces attached so wrapping looks natural.
+      const words = text.split(/(\s+)/).filter((w) => w.length > 0);
+
+      words.forEach((word, i) => {
         const span = document.createElement("span");
         span.className = "letter";
-        span.textContent = char;
+        span.textContent = word;
         span.setAttribute("aria-hidden", "true");
-
-        // Random scatter origin for each letter (golden particle burst point)
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 22 + Math.random() * 30;
-        const tx = (Math.cos(angle) * distance).toFixed(1) + "px";
-        const ty = (Math.sin(angle) * distance).toFixed(1) + "px";
-
         span.style.setProperty("--i", i);
-        span.style.setProperty("--tx", tx);
-        span.style.setProperty("--ty", ty);
-
         el.appendChild(span);
       });
     });
@@ -223,8 +217,12 @@ document.addEventListener("DOMContentLoaded", () => {
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
-              entry.target.classList.add("in-view");
-              snapObserver.unobserve(entry.target);
+              const target = entry.target;
+              const wordCount = target.querySelectorAll(".letter").length;
+              target.classList.add("in-view");
+              const totalTime = wordCount * 70 + 550 + 500;
+              setTimeout(() => target.classList.add("settled"), totalTime);
+              snapObserver.unobserve(target);
             }
           });
         },
@@ -232,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       snapEls.forEach((el) => snapObserver.observe(el));
     } else {
-      snapEls.forEach((el) => el.classList.add("in-view"));
+      snapEls.forEach((el) => el.classList.add("in-view", "settled"));
     }
   }
 

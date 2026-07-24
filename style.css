@@ -59,35 +59,26 @@
   display: inline-block;
   white-space: pre;
   opacity: 0;
-  will-change: transform, opacity;
-  transform: translate3d(var(--tx), var(--ty), 0) scale(0.7);
+  color: var(--gold);
+  transform: translate3d(0, 14px, 0);
+  transition: color 0.5s ease;
+  transition-delay: calc(var(--i) * 70ms + 500ms);
 }
 .snap-reveal.in-view .letter {
-  animation: snapAssemble 1.15s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-  animation-delay: calc(var(--i) * 28ms);
+  animation: snapIn 0.55s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  animation-delay: calc(var(--i) * 70ms);
 }
-@keyframes snapAssemble {
-  0% {
-    opacity: 0;
-    transform: translate3d(var(--tx), var(--ty), 0) scale(0.7);
-    color: var(--gold);
-    text-shadow: 0 0 10px var(--gold);
-  }
-  65% {
+.snap-reveal.settled .letter {
+  color: inherit;
+}
+@keyframes snapIn {
+  to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1.03);
-    color: var(--gold);
-    text-shadow: 0 0 6px var(--gold);
-  }
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    color: inherit;
-    text-shadow: none;
+    transform: translate3d(0, 0, 0);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .snap-reveal .letter { opacity: 1; transform: none; animation: none; }
+  .snap-reveal .letter { opacity: 1; transform: none; animation: none; transition: none; color: inherit; }
 }
 
 /* Hero entrance (plays once on load, not scroll-triggered) */
