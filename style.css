@@ -59,39 +59,35 @@
   display: inline-block;
   white-space: pre;
   opacity: 0;
-  will-change: transform, opacity, filter;
-  transform: translate(var(--tx), var(--ty)) scale(0.4) rotate(var(--tr));
-  filter: blur(6px);
+  will-change: transform, opacity;
+  transform: translate3d(var(--tx), var(--ty), 0) scale(0.7);
 }
 .snap-reveal.in-view .letter {
-  animation: snapAssemble 0.8s cubic-bezier(0.16, 0.9, 0.25, 1) forwards;
-  animation-delay: calc(var(--i) * 18ms);
+  animation: snapAssemble 1.15s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  animation-delay: calc(var(--i) * 28ms);
 }
 @keyframes snapAssemble {
   0% {
     opacity: 0;
-    transform: translate(var(--tx), var(--ty)) scale(0.4) rotate(var(--tr));
-    filter: blur(6px);
-    color: var(--gold);
-    text-shadow: 0 0 14px var(--gold), 0 0 4px var(--gold-bright, var(--gold));
-  }
-  55% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1.08) rotate(0deg);
-    filter: blur(0);
+    transform: translate3d(var(--tx), var(--ty), 0) scale(0.7);
     color: var(--gold);
     text-shadow: 0 0 10px var(--gold);
   }
+  65% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1.03);
+    color: var(--gold);
+    text-shadow: 0 0 6px var(--gold);
+  }
   100% {
     opacity: 1;
-    transform: translate(0, 0) scale(1) rotate(0deg);
-    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
     color: inherit;
     text-shadow: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .snap-reveal .letter { opacity: 1; transform: none; filter: none; animation: none; }
+  .snap-reveal .letter { opacity: 1; transform: none; animation: none; }
 }
 
 /* Hero entrance (plays once on load, not scroll-triggered) */

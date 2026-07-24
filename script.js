@@ -206,15 +206,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Random scatter origin for each letter (golden particle burst point)
         const angle = Math.random() * Math.PI * 2;
-        const distance = 40 + Math.random() * 60;
+        const distance = 22 + Math.random() * 30;
         const tx = (Math.cos(angle) * distance).toFixed(1) + "px";
         const ty = (Math.sin(angle) * distance).toFixed(1) + "px";
-        const tr = (Math.random() * 50 - 25).toFixed(1) + "deg";
 
         span.style.setProperty("--i", i);
         span.style.setProperty("--tx", tx);
         span.style.setProperty("--ty", ty);
-        span.style.setProperty("--tr", tr);
 
         el.appendChild(span);
       });
