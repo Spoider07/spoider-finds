@@ -55,30 +55,19 @@
    Snap-reveal — text assembles from scattered golden
    particles as it scrolls into view (reverse-snap effect)
    ========================================================= */
-.snap-reveal .letter {
-  display: inline-block;
-  white-space: pre;
+.snap-reveal {
   opacity: 0;
+  transform: translateY(16px);
   color: var(--gold);
-  transform: translate3d(0, 14px, 0);
-  transition: color 0.5s ease;
-  transition-delay: calc(var(--i) * 70ms + 500ms);
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease), color 0.6s ease 0.35s;
 }
-.snap-reveal.in-view .letter {
-  animation: snapIn 0.55s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-  animation-delay: calc(var(--i) * 70ms);
-}
-.snap-reveal.settled .letter {
+.snap-reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
   color: inherit;
 }
-@keyframes snapIn {
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .snap-reveal .letter { opacity: 1; transform: none; animation: none; transition: none; color: inherit; }
+  .snap-reveal { opacity: 1; transform: none; transition: none; color: inherit; }
 }
 
 /* Hero entrance (plays once on load, not scroll-triggered) */
@@ -764,6 +753,13 @@ img { max-width: 100%; display: block; }
 @media (max-width: 560px) {
   .product-grid { columns: 1; }
 }
+
+.empty-category {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-secondary);
+}
+.empty-category p { margin-bottom: 20px; }
 
 /* =========================================================
    TRUST

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fashion Finds — Spoider Finds</title>
+  <meta name="description" content="Understated staples and statement pieces worth the click.">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grain"></div>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="index.html#categories">Categories</a>
+        <a href="index.html#featured">Featured</a>
+        <a href="about.html">About</a>
+        <a href="index.html#latest">Latest</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="nav-mobile" id="navMobile" aria-label="Mobile">
+      <a href="index.html#categories">Categories</a>
+      <a href="index.html#featured">Featured</a>
+      <a href="about.html">About</a>
+      <a href="index.html#latest">Latest</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-top:90px; padding-bottom:40px;">
+      <p class="eyebrow center reveal"><a href="index.html#categories" style="color:inherit;">← ALL CATEGORIES</a></p>
+      <h1 class="hero-title" style="font-size:clamp(2rem, 5vw, 3.2rem);">Fashion Finds</h1>
+      <p class="hero-sub" style="margin:0 auto;">Understated staples and statement pieces worth the click.</p>
+    </section>
+
+    <section class="featured" id="products">
+      <div class="product-grid">
+        <a href="https://amzn.to/4eR5BWd" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
+          <div class="product-image">
+            <img src="assets/images/monster-sweatshirt.jpg" alt="Graphic quarter-zip sweatshirt with dragon design, oversized streetwear fit" loading="lazy">
+          </div>
+          <div class="product-body">
+            <span class="product-tag">Fashion Finds</span>
+            <h3>Monster Graphic Sweatshirt</h3>
+            <p>Oversized quarter-zip pullover with a bold graphic print — trendy streetwear for fall.</p>
+            <span class="product-link">View on Amazon →</span>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
+        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Site</h4>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+    </div>
+    <p class="footer-signature">Founder <span class="gold-text">~</span> Spoider</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
