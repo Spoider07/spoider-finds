@@ -598,14 +598,17 @@ img { max-width: 100%; display: block; }
 .category-card:hover .category-glow { opacity: 1; }
 .category-icon {
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   margin-bottom: 18px;
   color: var(--gold);
-  transition: transform 0.3s var(--ease);
+  opacity: 0;
+  transform: scale(0.55);
+  transition: transform 0.55s var(--ease) 0.1s, opacity 0.55s var(--ease) 0.1s, color 0.25s ease;
 }
 .category-icon svg { display: block; width: 100%; height: 100%; }
-.category-card:hover .category-icon { transform: translateY(-3px); }
+.reveal.is-visible .category-icon { opacity: 1; transform: scale(1); }
+.category-card:hover .category-icon { transform: scale(1.15) translateY(-2px); color: var(--gold-bright); }
 .category-card h3 {
   font-family: var(--font-display);
   font-weight: 500;
