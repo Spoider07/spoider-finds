@@ -189,6 +189,55 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- Snap-reveal text (golden particles converge into place) ----
+  const snapEls = document.querySelectorAll(".snap-reveal");
+
+  if (snapEls.length && !prefersReducedMotion) {
+    snapEls.forEach((el) => {
+      const text = el.textContent;
+      el.textContent = "";
+      el.setAttribute("aria-label", text);
+
+      [...text].forEach((char, i) => {
+        const span = document.createElement("span");
+        span.className = "letter";
+        span.textContent = char;
+        span.setAttribute("aria-hidden", "true");
+
+        // Random scatter origin for each letter (golden particle burst point)
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 60;
+        const tx = (Math.cos(angle) * distance).toFixed(1) + "px";
+        const ty = (Math.sin(angle) * distance).toFixed(1) + "px";
+        const tr = (Math.random() * 50 - 25).toFixed(1) + "deg";
+
+        span.style.setProperty("--i", i);
+        span.style.setProperty("--tx", tx);
+        span.style.setProperty("--ty", ty);
+        span.style.setProperty("--tr", tr);
+
+        el.appendChild(span);
+      });
+    });
+
+    if ("IntersectionObserver" in window) {
+      const snapObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("in-view");
+              snapObserver.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.3, rootMargin: "0px 0px -60px 0px" }
+      );
+      snapEls.forEach((el) => snapObserver.observe(el));
+    } else {
+      snapEls.forEach((el) => el.classList.add("in-view"));
+    }
+  }
+
   // ---- Scroll-reveal for sections and cards ----
   const revealEls = document.querySelectorAll(".reveal");
 
