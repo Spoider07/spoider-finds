@@ -24,6 +24,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .web-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: auto;
+      touch-action: pan-y;
+    }
+    .hero { position: relative; }
+    .hero > *:not(.web-canvas) { position: relative; z-index: 2; }
+  </style>
 </head>
 <body>
   <div class="page-loader" id="pageLoader">
@@ -70,6 +83,7 @@
         <span class="aurora-blob aurora-blob--2"></span>
         <span class="aurora-blob aurora-blob--3"></span>
       </div>
+      <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
       <div class="hero-mark hero-enter" aria-hidden="true">
         <svg viewBox="0 0 64 64" width="52" height="52">
           <circle cx="32" cy="32" r="2.6" fill="var(--gold)"/>
@@ -333,5 +347,172 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+  (function () {
+    var canvas = document.getElementById('webCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var hero = canvas.closest('.hero');
+    var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var nodes = [];
+    var pointer = { x: -9999, y: -9999, active: false };
+    var running = false;
+    var rafId = null;
+    var lastFrame = 0;
+    var FRAME_INTERVAL = 1000 / 30; // cap at 30fps — smooth but light on budget phones
+
+    var isSmall = window.matchMedia('(max-width: 600px)').matches;
+    var NODE_COUNT = isSmall ? 26 : 46;
+    var LINK_DIST = isSmall ? 110 : 150;
+    var TOUCH_RADIUS = isSmall ? 100 : 140;
+
+    function resize() {
+      var rect = hero.getBoundingClientRect();
+      w = rect.width;
+      h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seedNodes();
+    }
+
+    function seedNodes() {
+      nodes = [];
+      for (var i = 0; i < NODE_COUNT; i++) {
+        var x = Math.random() * w;
+        var y = Math.random() * h;
+        nodes.push({
+          x: x, y: y,
+          ox: x, oy: y,
+          vx: 0, vy: 0
+        });
+      }
+    }
+
+    function step(node) {
+      // gentle drift back toward original spot
+      var dxHome = node.ox - node.x;
+      var dyHome = node.oy - node.y;
+      node.vx += dxHome * 0.004;
+      node.vy += dyHome * 0.004;
+
+      // push away from pointer/touch
+      if (pointer.active) {
+        var dx = node.x - pointer.x;
+        var dy = node.y - pointer.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < TOUCH_RADIUS && dist > 0.01) {
+          var force = (1 - dist / TOUCH_RADIUS) * 2.2;
+          node.vx += (dx / dist) * force;
+          node.vy += (dy / dist) * force;
+        }
+      }
+
+      node.vx *= 0.9;
+      node.vy *= 0.9;
+      node.x += node.vx;
+      node.y += node.vy;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      ctx.lineWidth = 1;
+
+      for (var i = 0; i < nodes.length; i++) {
+        step(nodes[i]);
+      }
+
+      for (var i = 0; i < nodes.length; i++) {
+        for (var j = i + 1; j < nodes.length; j++) {
+          var a = nodes[i], b = nodes[j];
+          var dx = a.x - b.x, dy = a.y - b.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < LINK_DIST) {
+            var alpha = (1 - dist / LINK_DIST) * 0.35;
+            ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      for (var i = 0; i < nodes.length; i++) {
+        ctx.beginPath();
+        ctx.arc(nodes[i].x, nodes[i].y, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,199,102,0.55)';
+        ctx.fill();
+      }
+    }
+
+    function loop(ts) {
+      if (!running) return;
+      if (ts - lastFrame >= FRAME_INTERVAL) {
+        lastFrame = ts;
+        draw();
+      }
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (running) return;
+      running = true;
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function stop() {
+      running = false;
+      if (rafId) cancelAnimationFrame(rafId);
+    }
+
+    function setPointer(x, y, active) {
+      var rect = canvas.getBoundingClientRect();
+      pointer.x = x - rect.left;
+      pointer.y = y - rect.top;
+      pointer.active = active;
+    }
+
+    canvas.addEventListener('pointermove', function (e) {
+      setPointer(e.clientX, e.clientY, true);
+    }, { passive: true });
+
+    canvas.addEventListener('pointerleave', function () {
+      pointer.active = false;
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', function (e) {
+      if (e.touches && e.touches[0]) {
+        setPointer(e.touches[0].clientX, e.touches[0].clientY, true);
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', function () {
+      pointer.active = false;
+    }, { passive: true });
+
+    window.addEventListener('resize', resize);
+
+    // only animate while the hero is actually visible — saves battery/CPU when scrolled past
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) start(); else stop();
+        });
+      }, { threshold: 0.05 });
+      io.observe(hero);
+    } else {
+      start();
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stop(); else if (hero.getBoundingClientRect().top < window.innerHeight) start();
+    });
+
+    resize();
+  })();
+  </script>
 </body>
 </html>
