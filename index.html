@@ -103,8 +103,8 @@
   </svg>
 
   <!-- touch-reactive overlay thread — purely decorative, sits on top of the real one, never alters it -->
-  <svg class="thread" id="threadWiggle" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true" style="z-index:2;">
-    <path id="threadWigglePath" d="M2,0 L2,3000" style="stroke:var(--gold-bright,#e8c766); stroke-width:1.6; fill:none; opacity:0;"></path>
+  <svg class="thread" id="threadWiggle" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true" style="z-index:2; overflow:visible;">
+    <path id="threadWigglePath" d="M2,0 L2,3000" style="stroke:var(--gold-bright,#e8c766); stroke-width:1.6; fill:none; opacity:0; vector-effect:non-scaling-stroke;"></path>
   </svg>
 
   <main>
@@ -663,9 +663,9 @@
 
     var POINTS = 36;
     var SEGMENT = 3000 / (POINTS - 1);
-    var SIGMA = 220;        // how far the wiggle spreads along the line (viewBox units)
-    var MAX_DISPLACE = 1.6; // max sideways offset (viewBox width is only 4, so keep small)
-    var PROXIMITY_PX = 70;  // how close (screen px) touch must be horizontally to trigger it
+    var SIGMA = 200;        // how far the wiggle spreads along the line (viewBox units)
+    var MAX_DISPLACE = 22;  // max sideways offset — large on purpose so it reads clearly even in a thin strip
+    var PROXIMITY_PX = 90;  // how close (screen px) touch must be horizontally to trigger it
 
     var amplitude = 0;
     var targetAmplitude = 0;
