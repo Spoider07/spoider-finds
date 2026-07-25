@@ -102,11 +102,6 @@
     <path id="threadPath" d="M2,0 L2,3000" />
   </svg>
 
-  <!-- touch-reactive overlay thread — purely decorative, sits on top of the real one, never alters it -->
-  <svg class="thread" id="threadWiggle" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true" style="z-index:2; overflow:visible;">
-    <path id="threadWigglePath" d="M2,0 L2,3000" style="stroke:var(--gold-bright,#e8c766); stroke-width:1.6; fill:none; opacity:0; vector-effect:non-scaling-stroke;"></path>
-  </svg>
-
   <main>
     <!-- ================= HERO ================= -->
     <section class="hero">
@@ -650,87 +645,6 @@
     window.addEventListener('scroll', requestTick, { passive: true });
     window.addEventListener('resize', requestTick);
     requestTick();
-  })();
-  </script>
-
-  <script>
-  (function () {
-    // Touch-reactive thread wiggle — purely decorative overlay.
-    // Never touches #threadPath (the real scroll-progress line) or its logic.
-    var svg = document.getElementById('threadWiggle');
-    var path = document.getElementById('threadWigglePath');
-    if (!svg || !path) return;
-
-    var POINTS = 36;
-    var SEGMENT = 3000 / (POINTS - 1);
-    var SIGMA = 200;        // how far the wiggle spreads along the line (viewBox units)
-    var MAX_DISPLACE = 22;  // max sideways offset — large on purpose so it reads clearly even in a thin strip
-    var PROXIMITY_PX = 90;  // how close (screen px) touch must be horizontally to trigger it
-
-    var amplitude = 0;
-    var targetAmplitude = 0;
-    var localY = -9999;
-    var running = false;
-
-    function buildPath(amp) {
-      if (amp < 0.01) return 'M2,0 L2,3000';
-      var d = 'M2,0';
-      for (var i = 1; i < POINTS; i++) {
-        var y = i * SEGMENT;
-        var dy = y - localY;
-        var falloff = Math.exp(-(dy * dy) / (2 * SIGMA * SIGMA));
-        var x = 2 + amp * falloff;
-        d += ' L' + x.toFixed(3) + ',' + y.toFixed(1);
-      }
-      return d;
-    }
-
-    function frame() {
-      amplitude += (targetAmplitude - amplitude) * 0.15;
-      if (amplitude > 0.01 || targetAmplitude > 0.01) {
-        path.setAttribute('d', buildPath(amplitude));
-        path.style.opacity = Math.min(1, (amplitude / MAX_DISPLACE) * 1.2).toFixed(2);
-        requestAnimationFrame(frame);
-      } else {
-        path.setAttribute('d', 'M2,0 L2,3000');
-        path.style.opacity = '0';
-        running = false;
-      }
-    }
-
-    function ensureRunning() {
-      if (!running) {
-        running = true;
-        requestAnimationFrame(frame);
-      }
-    }
-
-    function handleMove(clientX, clientY) {
-      var rect = svg.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      var distX = Math.abs(clientX - (rect.left + rect.width / 2));
-      if (distX > PROXIMITY_PX + rect.width) {
-        targetAmplitude = 0;
-        ensureRunning();
-        return;
-      }
-      localY = ((clientY - rect.top) / rect.height) * 3000;
-      var t = Math.max(0, 1 - distX / PROXIMITY_PX);
-      targetAmplitude = MAX_DISPLACE * (0.3 + 0.7 * t);
-      ensureRunning();
-    }
-
-    function handleLeave() {
-      targetAmplitude = 0;
-      ensureRunning();
-    }
-
-    window.addEventListener('pointermove', function (e) { handleMove(e.clientX, e.clientY); }, { passive: true });
-    window.addEventListener('touchmove', function (e) {
-      if (e.touches && e.touches[0]) handleMove(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
-    window.addEventListener('touchend', handleLeave, { passive: true });
-    window.addEventListener('pointerleave', handleLeave, { passive: true });
   })();
   </script>
 </body>
