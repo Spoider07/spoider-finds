@@ -25,17 +25,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
+    .hero { position: relative; z-index: 0; }
     .web-canvas {
       position: absolute;
-      inset: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       width: 100%;
       height: 100%;
       z-index: 1;
       pointer-events: auto;
       touch-action: pan-y;
     }
-    .hero { position: relative; }
-    .hero > *:not(.web-canvas) { position: relative; z-index: 2; }
+    .hero .aurora,
+    .hero-mark, .hero .eyebrow, .hero-title, .hero-sub, .hero-actions, .hero-stats {
+      position: relative;
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
