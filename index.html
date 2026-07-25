@@ -570,5 +570,82 @@
     resize();
   })();
   </script>
+
+  <script>
+  (function () {
+    // Scroll-linked "grow" effect for Featured product cards.
+    // Only tracks cards near the viewport; everything else stays idle for performance.
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
+    if (!cards.length) return;
+
+    var MIN_SCALE = 0.82;
+    var MAX_SCALE = 1;
+    var active = new Set();
+    var ticking = false;
+    var lastScrollY = -1;
+
+    cards.forEach(function (card) {
+      card.style.transformOrigin = '50% 65%';
+      card.style.willChange = 'transform';
+      // let opacity keep whatever transition the existing .reveal system uses,
+      // but drive transform ourselves every frame with no transition lag
+      card.style.transitionProperty = 'opacity';
+    });
+
+    function smoothstep(t) {
+      t = Math.max(0, Math.min(1, t));
+      return t * t * (3 - 2 * t);
+    }
+
+    function updateCard(card) {
+      var rect = card.getBoundingClientRect();
+      var vh = window.innerHeight;
+      // progress: 0 when card top is at the bottom of the viewport (just entering),
+      // 1 once the card has scrolled up to ~62% of the viewport height
+      var start = vh;
+      var end = vh * 0.62;
+      var raw = (start - rect.top) / (start - end);
+      var p = smoothstep(raw);
+      var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
+      card.style.transform = 'scale(' + scale.toFixed(3) + ')';
+    }
+
+    function onFrame() {
+      ticking = false;
+      if (window.scrollY === lastScrollY) return; // nothing moved, skip work
+      lastScrollY = window.scrollY;
+      active.forEach(updateCard);
+    }
+
+    function requestTick() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(onFrame);
+      }
+    }
+
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            active.add(entry.target);
+            updateCard(entry.target); // set correct scale immediately, no pop-in
+          } else {
+            active.delete(entry.target);
+          }
+        });
+      }, { rootMargin: '25% 0px 25% 0px', threshold: 0 });
+
+      cards.forEach(function (card) { io.observe(card); });
+    } else {
+      // fallback: treat all as active if IntersectionObserver isn't supported
+      cards.forEach(function (card) { active.add(card); });
+    }
+
+    window.addEventListener('scroll', requestTick, { passive: true });
+    window.addEventListener('resize', requestTick);
+    requestTick();
+  })();
+  </script>
 </body>
 </html>
