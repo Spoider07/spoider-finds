@@ -366,9 +366,10 @@
     var FRAME_INTERVAL = 1000 / 30; // cap at 30fps — smooth but light on budget phones
 
     var isSmall = window.matchMedia('(max-width: 600px)').matches;
-    var NODE_COUNT = isSmall ? 26 : 46;
-    var LINK_DIST = isSmall ? 110 : 150;
-    var TOUCH_RADIUS = isSmall ? 100 : 140;
+    var NODE_COUNT = isSmall ? 34 : 60;
+    var LINK_DIST = isSmall ? 125 : 165;
+    var TOUCH_RADIUS = isSmall ? 110 : 150;
+    var pulseT = 0;
 
     function resize() {
       var rect = hero.getBoundingClientRect();
@@ -423,6 +424,8 @@
     function draw() {
       ctx.clearRect(0, 0, w, h);
       ctx.lineWidth = 1;
+      pulseT += 0.02;
+      var pulse = 0.75 + Math.sin(pulseT) * 0.25; // gentle breathing brightness, 0.5–1.0
 
       for (var i = 0; i < nodes.length; i++) {
         step(nodes[i]);
@@ -434,7 +437,7 @@
           var dx = a.x - b.x, dy = a.y - b.y;
           var dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < LINK_DIST) {
-            var alpha = (1 - dist / LINK_DIST) * 0.35;
+            var alpha = (1 - dist / LINK_DIST) * 0.4 * pulse;
             ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -445,9 +448,16 @@
       }
 
       for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        // soft glow halo behind each node (cheap: just a larger low-alpha circle, no shadowBlur)
         ctx.beginPath();
-        ctx.arc(nodes[i].x, nodes[i].y, 1.6, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,199,102,0.55)';
+        ctx.arc(n.x, n.y, 6 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,199,102,' + (0.10 * pulse).toFixed(3) + ')';
+        ctx.fill();
+        // core dot
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 1.7, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,199,102,' + (0.6 * pulse + 0.2).toFixed(3) + ')';
         ctx.fill();
       }
     }
