@@ -606,8 +606,26 @@ img { max-width: 100%; display: block; }
   transform: scale(0.55);
   transition: transform 0.55s var(--ease) 0.1s, opacity 0.55s var(--ease) 0.1s, color 0.25s ease;
 }
-.category-icon svg { display: block; width: 100%; height: 100%; }
+.category-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: iconFloat 2.6s ease-in-out infinite;
+  animation-play-state: paused;
+}
 .reveal.is-visible .category-icon { opacity: 1; transform: scale(1); }
+.reveal.is-visible .category-icon svg { animation-play-state: running; }
+.category-grid .category-card:nth-child(1) .category-icon svg { animation-delay: 0s; }
+.category-grid .category-card:nth-child(2) .category-icon svg { animation-delay: 0.15s; }
+.category-grid .category-card:nth-child(3) .category-icon svg { animation-delay: 0.3s; }
+.category-grid .category-card:nth-child(4) .category-icon svg { animation-delay: 0.45s; }
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .category-icon svg { animation: none; }
+}
 .category-card:hover .category-icon { transform: scale(1.15) translateY(-2px); color: var(--gold-bright); }
 .category-card h3 {
   font-family: var(--font-display);
