@@ -614,10 +614,24 @@ img { max-width: 100%; display: block; }
   font-weight: 500;
   font-size: 1.15rem;
   margin-bottom: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.75s var(--ease) 0.18s, transform 0.75s var(--ease) 0.18s;
 }
 .category-card p {
   font-size: 0.85rem;
   color: var(--text-secondary);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.75s var(--ease) 0.3s, transform 0.75s var(--ease) 0.3s;
+}
+.category-card.reveal.is-visible h3,
+.category-card.reveal.is-visible p {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .category-card h3, .category-card p { opacity: 1; transform: none; transition: none; }
 }
 
 @media (max-width: 900px) {
