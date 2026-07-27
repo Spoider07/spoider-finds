@@ -652,18 +652,27 @@ img { max-width: 100%; display: block; }
   .category-card h3, .category-card p { opacity: 1; transform: none; transition: none; }
 }
 
-.crazy-title.is-visible {
-  animation: crazyPop 0.95s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+/* "Four threads. One taste." — cinematic blur-to-sharp focus.
+   Starts slightly soft-focus, faded, and a touch larger, then
+   settles into a still, sharp, in-focus state. Whole-element
+   animation only (opacity/filter/transform), no per-character
+   JS — safe and smooth on Faraz's phone. */
+.crazy-title {
+  filter: blur(10px);
+  opacity: 0;
+  transform: scale(1.04);
 }
-@keyframes crazyPop {
-  0% { opacity: 0; transform: scale(0.2) rotate(-14deg); }
-  45% { opacity: 1; transform: scale(1.18) rotate(6deg); }
-  65% { transform: scale(0.93) rotate(-3deg); }
-  82% { transform: scale(1.05) rotate(2deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+.crazy-title.is-visible {
+  animation: cinematicFocus 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes cinematicFocus {
+  0% { opacity: 0; filter: blur(10px); transform: scale(1.04); }
+  60% { opacity: 1; }
+  100% { opacity: 1; filter: blur(0); transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .crazy-title.is-visible { animation: none; opacity: 1; transform: none; }
+  .crazy-title { filter: none; opacity: 1; transform: none; }
+  .crazy-title.is-visible { animation: none; }
 }
 
 @media (max-width: 900px) {
