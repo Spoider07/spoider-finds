@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://spoider07.github.io/spoider-finds/sitemap.xml
