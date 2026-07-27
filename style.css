@@ -661,17 +661,18 @@ img { max-width: 100%; display: block; }
   filter: blur(10px);
   opacity: 0;
   transform: scale(1.04);
+  color: var(--gold);
 }
 .crazy-title.is-visible {
-  animation: cinematicFocus 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: cinematicFocus 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 @keyframes cinematicFocus {
-  0% { opacity: 0; filter: blur(10px); transform: scale(1.04); }
-  60% { opacity: 1; }
-  100% { opacity: 1; filter: blur(0); transform: scale(1); }
+  0% { opacity: 0; filter: blur(10px); transform: scale(1.04); color: var(--gold); }
+  55% { opacity: 1; color: var(--gold-bright); }
+  100% { opacity: 1; filter: blur(0); transform: scale(1); color: var(--text-primary); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .crazy-title { filter: none; opacity: 1; transform: none; }
+  .crazy-title { filter: none; opacity: 1; transform: none; color: var(--text-primary); }
   .crazy-title.is-visible { animation: none; }
 }
 
