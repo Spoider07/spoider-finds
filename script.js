@@ -235,7 +235,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- Scroll-reveal for sections and cards ----
-  const revealEls = document.querySelectorAll(".reveal");
+  // NOTE: .crazy-title is deliberately excluded here and given its own
+  // dedicated observer below with a stricter trigger point, so it only
+  // plays once the user actually scrolls to it (not near page load).
+  const revealEls = document.querySelectorAll(".reveal:not(.crazy-title)");
 
   if (revealEls.length && !prefersReducedMotion && "IntersectionObserver" in window) {
     const revealObserver = new IntersectionObserver(
@@ -253,6 +256,29 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     // No IntersectionObserver support (or reduced motion) — just show everything
     revealEls.forEach((el) => el.classList.add("is-visible"));
+  }
+
+  // ---- "Four threads. One taste." cinematic focus-in ----
+  // Dedicated, stricter observer: only fires once the heading is
+  // actually well into the viewport as the user scrolls to it.
+  const crazyTitleEl = document.querySelector(".crazy-title");
+  if (crazyTitleEl) {
+    if (!prefersReducedMotion && "IntersectionObserver" in window) {
+      const crazyObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              crazyObserver.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.4, rootMargin: "0px 0px -15% 0px" }
+      );
+      crazyObserver.observe(crazyTitleEl);
+    } else {
+      crazyTitleEl.classList.add("is-visible");
+    }
   }
 
   // ---- Scroll-driven "thread" signature element ----
