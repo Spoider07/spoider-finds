@@ -85,9 +85,19 @@
       vertical-align: middle;
       transform: translateY(-1px);
     }
-    .stat-link {
+    .india-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 1.4rem auto 0;
+      padding: 0.5rem 1.1rem;
+      border: 1px solid rgba(201,168,118,0.35);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--gold-bright, #e8c766);
       text-decoration: none;
-      color: inherit;
+      width: fit-content;
     }
   </style>
 </head>
@@ -159,12 +169,8 @@
         <div class="stat"><span class="stat-num" data-count-to="4" data-suffix="">4</span><span class="stat-label">Categories</span></div>
         <div class="stat-divider"></div>
         <div class="stat"><span class="stat-num" data-count-to="100" data-suffix="%">100%</span><span class="stat-label">Hand-Picked</span></div>
-        <div class="stat-divider"></div>
-        <a href="india.html" class="stat stat-link">
-          <span class="stat-num">🇮🇳</span>
-          <span class="stat-label">For India</span>
-        </a>
       </div>
+      <a href="india.html" class="india-pill hero-enter">🇮🇳 For India →</a>
     </section>
 
     <!-- ================= CATEGORIES ================= -->
