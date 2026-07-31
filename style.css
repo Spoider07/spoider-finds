@@ -308,12 +308,20 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   font-size: 1.15rem;
   letter-spacing: -0.01em;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transform-origin: left center;
   transition: transform 0.35s var(--ease);
 }
 .nav.scrolled .logo { transform: scale(0.88); }
 .logo-accent { color: var(--gold); }
+.logo-mark {
+  display: block;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
 
 .nav-links {
   display: flex;
@@ -1037,6 +1045,20 @@ img { max-width: 100%; display: block; }
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--text-muted);
+}
+
+.india-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.3s var(--ease), border-color 0.3s var(--ease), background 0.3s var(--ease);
+}
+.india-pill:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-dim);
+  background: var(--surface-hover);
+  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--gold-dim);
 }
 
 @media (max-width: 600px) {
