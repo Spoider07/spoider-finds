@@ -110,6 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---- Page-load intro overlay (once per session) ----
+  // Sequence: thread unfolds (0-0.32s) -> dot pulses in (0.3-0.52s)
+  // -> spider mark weaves from the dot (0.42-0.84s) -> brief hold
+  // -> whole overlay fades out, revealing the hero (~1.4s total).
   const pageLoader = document.getElementById("pageLoader");
   if (pageLoader) {
     let alreadyShown = false;
@@ -127,12 +130,12 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {
         /* ignore */
       }
-      const hideDelay = 650;
+      const hideDelay = 950; // let the weave animation fully finish first
       setTimeout(() => {
         pageLoader.classList.add("loader-hidden");
         setTimeout(() => {
           if (pageLoader.parentNode) pageLoader.remove();
-        }, 700);
+        }, 450); // matches .page-loader CSS fade transition
       }, hideDelay);
     }
   }
