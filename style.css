@@ -187,7 +187,8 @@ img { max-width: 100%; display: block; }
 /* =========================================================
    Page-load intro overlay
    A brief brand-mark reveal that plays once per session on
-   first entry to the site, then fades away permanently.
+   first entry to the site: a thread unfolds, then weaves
+   into the spider mark, then fades to reveal the hero.
    ========================================================= */
 .page-loader {
   position: fixed;
@@ -197,17 +198,49 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.6s var(--ease);
+  transition: opacity 0.45s var(--ease);
 }
 .page-loader.loader-hidden {
   opacity: 0;
   pointer-events: none;
 }
+.loader-thread {
+  stroke-dasharray: 144;
+  stroke-dashoffset: 144;
+  opacity: 0.9;
+  animation: threadUnfold 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+             threadFadeOut 0.18s ease-in forwards;
+  animation-delay: 0s, 0.3s;
+}
+@keyframes threadUnfold {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes threadFadeOut {
+  to { opacity: 0; }
+}
+.loader-dot {
+  opacity: 0;
+  transform-origin: 32px 32px;
+  transform: scale(0.4);
+  animation: loaderDotPulse 0.22s ease-out forwards;
+  animation-delay: 0.3s;
+}
+@keyframes loaderDotPulse {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.35); }
+  100% { opacity: 1; transform: scale(1); }
+}
 .loader-mark-line {
   stroke-dasharray: 220;
   stroke-dashoffset: 220;
-  animation: markDraw 0.8s var(--ease) forwards;
-  animation-delay: 0.1s;
+  opacity: 0;
+  animation: loaderMarkWeave 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: 0.42s;
+}
+@keyframes loaderMarkWeave {
+  0% { stroke-dashoffset: 220; opacity: 0; }
+  12% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .page-loader { display: none; }
