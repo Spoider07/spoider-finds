@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Spoider Finds</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0b;
+      color: #f0ece3;
+      padding: 1.2rem;
+    }
+    h1 { font-size: 1.4rem; color: #e8c766; margin-bottom: 1rem; }
+    h2 { font-size: 1.1rem; color: #e8c766; margin: 2rem 0 0.8rem; }
+    .card {
+      background: #16161a;
+      border: 1px solid rgba(201,168,118,0.25);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    label { display: block; font-size: 0.85rem; margin: 0.7rem 0 0.3rem; color: #cbc4b6; }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(201,168,118,0.3);
+      background: #0a0a0b;
+      color: #f0ece3;
+      font-size: 0.95rem;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    button {
+      background: #c9a876;
+      color: #0a0a0b;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-top: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    button.secondary { background: transparent; border: 1px solid #c9a876; color: #c9a876; }
+    button.danger { background: #7a2f2f; color: #fff; }
+    .product-row {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(201,168,118,0.15);
+    }
+    .product-row img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
+    .product-info { flex: 1; min-width: 0; }
+    .product-info strong { display: block; font-size: 0.9rem; }
+    .product-info span { font-size: 0.75rem; color: #999; }
+    .row-actions { display: flex; gap: 0.4rem; }
+    .row-actions button { width: auto; margin: 0; padding: 0.4rem 0.7rem; font-size: 0.8rem; }
+    #status { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
+    .hidden { display: none !important; }
+    .badge-inactive { color: #ff8080; font-size: 0.7rem; }
+  </style>
+</head>
+<body>
+
+  <div id="loginView">
+    <h1>Spoider Finds — Admin Login</h1>
+    <div class="card">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+      <button onclick="login()">Log in</button>
+      <p id="loginStatus" style="color:#ff8080; font-size:0.85rem;"></p>
+    </div>
+  </div>
+
+  <div id="adminView" class="hidden">
+    <h1>Spoider Finds — Product Manager</h1>
+    <button class="secondary" onclick="logout()" style="margin-bottom:1rem;">Log out</button>
+
+    <h2 id="formTitle">Add Product</h2>
+    <div class="card">
+      <input type="hidden" id="editId">
+      <label>Title</label>
+      <input type="text" id="pTitle" placeholder="Product name">
+      <label>Description</label>
+      <textarea id="pDescription" placeholder="Short description"></textarea>
+      <label>Affiliate Link</label>
+      <input type="text" id="pLink" placeholder="https://www.amazon.in/...">
+      <label>Category</label>
+      <select id="pCategory">
+        <option value="desk-setup">Desk Setup</option>
+        <option value="fashion-finds">Fashion Finds</option>
+        <option value="accessories">Accessories</option>
+        <option value="amazon-finds">Amazon Finds</option>
+      </select>
+      <label>Region</label>
+      <select id="pRegion">
+        <option value="india">India</option>
+        <option value="us">US</option>
+      </select>
+      <label>Product Image</label>
+      <input type="file" id="pImageFile" accept="image/*">
+      <input type="hidden" id="pImageUrl">
+      <img id="imagePreview" class="hidden" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-top:0.5rem;">
+      <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.8rem;">
+        <input type="checkbox" id="pActive" checked style="width:auto;"> Active (visible on site)
+      </label>
+      <button onclick="saveProduct()">Save Product</button>
+      <button class="secondary" id="cancelEditBtn" onclick="resetForm()" style="display:none;">Cancel Edit</button>
+      <p id="status"></p>
+    </div>
+
+    <h2>All Products</h2>
+    <div class="card">
+      <div id="productList">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+
+    async function checkSession() {
+      const { data } = await sb.auth.getSession();
+      if (data.session) {
+        currentUser = data.session.user;
+        showAdmin();
+      } else {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('adminView').classList.add('hidden');
+    }
+
+    function showAdmin() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('adminView').classList.remove('hidden');
+      loadProducts();
+    }
+
+    async function login() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const statusEl = document.getElementById('loginStatus');
+      statusEl.textContent = 'Logging in...';
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) {
+        statusEl.textContent = error.message;
+        return;
+      }
+      currentUser = data.user;
+      showAdmin();
+    }
+
+    async function logout() {
+      await sb.auth.signOut();
+      showLogin();
+    }
+
+    function resetForm() {
+      document.getElementById('editId').value = '';
+      document.getElementById('pTitle').value = '';
+      document.getElementById('pDescription').value = '';
+      document.getElementById('pLink').value = '';
+      document.getElementById('pCategory').value = 'desk-setup';
+      document.getElementById('pRegion').value = 'india';
+      document.getElementById('pImageFile').value = '';
+      document.getElementById('pImageUrl').value = '';
+      document.getElementById('pActive').checked = true;
+      document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('formTitle').textContent = 'Add Product';
+      document.getElementById('cancelEditBtn').style.display = 'none';
+      document.getElementById('status').textContent = '';
+    }
+
+    async function saveProduct() {
+      const statusEl = document.getElementById('status');
+      const editId = document.getElementById('editId').value;
+      const title = document.getElementById('pTitle').value.trim();
+      const description = document.getElementById('pDescription').value.trim();
+      const affiliate_link = document.getElementById('pLink').value.trim();
+      const category = document.getElementById('pCategory').value;
+      const region = document.getElementById('pRegion').value;
+      const active = document.getElementById('pActive').checked;
+      const fileInput = document.getElementById('pImageFile');
+      let image_url = document.getElementById('pImageUrl').value;
+
+      if (!title || !affiliate_link) {
+        statusEl.textContent = 'Title and affiliate link are required.';
+        return;
+      }
+
+      statusEl.textContent = 'Saving...';
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const fileName = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.]/g, '');
+        const { data: uploadData, error: uploadError } = await sb.storage
+          .from('product-images')
+          .upload(fileName, file);
+        if (uploadError) {
+          statusEl.textContent = 'Image upload failed: ' + uploadError.message;
+          return;
+        }
+        const { data: urlData } = sb.storage.from('product-images').getPublicUrl(fileName);
+        image_url = urlData.publicUrl;
+      }
+
+      const payload = { title, description, affiliate_link, category, region, active, image_url };
+
+      let result;
+      if (editId) {
+        result = await sb.from('products').update(payload).eq('id', editId);
+      } else {
+        result = await sb.from('products').insert(payload);
+      }
+
+      if (result.error) {
+        statusEl.textContent = 'Error: ' + result.error.message;
+        return;
+      }
+
+      statusEl.textContent = 'Saved successfully!';
+      resetForm();
+      loadProducts();
+    }
+
+    async function loadProducts() {
+      const listEl = document.getElementById('productList');
+      listEl.textContent = 'Loading...';
+      const { data, error } = await sb.from('products').select('*').order('created_at', { ascending: false });
+      if (error) {
+        listEl.textContent = 'Error loading products: ' + error.message;
+        return;
+      }
+      if (!data.length) {
+        listEl.textContent = 'No products yet.';
+        return;
+      }
+      listEl.innerHTML = '';
+      data.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'product-row';
+        row.innerHTML = `
+          <img src="${p.image_url || ''}" onerror="this.style.display='none'">
+          <div class="product-info">
+            <strong>${p.title} ${!p.active ? '<span class=\"badge-inactive\">(hidden)</span>' : ''}</strong>
+            <span>${p.category} · ${p.region}</span>
+          </div>
+          <div class="row-actions">
+            <button class="secondary" onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Edit</button>
+            <button class="danger" onclick="deleteProduct(${p.id})">Del</button>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function editProduct(p) {
+      document.getElementById('editId').value = p.id;
+      document.getElementById('pTitle').value = p.title || '';
+      document.getElementById('pDescription').value = p.description || '';
+      document.getElementById('pLink').value = p.affiliate_link || '';
+      document.getElementById('pCategory').value = p.category || 'desk-setup';
+      document.getElementById('pRegion').value = p.region || 'india';
+      document.getElementById('pImageUrl').value = p.image_url || '';
+      document.getElementById('pActive').checked = p.active;
+      const preview = document.getElementById('imagePreview');
+      if (p.image_url) {
+        preview.src = p.image_url;
+        preview.classList.remove('hidden');
+      } else {
+        preview.classList.add('hidden');
+      }
+      document.getElementById('formTitle').textContent = 'Edit Product';
+      document.getElementById('cancelEditBtn').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('Delete this product?')) return;
+      const { error } = await sb.from('products').delete().eq('id', id);
+      if (error) {
+        alert('Error: ' + error.message);
+        return;
+      }
+      loadProducts();
+    }
+
+    checkSession();
+  </script>
+</body>
+</html>
