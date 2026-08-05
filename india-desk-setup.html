@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .nav-badge-new {
       display: inline-block;
@@ -72,6 +73,13 @@
       margin: 0 0 1.3rem;
       line-height: 1.5;
     }
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
+    }
   </style>
 </head>
 <body>
@@ -107,54 +115,8 @@
     </section>
 
     <section class="featured" id="products">
-      <div class="product-grid">
-        <a href="https://www.amazon.in/RUCON%C2%AE-Colors-Changing-Sensor-Wooden/dp/B08Z332VVM?linkCode=ll2&tag=spoiderfinds2-21&linkId=bccd9a9cc617be3bfa15c4416156ca84&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2029%20July%202026%20at%2014.21.11.png" alt="RUCON 3D moon lamp with color-changing LED and wooden stand" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>RUCON Moon Lamp</h3>
-            <p>A 3D moon-surface lamp with touch-sensor color changing and a wooden stand — ₹499.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-
-        <a href="https://www.amazon.in/STRIFF-Extended-Stitched-Non-Slip-Computer/dp/B0CXDN7V9N?crid=19Y5KWFHQFJVU&dib=eyJ2IjoiMSJ9.8gYUBl_QcWky3LjVxI7H6BCEyrqFneMZg7XQXMr6Ef-0fFwSPOhDQANCWnKprlKRAiL9Dm9uu1ukh6MLG2dlzOYdQ7yXsvgg-r_9VxwVG4ILd82WqS6KqYRWNaq-EkWTWSSqrQ4OZyeZCVUwIDo9aNJkb_L5oJQI7umDBXcEn1qPoZZUG9iyKJSbMO1CPQ-DRd8f_lf1ii9kQyX941SiINWujXckKITz2HIoVc7FY4ZnpJCv2gILi2yHL3mC0cS6dAZ_RKmj4JNHJk0lxLETzRgW-MkLM6u0YGKZNY63aQ8.teKkEcNmZdq7i-aVTQY1pFzYf2qOHMQNHmxcTxPHWQM&dib_tag=se&keywords=Desk+setup&qid=1785563685&sprefix=desk+setup+%2Caps%2C416&sr=8-18&linkCode=ll2&tag=spoiderfinds2-21&linkId=9b3702250955cbdf17f52d62eff698a2&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.06s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2001%20August%202026%20at%2011.28.39.png" alt="STRIFF extended XXL gaming mouse pad with world map print and stitched edges" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>STRIFF Extended Mouse Pad — World Map XXL</h3>
-            <p>A full-desk XXL mouse pad with a stitched world map print and non-slip rubber base — room for your whole setup.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-
-        <a href="https://www.amazon.in/Lukzer-Engineered-Computer-Shelves-Workstation/dp/B0BPY92JFN?linkCode=ll2&tag=spoiderfinds2-21&linkId=8e5231674a72d5aa7e8f9c76095fd4d4&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.09s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2018.49.09.png" alt="Lukzer engineered wood modern desk with one-tier shelf" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>Lukzer Modern Desk — With Shelf</h3>
-            <p>An engineered-wood computer desk with a one-tier open shelf below — clean lines for office or home.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-
-        <a href="https://www.amazon.in/Xech-Bluetooth-Speaker-Clock-Ellipse/dp/B0CBRZ44TV?linkCode=ll2&tag=spoiderfinds2-21&linkId=53776ee149da0e2679f7a0c959724a76&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.12s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.45.16%20%281%29.png" alt="XECH bluetooth speaker desk clock with pen holder" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>XECH Bluetooth Speaker Desk Clock</h3>
-            <p>A smart table clock and Bluetooth speaker in one — doubles as a bedside clock with a built-in pen holder.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
+      <div class="product-grid" id="productGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
 
       <div class="thread-cta reveal">
@@ -193,5 +155,49 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadProducts() {
+      const grid = document.getElementById('productGrid');
+      const { data, error } = await sb
+        .from('products')
+        .select('*')
+        .eq('category', 'desk-setup')
+        .eq('region', 'india')
+        .eq('active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+        return;
+      }
+
+      grid.innerHTML = data.map((p, i) => `
+        <a href="${p.affiliate_link}" class="product-card reveal" style="--reveal-delay:${(i * 0.05).toFixed(2)}s;" target="_blank" rel="sponsored noopener nofollow">
+          <div class="product-image">
+            <img src="${p.image_url || ''}" alt="${p.title}" loading="lazy">
+          </div>
+          <div class="product-body">
+            <span class="product-tag">Desk Setup</span>
+            <h3>${p.title}</h3>
+            <p>${p.description || ''}</p>
+            <span class="product-link">View on Amazon →</span>
+          </div>
+        </a>
+      `).join('');
+
+      if (window.initReveal) window.initReveal();
+    }
+
+    loadProducts();
+  </script>
 </body>
 </html>
