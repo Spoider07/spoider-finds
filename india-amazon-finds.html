@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .nav-badge-new {
       display: inline-block;
@@ -71,6 +72,17 @@
       margin: 0 0 1.3rem;
       line-height: 1.5;
     }
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
+    }
+    #productGrid .product-card {
+      opacity: 1 !important;
+      transform: none !important;
+    }
   </style>
 </head>
 <body>
@@ -106,18 +118,8 @@
     </section>
 
     <section class="featured" id="products">
-      <div class="product-grid">
-        <a href="https://www.amazon.in/FireBees-Mounted-Bookshelf-Floating-Decorative/dp/B0FBW7J2JF?crid=2XYKV08CUTK61&dib=eyJ2IjoiMSJ9.CJEZc7srZbiIueo6t49hlkE-xxFYiuFvfc0L_osQZMFGo-y0kas1_GWxY8s7d0BuKjMrWKSw6XQzeNEwFV6JXhSIjYV3VDecQEvC_WtyBUCV3F7ZUMkI0N2NSDrQLNPVWEBwVLqIjoFRBxXsFvNai2rCCqmO1EWY1W72NvLq8FgQelL_8Vomq6_Le3RLtdzJVH5QCLsPrVhxx67fQn0gWT48d6h4JEG1XQXp8C3SUfMRpsFqs3a5yUNwAONYGNcm9SYd5NZQ6SPLKg6qmJ5liwozLmwe41KSmhCsgVyEoCk.E0hOVVTzAlmVOGxYuCGAMDUZj6d_C0D20plb0biSDUY&dib_tag=se&keywords=floating%2Bshelf&qid=1785851732&sprefix=Floating%2B%2Caps%2C504&sr=8-7&th=1&linkCode=ll2&tag=spoiderfinds2-21&linkId=572c9298cfd01ccb4d03d54c40f15b23&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.28.18.png" alt="Set of three dark wood floating wall shelves with black brackets" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Amazon Finds</span>
-            <h3>FireBees Floating Wall Shelves — Set of 3</h3>
-            <p>Dark wood floating shelves with black metal brackets — great for plants, books, and decor styling.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
+      <div class="product-grid" id="productGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
 
       <div class="thread-cta reveal">
@@ -156,5 +158,47 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadProducts() {
+      const grid = document.getElementById('productGrid');
+      const { data, error } = await sb
+        .from('products')
+        .select('*')
+        .eq('category', 'amazon-finds')
+        .eq('region', 'india')
+        .eq('active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+        return;
+      }
+
+      grid.innerHTML = data.map(p => `
+        <a href="${p.affiliate_link}" class="product-card" target="_blank" rel="sponsored noopener nofollow">
+          <div class="product-image">
+            <img src="${p.image_url || ''}" alt="${p.title}" loading="lazy">
+          </div>
+          <div class="product-body">
+            <span class="product-tag">Amazon Finds</span>
+            <h3>${p.title}</h3>
+            <p>${p.description || ''}</p>
+            <span class="product-link">View on Amazon →</span>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    loadProducts();
+  </script>
 </body>
 </html>
