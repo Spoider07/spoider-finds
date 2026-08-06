@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .nav-badge-new {
       display: inline-block;
@@ -71,6 +72,17 @@
       margin: 0 0 1.3rem;
       line-height: 1.5;
     }
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
+    }
+    #productGrid .product-card {
+      opacity: 1 !important;
+      transform: none !important;
+    }
   </style>
 </head>
 <body>
@@ -106,18 +118,8 @@
     </section>
 
     <section class="featured" id="products">
-      <div class="product-grid">
-        <a href="https://www.amazon.in/boffi-Oversized-T-Shirt-Shoulder-Regular/dp/B0GSGZSQ51?crid=1RJVVWPY4TKH1&dib=eyJ2IjoiMSJ9.xQ983VYipIONnkWe2Yp-v9xO6GAUq058ssOBAWozw9DdafzVGgAFl-sXxZ02tgU413RlNoNM7IxcNJxXRbjZO9EnId4GEOAOmRDPxsntx2sbXRQNgPn6TKmUTwXyLNAUPQcy9l5u3UWkIH0UPB-d4ReVFYov3Z_QFF112PH_xjvDikGOQb7_jm0jH5kvP6l3EgUf5m67QN_MJ3P4XtMMMUqUgcENbiELZ3_Q7Uooy2-6hd-OcCgN3TzRAK2zu64dEiBVs9JunK9TgR9dMqrEUJLFR_bulQVQPdabWGe2zyo.ddoxTLzgTWCrW1UR9AJEQ61081ug7gkE03bHzVqaNaA&dib_tag=se&keywords=Street%2Bwear&qid=1785565689&sprefix=street%2Bwear%2Caps%2C453&sr=8-25&th=1&psc=1&linkCode=ll2&tag=spoiderfinds2-21&linkId=4a05f85cb55e12ca8fb2c9c775b4daab&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2001%20August%202026%20at%2012.00.42.png" alt="Boffi oversized acid-wash streetwear t-shirt with drop shoulders" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Fashion Finds</span>
-            <h3>Boffi Oversized Streetwear Tee — Acid Wash</h3>
-            <p>An acid-washed oversized tee with drop shoulders and a bold front print — unisex fit, 100% cotton.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
+      <div class="product-grid" id="productGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
 
       <div class="thread-cta reveal">
@@ -156,5 +158,47 @@
   </footer>
 
   <script src="script.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadProducts() {
+      const grid = document.getElementById('productGrid');
+      const { data, error } = await sb
+        .from('products')
+        .select('*')
+        .eq('category', 'fashion-finds')
+        .eq('region', 'india')
+        .eq('active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+        return;
+      }
+
+      grid.innerHTML = data.map(p => `
+        <a href="${p.affiliate_link}" class="product-card" target="_blank" rel="sponsored noopener nofollow">
+          <div class="product-image">
+            <img src="${p.image_url || ''}" alt="${p.title}" loading="lazy">
+          </div>
+          <div class="product-body">
+            <span class="product-tag">Fashion Finds</span>
+            <h3>${p.title}</h3>
+            <p>${p.description || ''}</p>
+            <span class="product-link">View on Amazon →</span>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    loadProducts();
+  </script>
 </body>
 </html>
