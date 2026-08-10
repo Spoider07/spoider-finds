@@ -433,6 +433,8 @@
     var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
     var nodes = [];
     var spokes = [];
+    var edges = [];
+    var shimmers = [];
     var centerNode = { x: 0, y: 0 };
     var pointer = { x: -9999, y: -9999, active: false };
     var running = false;
@@ -444,6 +446,7 @@
     var SPOKE_COUNT = isSmall ? 10 : 15;
     var RING_COUNT = isSmall ? 5 : 7;
     var TOUCH_RADIUS = isSmall ? 110 : 150;
+    var MAX_SHIMMERS = isSmall ? 1 : 2;
     var pulseT = 0;
 
     var prevW = 0;
@@ -477,11 +480,13 @@
     function seedNodes() {
       nodes = [];
       spokes = [];
+      edges = [];
+      shimmers = [];
       var cx = w / 2;
       var cy = h * 0.42;
       var maxRadius = Math.min(w, h) * 0.44;
 
-      centerNode = { x: cx, y: cy, ox: cx, oy: cy };
+      centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
 
       for (var s = 0; s < SPOKE_COUNT; s++) {
         var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
@@ -491,12 +496,50 @@
           radius += (Math.random() - 0.5) * radius * 0.02;
           var x = cx + Math.cos(angle) * radius;
           var y = cy + Math.sin(angle) * radius;
-          var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0 };
+          var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * Math.PI * 2 };
           nodes.push(node);
           ring.push(node);
         }
         spokes.push(ring);
       }
+
+      // build edge list once (used for both drawing and shimmer travel)
+      for (var s2 = 0; s2 < spokes.length; s2++) {
+        var ring2 = spokes[s2];
+        edges.push({ a: centerNode, b: ring2[0], sag: 0.05, seed: Math.random() * 10 });
+        for (var r2 = 0; r2 < ring2.length - 1; r2++) {
+          edges.push({ a: ring2[r2], b: ring2[r2 + 1], sag: 0.05, seed: Math.random() * 10 });
+        }
+      }
+      for (var r3 = 0; r3 < RING_COUNT; r3++) {
+        for (var s3 = 0; s3 < spokes.length; s3++) {
+          var a3 = spokes[s3][r3];
+          var b3 = spokes[(s3 + 1) % spokes.length][r3];
+          if (a3 && b3) edges.push({ a: a3, b: b3, sag: 0.09, seed: Math.random() * 10, isRing: true });
+        }
+      }
+    }
+
+    function spawnShimmer() {
+      if (!edges.length || shimmers.length >= MAX_SHIMMERS) return;
+      var edge = edges[Math.floor(Math.random() * edges.length)];
+      shimmers.push({ edge: edge, t: 0, speed: 0.008 + Math.random() * 0.006, reverse: Math.random() < 0.5 });
+    }
+
+    function curvePoint(a, b, sag, seed, t) {
+      var mx = (a.x + b.x) / 2;
+      var my = (a.y + b.y) / 2;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / dist, ny = dx / dist;
+      var wobble = Math.sin(pulseT * 0.5 + seed) * 0.5 + 0.5;
+      var offset = dist * sag * wobble;
+      var cxp = mx + nx * offset;
+      var cyp = my + ny * offset;
+      var it = 1 - t;
+      var x = it * it * a.x + 2 * it * t * cxp + t * t * b.x;
+      var y = it * it * a.y + 2 * it * t * cyp + t * t * b.y;
+      return { x: x, y: y, ctrlX: cxp, ctrlY: cyp };
     }
 
     function step(node) {
@@ -504,6 +547,10 @@
       var dyHome = node.oy - node.y;
       node.vx += dxHome * 0.004;
       node.vy += dyHome * 0.004;
+
+      // ambient breathing sway — subtle even without touch
+      node.vx += Math.sin(pulseT * 0.4 + node.seed) * 0.025;
+      node.vy += Math.cos(pulseT * 0.4 + node.seed * 1.3) * 0.025;
 
       if (pointer.active) {
         var dx = node.x - pointer.x;
@@ -522,11 +569,20 @@
       node.y += node.vy;
     }
 
-    function drawLine(a, b, alpha) {
+    function drawEdge(edge, alpha) {
+      var a = edge.a, b = edge.b;
+      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / dist, ny = dx / dist;
+      var wobble = Math.sin(pulseT * 0.5 + edge.seed) * 0.5 + 0.5;
+      var offset = dist * edge.sag * wobble;
+      var cxp = mx + nx * offset, cyp = my + ny * offset;
+
       ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
+      ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
       ctx.stroke();
     }
 
@@ -541,22 +597,10 @@
         step(nodes[i]);
       }
 
-      // radial spoke threads (center -> outward)
-      for (var s = 0; s < spokes.length; s++) {
-        var ring = spokes[s];
-        drawLine(centerNode, ring[0], baseAlpha);
-        for (var r = 0; r < ring.length - 1; r++) {
-          drawLine(ring[r], ring[r + 1], baseAlpha);
-        }
-      }
-
-      // concentric ring threads (spoke -> next spoke, same radius level)
-      for (var r = 0; r < RING_COUNT; r++) {
-        for (var s = 0; s < spokes.length; s++) {
-          var a = spokes[s][r];
-          var b = spokes[(s + 1) % spokes.length][r];
-          if (a && b) drawLine(a, b, baseAlpha * 0.75);
-        }
+      // all threads — gently sagging curves, not straight lines
+      for (var e = 0; e < edges.length; e++) {
+        var edge = edges[e];
+        drawEdge(edge, edge.isRing ? baseAlpha * 0.75 : baseAlpha);
       }
 
       // nodes — tiny junction points, no glow halo (avoids "star" look)
@@ -565,6 +609,25 @@
         ctx.beginPath();
         ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
+        ctx.fill();
+      }
+
+      // traveling shimmer glints along the silk
+      if (Math.random() < 0.02) spawnShimmer();
+      for (var si = shimmers.length - 1; si >= 0; si--) {
+        var sh = shimmers[si];
+        sh.t += sh.speed;
+        if (sh.t >= 1) { shimmers.splice(si, 1); continue; }
+        var tt = sh.reverse ? 1 - sh.t : sh.t;
+        var pos = curvePoint(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, tt);
+        var fade = Math.sin(sh.t * Math.PI);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,240,200,' + (0.15 * fade).toFixed(3) + ')';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,247,225,' + (0.9 * fade).toFixed(3) + ')';
         ctx.fill();
       }
     }
