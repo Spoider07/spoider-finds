@@ -483,9 +483,9 @@
       edges = [];
       shimmers = [];
       var cx = w / 2;
-      var cy = h * 0.45;
-      var radiusX = w * 0.58;
-      var radiusY = h * 0.36;
+      var cy = h * 0.42;
+      var radiusX = Math.min(w, h) * 0.44;
+      var radiusY = radiusX;
 
       centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
 
