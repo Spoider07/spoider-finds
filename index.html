@@ -489,8 +489,10 @@
 
       centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
 
+      var spokeAngles = [];
       for (var s = 0; s < SPOKE_COUNT; s++) {
         var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
+        spokeAngles.push(angle);
         var ring = [];
         for (var r = 1; r <= RING_COUNT; r++) {
           var frac = r / RING_COUNT;
@@ -521,6 +523,25 @@
           if (a3 && b3) edges.push({ a: a3, b: b3, sag: 0.09, seed: Math.random() * 10, isRing: true });
         }
       }
+
+      // anchor threads — outer ring stretches out to the frame (top/sides/corners),
+      // like a real web attached to a wall — fills the empty space around the mark & edges
+      var anchorEvery = isSmall ? 2 : 2;
+      for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
+        var outerNode = spokes[sa][spokes[sa].length - 1];
+        var aAngle = spokeAngles[sa];
+        var anchorPt = rayToRectEdge(cx, cy, aAngle, w, h, 4);
+        var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
+        edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
+      }
+    }
+
+    function rayToRectEdge(cx, cy, angle, w, h, pad) {
+      var dx = Math.cos(angle), dy = Math.sin(angle);
+      var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
+      var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
+      var t = Math.min(tX, tY);
+      return { x: cx + dx * t, y: cy + dy * t };
     }
 
     function spawnShimmer() {
@@ -603,7 +624,8 @@
       // all threads — gently sagging curves, not straight lines
       for (var e = 0; e < edges.length; e++) {
         var edge = edges[e];
-        drawEdge(edge, edge.isRing ? baseAlpha * 0.75 : baseAlpha);
+        var edgeAlpha = edge.isAnchor ? baseAlpha * 0.45 : (edge.isRing ? baseAlpha * 0.75 : baseAlpha);
+        drawEdge(edge, edgeAlpha);
       }
 
       // nodes — tiny junction points, no glow halo (avoids "star" look)
