@@ -432,6 +432,8 @@
     var hero = canvas.closest('.hero');
     var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
     var nodes = [];
+    var spokes = [];
+    var centerNode = { x: 0, y: 0 };
     var pointer = { x: -9999, y: -9999, active: false };
     var running = false;
     var rafId = null;
@@ -439,8 +441,8 @@
     var FRAME_INTERVAL = 1000 / 30;
 
     var isSmall = window.matchMedia('(max-width: 600px)').matches;
-    var NODE_COUNT = isSmall ? 34 : 60;
-    var LINK_DIST = isSmall ? 125 : 165;
+    var SPOKE_COUNT = isSmall ? 7 : 10;
+    var RING_COUNT = isSmall ? 4 : 5;
     var TOUCH_RADIUS = isSmall ? 110 : 150;
     var pulseT = 0;
 
@@ -474,14 +476,26 @@
 
     function seedNodes() {
       nodes = [];
-      for (var i = 0; i < NODE_COUNT; i++) {
-        var x = Math.random() * w;
-        var y = Math.random() * h;
-        nodes.push({
-          x: x, y: y,
-          ox: x, oy: y,
-          vx: 0, vy: 0
-        });
+      spokes = [];
+      var cx = w / 2;
+      var cy = h * 0.42;
+      var maxRadius = Math.min(w, h) * 0.44;
+
+      centerNode = { x: cx, y: cy, ox: cx, oy: cy };
+
+      for (var s = 0; s < SPOKE_COUNT; s++) {
+        var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.12;
+        var ring = [];
+        for (var r = 1; r <= RING_COUNT; r++) {
+          var radius = (maxRadius * r) / RING_COUNT;
+          radius += (Math.random() - 0.5) * radius * 0.06;
+          var x = cx + Math.cos(angle) * radius;
+          var y = cy + Math.sin(angle) * radius;
+          var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0 };
+          nodes.push(node);
+          ring.push(node);
+        }
+        spokes.push(ring);
       }
     }
 
@@ -508,40 +522,52 @@
       node.y += node.vy;
     }
 
+    function drawLine(a, b, alpha) {
+      ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
     function draw() {
       ctx.clearRect(0, 0, w, h);
       ctx.lineWidth = 1;
       pulseT += 0.02;
       var pulse = 0.75 + Math.sin(pulseT) * 0.25;
+      var baseAlpha = 0.32 * pulse;
 
       for (var i = 0; i < nodes.length; i++) {
         step(nodes[i]);
       }
 
-      for (var i = 0; i < nodes.length; i++) {
-        for (var j = i + 1; j < nodes.length; j++) {
-          var a = nodes[i], b = nodes[j];
-          var dx = a.x - b.x, dy = a.y - b.y;
-          var dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < LINK_DIST) {
-            var alpha = (1 - dist / LINK_DIST) * 0.4 * pulse;
-            ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
+      // radial spoke threads (center -> outward)
+      for (var s = 0; s < spokes.length; s++) {
+        var ring = spokes[s];
+        drawLine(centerNode, ring[0], baseAlpha);
+        for (var r = 0; r < ring.length - 1; r++) {
+          drawLine(ring[r], ring[r + 1], baseAlpha);
         }
       }
 
+      // concentric ring threads (spoke -> next spoke, same radius level)
+      for (var r = 0; r < RING_COUNT; r++) {
+        for (var s = 0; s < spokes.length; s++) {
+          var a = spokes[s][r];
+          var b = spokes[(s + 1) % spokes.length][r];
+          if (a && b) drawLine(a, b, baseAlpha * 0.75);
+        }
+      }
+
+      // nodes
       for (var i = 0; i < nodes.length; i++) {
         var n = nodes[i];
         ctx.beginPath();
-        ctx.arc(n.x, n.y, 6 * pulse, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, 5 * pulse, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(232,199,102,' + (0.10 * pulse).toFixed(3) + ')';
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.7, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, 1.6, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(232,199,102,' + (0.6 * pulse + 0.2).toFixed(3) + ')';
         ctx.fill();
       }
