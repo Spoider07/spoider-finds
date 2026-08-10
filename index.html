@@ -534,6 +534,19 @@
         var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
         edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
       }
+
+      // guarantee a thread reaches straight toward the top — fills the gap near the mark
+      var topIdx = 0, topDiff = Infinity;
+      for (var ti = 0; ti < spokeAngles.length; ti++) {
+        var norm = ((spokeAngles[ti] % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        var diff = Math.abs(norm - Math.PI * 1.5);
+        diff = Math.min(diff, Math.PI * 2 - diff);
+        if (diff < topDiff) { topDiff = diff; topIdx = ti; }
+      }
+      var topOuter = spokes[topIdx][spokes[topIdx].length - 1];
+      var topAnchorPt = rayToRectEdge(cx, cy, spokeAngles[topIdx], w, h, 4);
+      var topAnchorNode = { x: topAnchorPt.x, y: topAnchorPt.y, ox: topAnchorPt.x, oy: topAnchorPt.y, vx: 0, vy: 0 };
+      edges.push({ a: topOuter, b: topAnchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
     }
 
     function rayToRectEdge(cx, cy, angle, w, h, pad) {
