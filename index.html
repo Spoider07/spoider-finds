@@ -483,8 +483,9 @@
       edges = [];
       shimmers = [];
       var cx = w / 2;
-      var cy = h * 0.5;
-      var maxRadius = Math.min(w * 0.54, h * 0.48);
+      var cy = h * 0.46;
+      var radiusX = w * 0.62;
+      var radiusY = h * 0.6;
 
       centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
 
@@ -492,10 +493,12 @@
         var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
         var ring = [];
         for (var r = 1; r <= RING_COUNT; r++) {
-          var radius = (maxRadius * r) / RING_COUNT;
-          radius += (Math.random() - 0.5) * radius * 0.02;
-          var x = cx + Math.cos(angle) * radius;
-          var y = cy + Math.sin(angle) * radius;
+          var frac = r / RING_COUNT;
+          var jitter = 1 + (Math.random() - 0.5) * 0.02;
+          var rx = radiusX * frac * jitter;
+          var ry = radiusY * frac * jitter;
+          var x = cx + Math.cos(angle) * rx;
+          var y = cy + Math.sin(angle) * ry;
           var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * Math.PI * 2 };
           nodes.push(node);
           ring.push(node);
