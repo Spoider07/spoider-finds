@@ -524,20 +524,24 @@
         }
       }
 
-      // anchor threads — outer ring extends a bit further out (proportional to web size),
-      // like real web frame threads — fills the empty space without shooting off-screen
+      // anchor threads — outer ring stretches out to the frame (edges of the canvas),
+      // fills the empty space around the web like a real wall-attached web
       var anchorEvery = 3;
-      var anchorScale = 1.55;
       for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
         var outerNode = spokes[sa][spokes[sa].length - 1];
         var aAngle = spokeAngles[sa];
-        var ax = cx + Math.cos(aAngle) * radiusX * anchorScale;
-        var ay = cy + Math.sin(aAngle) * radiusY * anchorScale;
-        ax = Math.max(6, Math.min(w - 6, ax));
-        ay = Math.max(6, Math.min(h - 6, ay));
-        var anchorNode = { x: ax, y: ay, ox: ax, oy: ay, vx: 0, vy: 0 };
+        var anchorPt = rayToRectEdge(cx, cy, aAngle, w, h, 4);
+        var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
         edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
       }
+    }
+
+    function rayToRectEdge(cx, cy, angle, w, h, pad) {
+      var dx = Math.cos(angle), dy = Math.sin(angle);
+      var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
+      var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
+      var t = Math.min(tX, tY);
+      return { x: cx + dx * t, y: cy + dy * t };
     }
 
     function spawnShimmer() {
