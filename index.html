@@ -111,13 +111,13 @@
       border-color: var(--gold, #c9a876);
     }
     .logo-img {
-      height: 28px;
+      height: 34px;
       width: auto;
       vertical-align: middle;
       margin-right: 6px;
     }
     .footer-logo-img {
-      height: 22px;
+      height: 26px;
       width: auto;
       vertical-align: middle;
       margin-right: 6px;
@@ -522,7 +522,6 @@
         spokes.push(ring);
       }
 
-      // build edge list once (used for both drawing and shimmer travel)
       for (var s2 = 0; s2 < spokes.length; s2++) {
         var ring2 = spokes[s2];
         edges.push({ a: centerNode, b: ring2[0], sag: 0.05, seed: Math.random() * 10 });
@@ -538,8 +537,6 @@
         }
       }
 
-      // anchor threads — outer ring stretches out to the frame (edges of the canvas),
-      // fills the empty space around the web like a real wall-attached web
       var anchorEvery = 3;
       for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
         var outerNode = spokes[sa][spokes[sa].length - 1];
@@ -549,7 +546,6 @@
         edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
       }
 
-      // guarantee a thread reaches straight toward the top — fills the gap near the mark
       var topIdx = 0, topDiff = Infinity;
       for (var ti = 0; ti < spokeAngles.length; ti++) {
         var norm = ((spokeAngles[ti] % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
@@ -599,7 +595,6 @@
       node.vx += dxHome * 0.004;
       node.vy += dyHome * 0.004;
 
-      // ambient breathing sway — subtle even without touch
       node.vx += Math.sin(pulseT * 0.4 + node.seed) * 0.025;
       node.vy += Math.cos(pulseT * 0.4 + node.seed * 1.3) * 0.025;
 
@@ -648,14 +643,12 @@
         step(nodes[i]);
       }
 
-      // all threads — gently sagging curves, not straight lines
       for (var e = 0; e < edges.length; e++) {
         var edge = edges[e];
         var edgeAlpha = edge.isAnchor ? baseAlpha * 0.45 : (edge.isRing ? baseAlpha * 0.75 : baseAlpha);
         drawEdge(edge, edgeAlpha);
       }
 
-      // nodes — tiny junction points, no glow halo (avoids "star" look)
       for (var i = 0; i < nodes.length; i++) {
         var n = nodes[i];
         ctx.beginPath();
@@ -664,7 +657,6 @@
         ctx.fill();
       }
 
-      // traveling shimmer glints along the silk
       if (Math.random() < 0.02) spawnShimmer();
       for (var si = shimmers.length - 1; si >= 0; si--) {
         var sh = shimmers[si];
