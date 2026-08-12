@@ -132,12 +132,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
     }
     .hero-mark-halo {
       position: absolute;
       inset: -34%;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(232,199,102,0.28) 0%, rgba(201,168,118,0.09) 45%, transparent 75%);
+      background:
+        radial-gradient(circle at 38% 34%, rgba(255,238,190,0.32) 0%, transparent 42%),
+        radial-gradient(circle, rgba(232,199,102,0.26) 0%, rgba(180,140,70,0.1) 48%, transparent 76%);
       filter: blur(10px);
       z-index: 0;
       pointer-events: none;
@@ -161,6 +164,22 @@
       0%   { opacity: 0.85; transform: scale(0.55); }
       100% { opacity: 0; transform: scale(2); }
     }
+    .hero-mark-tap-ring {
+      position: absolute;
+      inset: -6%;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,241,204,0.75);
+      opacity: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .hero-mark-tap-ring.burst {
+      animation: markTapBurst 0.75s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes markTapBurst {
+      0%   { opacity: 0.9; transform: scale(0.5); }
+      100% { opacity: 0; transform: scale(2.3); }
+    }
     .hero-mark-img {
       position: relative;
       z-index: 1;
@@ -170,11 +189,19 @@
       object-fit: contain;
       transform-origin: center;
       animation: markGlowPulse 7s ease-in-out infinite;
-      filter: drop-shadow(0 0 5px rgba(232,199,102,0.28));
+      filter: drop-shadow(0 0 4px rgba(232,199,102,0.28)) drop-shadow(0 0 8px rgba(180,140,70,0.16));
     }
     @keyframes markGlowPulse {
-      0%, 100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)); opacity: 0.95; transform: scale(1); }
-      50%      { filter: drop-shadow(0 0 14px rgba(232,199,102,0.55)); opacity: 1; transform: scale(1.02); }
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); opacity: 0.95; transform: scale(1); }
+      50%      { filter: drop-shadow(0 0 13px rgba(232,199,102,0.55)) drop-shadow(0 0 5px rgba(255,238,190,0.35)); opacity: 1; transform: scale(1.02); }
+    }
+    .hero-mark-img.flash {
+      animation: markGlowPulse 7s ease-in-out infinite, markTapFlash 0.55s ease-out;
+    }
+    @keyframes markTapFlash {
+      0%   { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
+      30%  { filter: drop-shadow(0 0 22px rgba(255,238,190,0.9)) drop-shadow(0 0 10px rgba(232,199,102,0.6)); }
+      100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
     }
     .hero-mark-glint {
       position: absolute;
@@ -199,7 +226,7 @@
       100%     { opacity: 0; transform: translate(0, 0) scale(0.8); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint { animation: none; }
+      .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
     }
   </style>
 </head>
@@ -257,6 +284,7 @@
         <div class="hero-mark-inner">
           <span class="hero-mark-halo"></span>
           <span class="hero-mark-ping"></span>
+          <span class="hero-mark-tap-ring"></span>
           <img src="assets/images/spoider-logo-vector.svg" alt="" class="hero-mark-img">
           <span class="hero-mark-glint"></span>
         </div>
@@ -890,6 +918,52 @@
     window.addEventListener('scroll', requestTick, { passive: true });
     window.addEventListener('resize', requestTick);
     requestTick();
+  })();
+  </script>
+  <script>
+  (function () {
+    var mark = document.querySelector('.hero-mark-inner');
+    var hero = document.querySelector('.hero');
+    if (!mark || !hero) return;
+
+    /* Scroll fade — logo softly fades, shrinks and drifts up as you scroll past the hero */
+    var ticking = false;
+    function updateScrollFade() {
+      ticking = false;
+      var rect = hero.getBoundingClientRect();
+      var fadeRange = hero.offsetHeight * 0.5;
+      var scrolled = Math.min(Math.max(-rect.top, 0), fadeRange);
+      var progress = fadeRange > 0 ? scrolled / fadeRange : 0;
+      mark.style.opacity = (1 - progress).toFixed(3);
+      mark.style.transform = 'translateY(' + (-progress * 14).toFixed(1) + 'px) scale(' + (1 - progress * 0.1).toFixed(3) + ')';
+    }
+    function onScroll() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(updateScrollFade);
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateScrollFade();
+
+    /* Tap interaction — a soft gold ring burst + brief bright flash */
+    var ring = mark.querySelector('.hero-mark-tap-ring');
+    var img = mark.querySelector('.hero-mark-img');
+    var flashTimer = null;
+    function burst() {
+      if (!ring || !img) return;
+      ring.classList.remove('burst');
+      img.classList.remove('flash');
+      void ring.offsetWidth;
+      ring.classList.add('burst');
+      img.classList.add('flash');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(function () {
+        ring.classList.remove('burst');
+        img.classList.remove('flash');
+      }, 800);
+    }
+    mark.addEventListener('click', burst);
   })();
   </script>
 </body>
