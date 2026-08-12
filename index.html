@@ -137,17 +137,19 @@
       width: 52px;
       height: 52px;
       margin: 0 auto;
-      overflow: visible;
+      position: relative;
+      overflow: hidden;
+      border-radius: 50%;
     }
     .hero-mark-img {
       width: 42px;
       height: 42px;
       object-fit: contain;
       display: block;
+      position: relative;
+      z-index: 1;
       animation: markGlowPulse 4.2s ease-in-out infinite !important;
       filter: drop-shadow(0 0 4px rgba(232,199,102,0.25));
-      -webkit-mask-image: linear-gradient(#000, #000);
-      mask-image: linear-gradient(#000, #000);
     }
     @keyframes markGlowPulse {
       0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)); opacity: 0.9; }
@@ -156,29 +158,21 @@
     .hero-mark--logo::after {
       content: '';
       position: absolute;
-      top: 3px;
-      left: 5px;
-      width: 42px;
-      height: 42px;
-      background: linear-gradient(115deg, transparent 35%, rgba(255,247,225,0.75) 50%, transparent 65%);
-      background-size: 250% 250%;
-      background-position: -150% -150%;
+      top: -60%;
+      left: -160%;
+      width: 55%;
+      height: 220%;
+      background: linear-gradient(100deg, transparent 15%, rgba(255,247,225,0.5) 50%, transparent 85%);
+      transform: rotate(18deg);
       mix-blend-mode: screen;
-      -webkit-mask-image: url('assets/images/spoider-logo-vector.svg');
-      mask-image: url('assets/images/spoider-logo-vector.svg');
-      -webkit-mask-size: contain;
-      mask-size: contain;
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-      -webkit-mask-position: center;
-      mask-position: center;
       animation: markShimmerSweep 5.5s ease-in-out infinite;
       pointer-events: none;
+      z-index: 2;
     }
     @keyframes markShimmerSweep {
-      0%, 38%  { background-position: -150% -150%; }
-      55%      { background-position: 150% 150%; }
-      100%     { background-position: 150% 150%; }
+      0%, 38%  { left: -160%; }
+      55%      { left: 160%; }
+      100%     { left: 160%; }
     }
   </style>
 </head>
