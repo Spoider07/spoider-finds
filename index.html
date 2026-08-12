@@ -136,19 +136,17 @@
     }
     .hero-mark-halo {
       position: absolute;
-      inset: -34%;
+      inset: -18%;
       border-radius: 50%;
-      background:
-        radial-gradient(circle at 38% 34%, rgba(255,238,190,0.32) 0%, transparent 42%),
-        radial-gradient(circle, rgba(232,199,102,0.26) 0%, rgba(180,140,70,0.1) 48%, transparent 76%);
-      filter: blur(10px);
+      background: radial-gradient(circle, rgba(220,185,120,0.22) 0%, rgba(180,140,70,0.08) 48%, transparent 75%);
+      filter: blur(14px);
       z-index: 0;
       pointer-events: none;
       animation: markHaloBreathe 7s ease-in-out infinite;
     }
     @keyframes markHaloBreathe {
-      0%, 100% { opacity: 0.55; transform: scale(0.95); }
-      50%      { opacity: 0.9; transform: scale(1.06); }
+      0%, 100% { opacity: 0.4; transform: scale(0.95); }
+      50%      { opacity: 0.65; transform: scale(1.04); }
     }
     .hero-mark-ping {
       position: absolute;
@@ -192,8 +190,8 @@
       filter: drop-shadow(0 0 4px rgba(232,199,102,0.28)) drop-shadow(0 0 8px rgba(180,140,70,0.16));
     }
     @keyframes markGlowPulse {
-      0%, 100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); opacity: 0.95; transform: scale(1); }
-      50%      { filter: drop-shadow(0 0 13px rgba(232,199,102,0.55)) drop-shadow(0 0 5px rgba(255,238,190,0.35)); opacity: 1; transform: scale(1.02); }
+      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)) drop-shadow(0 0 6px rgba(180,140,70,0.1)); opacity: 0.95; transform: scale(1); }
+      50%      { filter: drop-shadow(0 0 9px rgba(232,199,102,0.4)) drop-shadow(0 0 4px rgba(255,238,190,0.22)); opacity: 1; transform: scale(1.02); }
     }
     .hero-mark-img.flash {
       animation: markGlowPulse 7s ease-in-out infinite, markTapFlash 0.55s ease-out;
