@@ -123,56 +123,18 @@
       margin-right: 2px;
     }
 
-    /* ===== Hero mark: static spider logo, no rotation, glow + shimmer instead ===== */
-    .hero-mark.hero-mark--logo,
-    .hero-mark.hero-mark--logo svg,
-    .hero-mark.hero-mark--logo * {
-      animation: none !important;
-      transform: none !important;
-    }
-    .hero-mark--logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 52px;
-      height: 52px;
-      margin: 0 auto;
-      position: relative;
-      overflow: hidden;
-      border-radius: 50%;
-    }
+    /* ===== Hero mark: static spider logo, no rotation, gentle glow instead ===== */
     .hero-mark-img {
+      display: block;
       width: 42px;
       height: 42px;
       object-fit: contain;
-      display: block;
-      position: relative;
-      z-index: 1;
-      animation: markGlowPulse 4.2s ease-in-out infinite !important;
-      filter: drop-shadow(0 0 4px rgba(232,199,102,0.25));
+      animation: markGlowPulse 4.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 4px rgba(232,199,102,0.28));
     }
     @keyframes markGlowPulse {
-      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)); opacity: 0.9; }
-      50%      { filter: drop-shadow(0 0 11px rgba(232,199,102,0.55)); opacity: 1; }
-    }
-    .hero-mark--logo::after {
-      content: '';
-      position: absolute;
-      top: -60%;
-      left: -160%;
-      width: 55%;
-      height: 220%;
-      background: linear-gradient(100deg, transparent 15%, rgba(255,247,225,0.5) 50%, transparent 85%);
-      transform: rotate(18deg);
-      mix-blend-mode: screen;
-      animation: markShimmerSweep 5.5s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 2;
-    }
-    @keyframes markShimmerSweep {
-      0%, 38%  { left: -160%; }
-      55%      { left: 160%; }
-      100%     { left: 160%; }
+      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.25)); opacity: 0.92; }
+      50%      { filter: drop-shadow(0 0 13px rgba(232,199,102,0.65)); opacity: 1; }
     }
   </style>
 </head>
@@ -226,7 +188,7 @@
       </div>
       <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
       <div class="hero-text-glow" aria-hidden="true"></div>
-      <div class="hero-mark hero-mark--logo hero-enter" aria-hidden="true">
+      <div class="hero-mark hero-enter" aria-hidden="true">
         <img src="assets/images/spoider-logo-vector.svg" alt="" class="hero-mark-img">
       </div>
       <p class="eyebrow hero-enter">A THREAD OF GOOD TASTE</p>
