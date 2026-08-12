@@ -123,18 +123,83 @@
       margin-right: 2px;
     }
 
-    /* ===== Hero mark: static spider logo, no rotation, gentle glow instead ===== */
+    /* ===== Hero mark: static spider logo, layered premium glow ===== */
+    .hero-mark-inner {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-mark-halo {
+      position: absolute;
+      inset: -34%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232,199,102,0.32) 0%, rgba(201,168,118,0.1) 45%, transparent 75%);
+      filter: blur(9px);
+      z-index: 0;
+      pointer-events: none;
+      animation: markHaloBreathe 4.2s ease-in-out infinite;
+    }
+    @keyframes markHaloBreathe {
+      0%, 100% { opacity: 0.5; transform: scale(0.92); }
+      50%      { opacity: 1; transform: scale(1.1); }
+    }
+    .hero-mark-ping {
+      position: absolute;
+      inset: -4%;
+      border-radius: 50%;
+      border: 1px solid rgba(232,199,102,0.55);
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+      animation: markPingOnce 1.5s ease-out 1s 1 both;
+    }
+    @keyframes markPingOnce {
+      0%   { opacity: 0.85; transform: scale(0.55); }
+      100% { opacity: 0; transform: scale(2); }
+    }
     .hero-mark-img {
+      position: relative;
+      z-index: 1;
       display: block;
       width: 68px;
       height: 68px;
       object-fit: contain;
+      transform-origin: center;
       animation: markGlowPulse 4.2s ease-in-out infinite;
       filter: drop-shadow(0 0 5px rgba(232,199,102,0.28));
     }
     @keyframes markGlowPulse {
-      0%, 100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)); opacity: 0.92; }
-      50%      { filter: drop-shadow(0 0 16px rgba(232,199,102,0.6)); opacity: 1; }
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)); opacity: 0.94; transform: scale(1); }
+      50%      { filter: drop-shadow(0 0 18px rgba(232,199,102,0.68)); opacity: 1; transform: scale(1.035); }
+    }
+    .hero-mark-glint {
+      position: absolute;
+      top: 12%;
+      left: -6%;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,247,225,0.95), transparent 70%);
+      filter: blur(1px);
+      mix-blend-mode: screen;
+      z-index: 2;
+      opacity: 0;
+      pointer-events: none;
+      animation: markGlintSweep 6.2s ease-in-out infinite;
+    }
+    @keyframes markGlintSweep {
+      0%, 52%  { opacity: 0; transform: translate(0, 0); }
+      58%      { opacity: 1; }
+      74%      { opacity: 0.9; transform: translate(46px, 40px); }
+      84%      { opacity: 0; transform: translate(56px, 50px); }
+      100%     { opacity: 0; transform: translate(0, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint { animation: none; }
     }
   </style>
 </head>
@@ -189,7 +254,12 @@
       <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
       <div class="hero-text-glow" aria-hidden="true"></div>
       <div class="hero-mark hero-enter" aria-hidden="true">
-        <img src="assets/images/spoider-logo-vector.svg" alt="" class="hero-mark-img">
+        <div class="hero-mark-inner">
+          <span class="hero-mark-halo"></span>
+          <span class="hero-mark-ping"></span>
+          <img src="assets/images/spoider-logo-vector.svg" alt="" class="hero-mark-img">
+          <span class="hero-mark-glint"></span>
+        </div>
       </div>
       <p class="eyebrow hero-enter">A THREAD OF GOOD TASTE</p>
       <h1 class="hero-title hero-enter">We dig through <em>everything</em>,<br>so you only see <span class="gold-text">the good stuff.</span></h1>
