@@ -122,6 +122,64 @@
       vertical-align: middle;
       margin-right: 2px;
     }
+
+    /* ===== Hero mark: static spider logo, no rotation, glow + shimmer instead ===== */
+    .hero-mark.hero-mark--logo,
+    .hero-mark.hero-mark--logo svg,
+    .hero-mark.hero-mark--logo * {
+      animation: none !important;
+      transform: none !important;
+    }
+    .hero-mark--logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      margin: 0 auto;
+      overflow: visible;
+    }
+    .hero-mark-img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      display: block;
+      animation: markGlowPulse 4.2s ease-in-out infinite !important;
+      filter: drop-shadow(0 0 4px rgba(232,199,102,0.25));
+      -webkit-mask-image: linear-gradient(#000, #000);
+      mask-image: linear-gradient(#000, #000);
+    }
+    @keyframes markGlowPulse {
+      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)); opacity: 0.9; }
+      50%      { filter: drop-shadow(0 0 11px rgba(232,199,102,0.55)); opacity: 1; }
+    }
+    .hero-mark--logo::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 5px;
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(115deg, transparent 35%, rgba(255,247,225,0.75) 50%, transparent 65%);
+      background-size: 250% 250%;
+      background-position: -150% -150%;
+      mix-blend-mode: screen;
+      -webkit-mask-image: url('assets/images/spoider-logo-vector.svg');
+      mask-image: url('assets/images/spoider-logo-vector.svg');
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      animation: markShimmerSweep 5.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes markShimmerSweep {
+      0%, 38%  { background-position: -150% -150%; }
+      55%      { background-position: 150% 150%; }
+      100%     { background-position: 150% 150%; }
+    }
   </style>
 </head>
 <body>
@@ -174,11 +232,8 @@
       </div>
       <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
       <div class="hero-text-glow" aria-hidden="true"></div>
-      <div class="hero-mark hero-enter" aria-hidden="true">
-        <svg viewBox="0 0 64 64" width="52" height="52">
-          <circle cx="32" cy="32" r="2.6" fill="var(--gold)"/>
-          <path class="mark-line" d="M32 8 L32 24 M32 40 L32 56 M8 32 L24 32 M40 32 L56 32 M14 14 L23 23 M41 41 L50 50 M50 14 L41 23 M23 41 L14 50" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
-        </svg>
+      <div class="hero-mark hero-mark--logo hero-enter" aria-hidden="true">
+        <img src="assets/images/spoider-logo-vector.svg" alt="" class="hero-mark-img">
       </div>
       <p class="eyebrow hero-enter">A THREAD OF GOOD TASTE</p>
       <h1 class="hero-title hero-enter">We dig through <em>everything</em>,<br>so you only see <span class="gold-text">the good stuff.</span></h1>
