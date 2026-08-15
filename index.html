@@ -231,6 +231,40 @@
       .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
     }
 
+    /* ===== Cinematic scroll transition: web collapse → camera dive → product reveal ===== */
+    #webCanvas {
+      transform-origin: 50% 42%;
+      will-change: transform, opacity;
+    }
+    .portal-stage {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      clip-path: circle(0% at 50% 42%);
+      opacity: 0;
+      will-change: clip-path, opacity;
+    }
+    .portal-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 42%, rgba(232,199,102,0.35), transparent 62%);
+    }
+    .portal-product-img {
+      position: relative;
+      width: min(58%, 250px);
+      border-radius: 20px;
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.75), 0 0 60px -10px rgba(232,199,102,0.35);
+      transform: scale(0.7);
+      will-change: transform;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .portal-stage { display: none; }
+    }
+
   </style>
 </head>
 <body>
@@ -282,6 +316,10 @@
         <span class="aurora-blob aurora-blob--3"></span>
       </div>
       <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
+      <div class="portal-stage" id="portalStage" aria-hidden="true">
+        <div class="portal-glow"></div>
+        <img src="assets/images/levitating-moon-lamp.jpg" alt="" class="portal-product-img">
+      </div>
       <div class="hero-text-glow" aria-hidden="true"></div>
       <div class="hero-mark hero-enter" aria-hidden="true">
         <div class="hero-mark-inner">
@@ -575,6 +613,20 @@
     var MAX_SHIMMERS = isSmall ? 1 : 2;
     var pulseT = 0;
 
+    /* ---- Cinematic collapse state (driven externally by ScrollTrigger) ---- */
+    var collapseProgress = 0;
+    window.setHeroCollapse = function (p) {
+      collapseProgress = Math.max(0, Math.min(1, p));
+    };
+    function dpos(node) {
+      if (collapseProgress <= 0) return node;
+      var f = collapseProgress * 0.92;
+      return {
+        x: node.x + (centerNode.x - node.x) * f,
+        y: node.y + (centerNode.y - node.y) * f
+      };
+    }
+
     var prevW = 0;
     var resizeTimer = null;
 
@@ -728,7 +780,7 @@
     }
 
     function drawEdge(edge, alpha) {
-      var a = edge.a, b = edge.b;
+      var a = dpos(edge.a), b = dpos(edge.b);
       var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       var dx = b.x - a.x, dy = b.y - a.y;
       var dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -736,8 +788,9 @@
       var wobble = Math.sin(pulseT * 0.5 + edge.seed) * 0.5 + 0.5;
       var offset = dist * edge.sag * wobble;
       var cxp = mx + nx * offset, cyp = my + ny * offset;
+      var boostedAlpha = alpha * (1 + collapseProgress * 1.4);
 
-      ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
+      ctx.strokeStyle = 'rgba(201,168,118,' + boostedAlpha.toFixed(3) + ')';
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
@@ -746,7 +799,7 @@
 
     function draw() {
       ctx.clearRect(0, 0, w, h);
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1 + collapseProgress * 1.8;
       pulseT += 0.02;
       var pulse = 0.75 + Math.sin(pulseT) * 0.25;
       var baseAlpha = 0.5 * pulse;
@@ -762,20 +815,20 @@
       }
 
       for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i];
+        var n = dpos(nodes[i]);
         ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
+        ctx.arc(n.x, n.y, 1.3 + collapseProgress * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15 + collapseProgress * 0.25).toFixed(3) + ')';
         ctx.fill();
       }
 
-      if (Math.random() < 0.02) spawnShimmer();
+      if (collapseProgress <= 0 && Math.random() < 0.02) spawnShimmer();
       for (var si = shimmers.length - 1; si >= 0; si--) {
         var sh = shimmers[si];
         sh.t += sh.speed;
         if (sh.t >= 1) { shimmers.splice(si, 1); continue; }
         var tt = sh.reverse ? 1 - sh.t : sh.t;
-        var pos = curvePoint(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, tt);
+        var pos = curvePoint(dpos(sh.edge.a), dpos(sh.edge.b), sh.edge.sag, sh.edge.seed, tt);
         var fade = Math.sin(sh.t * Math.PI);
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
@@ -967,6 +1020,83 @@
       }, 800);
     }
     mark.addEventListener('click', burst);
+  })();
+  </script>
+
+  <!-- ================= CINEMATIC HERO → FEATURED TRANSITION ================= -->
+  <!-- Web collapse → camera dive → product reveal. Pins the hero briefly on
+       scroll, converges the existing web canvas toward its center, scales the
+       canvas to simulate diving through it, then reveals a preview of the
+       first featured product through a growing circular mask before releasing
+       the pin so the page continues into Categories → Featured as normal. -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script>
+  (function () {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    var hero = document.querySelector('.hero');
+    var canvas = document.getElementById('webCanvas');
+    var portalStage = document.getElementById('portalStage');
+    var portalImg = portalStage ? portalStage.querySelector('.portal-product-img') : null;
+    if (!hero || !canvas || !portalStage) return;
+
+    var heroMark = document.querySelector('.hero-mark');
+    var eyebrow = document.querySelector('.hero .eyebrow');
+    var title = document.querySelector('.hero-title');
+    var sub = document.querySelector('.hero-sub');
+    var actions = document.querySelector('.hero-actions');
+    var stats = document.querySelector('.hero-stats');
+    var indiaPill = document.querySelector('.hero .india-pill');
+    var softEls = [eyebrow, title, sub, actions, stats, indiaPill].filter(Boolean);
+
+    var tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: hero,
+        start: 'top top',
+        end: function () { return '+=' + Math.round(window.innerHeight * 0.85); },
+        scrub: 0.6,
+        pin: true,
+        pinSpacing: true,
+        anticipatePin: 1,
+        onUpdate: function (self) {
+          if (window.setHeroCollapse) window.setHeroCollapse(self.progress);
+        },
+        onLeaveBack: function () {
+          if (window.setHeroCollapse) window.setHeroCollapse(0);
+        }
+      }
+    });
+
+    /* PHASE 1 — cinematic pause: hero copy softens away first */
+    if (softEls.length) {
+      tl.to(softEls, { opacity: 0, y: -14, duration: 0.22, ease: 'power1.out' }, 0);
+    }
+    if (heroMark) {
+      tl.to(heroMark, { opacity: 0, scale: 0.85, duration: 0.18, ease: 'power1.out' }, 0.16);
+    }
+
+    /* PHASE 2/3 — web collapses (handled inside the canvas script via
+       setHeroCollapse) while the canvas itself scales up like a camera
+       moving through it */
+    tl.to(canvas, { scale: 2.6, opacity: 0.35, duration: 0.45, ease: 'power2.in' }, 0.22);
+
+    /* PHASE 4 — product discovered through the portal */
+    tl.fromTo(portalStage,
+      { clipPath: 'circle(0% at 50% 42%)', opacity: 0 },
+      { clipPath: 'circle(75% at 50% 42%)', opacity: 1, duration: 0.32, ease: 'power2.out' },
+      0.5
+    );
+    if (portalImg) {
+      tl.fromTo(portalImg, { scale: 0.7 }, { scale: 1, duration: 0.32, ease: 'power2.out' }, 0.5);
+    }
+
+    /* PHASE 5 — release: portal recedes as the pin lets go */
+    tl.to(portalStage, { opacity: 0, duration: 0.18, ease: 'power1.in' }, 0.82);
   })();
   </script>
 
