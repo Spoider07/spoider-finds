@@ -230,6 +230,103 @@
     @media (prefers-reduced-motion: reduce) {
       .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
     }
+
+    /* ===== Story: sticky scroll-scrubbed beats ===== */
+    .story {
+      position: relative;
+      height: 300vh;
+    }
+    .story-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .story-media {
+      position: absolute;
+      inset: 0;
+    }
+    .story-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      filter: brightness(0.5) saturate(1.05);
+      will-change: opacity, transform;
+    }
+    .story-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,10,11,0.55) 0%, rgba(10,10,11,0.25) 40%, rgba(10,10,11,0.65) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .story-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 1.5rem;
+      max-width: 640px;
+    }
+    .story-tag {
+      position: absolute;
+      inset: auto 0 0 0;
+      margin: 0 auto;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      color: var(--gold-bright, #e8c766);
+      opacity: 0;
+      will-change: opacity, transform;
+    }
+    .story-line {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: clamp(1.6rem, 6vw, 2.6rem);
+      line-height: 1.25;
+      color: #f4ecd8;
+      opacity: 0;
+      will-change: opacity, transform;
+    }
+    .story-progress {
+      position: absolute;
+      left: 50%;
+      bottom: 2.2rem;
+      transform: translateX(-50%);
+      width: min(70%, 220px);
+      height: 2px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 2px;
+      z-index: 2;
+      overflow: hidden;
+    }
+    .story-progress-fill {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--gold-bright, #e8c766);
+      border-radius: 2px;
+    }
+    .story-count {
+      position: absolute;
+      top: 1.8rem;
+      right: 1.6rem;
+      z-index: 2;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: rgba(232,199,102,0.7);
+    }
   </style>
 </head>
 <body>
@@ -361,6 +458,28 @@
           <h3>Amazon Finds</h3>
           <p>Genuinely surprising products we didn't expect to love.</p>
         </a>
+      </div>
+    </section>
+
+    <!-- ================= STORY (sticky scroll-scrubbed) ================= -->
+    <section class="story" id="story">
+      <div class="story-sticky">
+        <div class="story-media">
+          <img class="story-img" data-beat="0" src="assets/images/levitating-moon-lamp.jpg" alt="Desk setup finds">
+          <img class="story-img" data-beat="1" src="assets/images/ddc0b64cc6355f777da2e2085d4f0321.jpg" alt="Fashion finds">
+          <img class="story-img" data-beat="2" src="assets/images/f566889325db22663b46fa4b393f16d0.jpg" alt="Accessories finds">
+        </div>
+        <div class="story-scrim" aria-hidden="true"></div>
+        <span class="story-count" id="storyCount">01 / 03</span>
+        <div class="story-content">
+          <p class="story-tag" data-beat="0">DESK SETUP</p>
+          <p class="story-tag" data-beat="1">FASHION FINDS</p>
+          <p class="story-tag" data-beat="2">ACCESSORIES</p>
+          <h2 class="story-line" data-beat="0">We dig through <span class="gold-text">thousands</span> of listings...</h2>
+          <h2 class="story-line" data-beat="1">...filter out every bit of the <span class="gold-text">noise</span>...</h2>
+          <h2 class="story-line" data-beat="2">...and keep only what's <span class="gold-text">worth your cart.</span></h2>
+        </div>
+        <div class="story-progress"><span class="story-progress-fill" id="storyProgressFill"></span></div>
       </div>
     </section>
 
@@ -966,6 +1085,78 @@
       }, 800);
     }
     mark.addEventListener('click', burst);
+  })();
+  </script>
+
+  <!-- ================= STORY: scroll-scrubbed beat controller ================= -->
+  <script>
+  (function () {
+    var story = document.getElementById('story');
+    if (!story) return;
+    var images = Array.prototype.slice.call(story.querySelectorAll('.story-img'));
+    var tags = Array.prototype.slice.call(story.querySelectorAll('.story-tag'));
+    var lines = Array.prototype.slice.call(story.querySelectorAll('.story-line'));
+    var fill = document.getElementById('storyProgressFill');
+    var countEl = document.getElementById('storyCount');
+    var numBeats = images.length;
+    var ticking = false;
+    var storyTop = 0;
+    var scrollRange = 0;
+
+    function measure() {
+      var rect = story.getBoundingClientRect();
+      storyTop = rect.top + window.scrollY;
+      scrollRange = Math.max(story.offsetHeight - window.innerHeight, 1);
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function update() {
+      ticking = false;
+      var raw = (window.scrollY - storyTop) / scrollRange;
+      var progress = clamp(raw, 0, 1);
+      var bp = progress * (numBeats - 1);
+
+      for (var i = 0; i < numBeats; i++) {
+        var diff = bp - i;
+        var opacity = clamp(1 - Math.abs(diff), 0, 1);
+        var scale = 1.06 - 0.06 * opacity;
+        var shiftY = (1 - opacity) * 16;
+
+        images[i].style.opacity = opacity.toFixed(3);
+        images[i].style.transform = 'scale(' + scale.toFixed(3) + ')';
+
+        if (tags[i]) {
+          tags[i].style.opacity = opacity.toFixed(3);
+          tags[i].style.transform = 'translateY(' + shiftY.toFixed(1) + 'px)';
+        }
+        if (lines[i]) {
+          lines[i].style.opacity = opacity.toFixed(3);
+          lines[i].style.transform = 'translateY(' + shiftY.toFixed(1) + 'px)';
+        }
+      }
+
+      if (fill) fill.style.width = (progress * 100).toFixed(1) + '%';
+      if (countEl) {
+        var activeBeat = clamp(Math.round(bp), 0, numBeats - 1) + 1;
+        countEl.textContent = ('0' + activeBeat).slice(-2) + ' / 0' + numBeats;
+      }
+    }
+
+    function requestTick() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    }
+
+    window.addEventListener('scroll', requestTick, { passive: true });
+    window.addEventListener('resize', function () { measure(); requestTick(); });
+
+    measure();
+    update();
   })();
   </script>
 </body>
