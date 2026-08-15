@@ -74,16 +74,124 @@
       pointer-events: none;
     }
     .logo-img {
-      height: 34px;
+      height: 40px;
       width: auto;
       vertical-align: middle;
-      margin-right: 6px;
+      margin-right: 2px;
     }
     .footer-logo-img {
-      height: 26px;
+      height: 30px;
       width: auto;
       vertical-align: middle;
-      margin-right: 6px;
+      margin-right: 2px;
+    }
+
+    /* ===== Hero mark: static spider logo, layered premium glow ===== */
+    .hero-mark-inner {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      outline: none;
+    }
+    .hero-mark-halo {
+      position: absolute;
+      inset: -18%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(220,185,120,0.22) 0%, rgba(180,140,70,0.08) 48%, transparent 75%);
+      filter: blur(14px);
+      z-index: 0;
+      pointer-events: none;
+      animation: markHaloBreathe 7s ease-in-out infinite;
+    }
+    @keyframes markHaloBreathe {
+      0%, 100% { opacity: 0.4; transform: scale(0.95); }
+      50%      { opacity: 0.65; transform: scale(1.04); }
+    }
+    .hero-mark-ping {
+      position: absolute;
+      inset: -4%;
+      border-radius: 50%;
+      border: 1px solid rgba(232,199,102,0.55);
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+      animation: markPingOnce 1.5s ease-out 1s 1 both;
+    }
+    @keyframes markPingOnce {
+      0%   { opacity: 0.85; transform: scale(0.55); }
+      100% { opacity: 0; transform: scale(2); }
+    }
+    .hero-mark-tap-ring {
+      position: absolute;
+      inset: -6%;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,241,204,0.75);
+      opacity: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .hero-mark-tap-ring.burst {
+      animation: markTapBurst 0.75s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes markTapBurst {
+      0%   { opacity: 0.9; transform: scale(0.5); }
+      100% { opacity: 0; transform: scale(2.3); }
+    }
+    .hero-mark-img {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      transform-origin: center;
+      animation: markGlowPulse 7s ease-in-out infinite;
+      filter: drop-shadow(0 0 4px rgba(232,199,102,0.28)) drop-shadow(0 0 8px rgba(180,140,70,0.16));
+    }
+    @keyframes markGlowPulse {
+      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)) drop-shadow(0 0 6px rgba(180,140,70,0.1)); opacity: 0.95; transform: scale(1); }
+      50%      { filter: drop-shadow(0 0 9px rgba(232,199,102,0.4)) drop-shadow(0 0 4px rgba(255,238,190,0.22)); opacity: 1; transform: scale(1.02); }
+    }
+    .hero-mark-img.flash {
+      animation: markGlowPulse 7s ease-in-out infinite, markTapFlash 0.55s ease-out;
+    }
+    @keyframes markTapFlash {
+      0%   { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
+      30%  { filter: drop-shadow(0 0 22px rgba(255,238,190,0.9)) drop-shadow(0 0 10px rgba(232,199,102,0.6)); }
+      100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
+    }
+    .hero-mark-glint {
+      position: absolute;
+      top: 22%;
+      left: 8%;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,247,225,0.85), transparent 70%);
+      filter: blur(1.5px);
+      mix-blend-mode: screen;
+      z-index: 2;
+      opacity: 0;
+      pointer-events: none;
+      animation: markGlintSweep 9.5s ease-in-out infinite;
+    }
+    @keyframes markGlintSweep {
+      0%, 68%  { opacity: 0; transform: translate(0, 0) scale(0.8); }
+      74%      { opacity: 0.75; transform: translate(14px, 12px) scale(1); }
+      80%      { opacity: 0.55; transform: translate(24px, 20px) scale(0.9); }
+      88%      { opacity: 0; transform: translate(30px, 26px) scale(0.7); }
+      100%     { opacity: 0; transform: translate(0, 0) scale(0.8); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
     }
   </style>
 </head>
@@ -99,7 +207,7 @@
 
   <header class="nav" id="nav">
     <div class="nav-inner">
-      <a href="index.html" class="logo"><img src="assets/images/spoider-logo-navbar.png" alt="Spoider Finds" class="logo-img">Spoider<span class="logo-accent">Finds</span></a>
+      <a href="index.html" class="logo"><img src="assets/images/spoider-logo-vector.svg" alt="Spoider Finds" class="logo-img">Spoider<span class="logo-accent">Finds</span></a>
       <nav class="nav-links" aria-label="Primary">
         <a href="index.html#categories">Categories</a>
         <a href="index.html#featured">Featured</a>
@@ -134,10 +242,13 @@
       <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
       <div class="hero-text-glow" aria-hidden="true"></div>
       <div class="hero-mark hero-enter" aria-hidden="true">
-        <svg viewBox="0 0 64 64" width="52" height="52">
-          <circle cx="32" cy="32" r="2.6" fill="var(--gold)"/>
-          <path class="mark-line" d="M32 8 L32 24 M32 40 L32 56 M8 32 L24 32 M40 32 L56 32 M14 14 L23 23 M41 41 L50 50 M50 14 L41 23 M23 41 L14 50" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
-        </svg>
+        <div class="hero-mark-inner">
+          <span class="hero-mark-halo"></span>
+          <span class="hero-mark-ping"></span>
+          <span class="hero-mark-tap-ring"></span>
+          <img src="assets/images/spoider-logo-vector.svg" alt="" class="hero-mark-img">
+          <span class="hero-mark-glint"></span>
+        </div>
       </div>
       <p class="eyebrow hero-enter">🇮🇳 CURATED FOR INDIA</p>
       <h1 class="hero-title hero-enter" style="font-size: clamp(2rem, 5vw, 3rem);">Same taste. <span class="gold-text">Faster to your door.</span></h1>
@@ -280,7 +391,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <a href="index.html" class="logo"><img src="assets/images/spoider-logo-navbar.png" alt="Spoider Finds" class="footer-logo-img">Spoider<span class="logo-accent">Finds</span></a>
+        <a href="index.html" class="logo"><img src="assets/images/spoider-logo-vector.svg" alt="Spoider Finds" class="footer-logo-img">Spoider<span class="logo-accent">Finds</span></a>
         <p>A hand-curated thread of the internet's best aesthetic finds.</p>
       </div>
       <div class="footer-links">
@@ -312,6 +423,10 @@
     var hero = canvas.closest('.hero');
     var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
     var nodes = [];
+    var spokes = [];
+    var edges = [];
+    var shimmers = [];
+    var centerNode = { x: 0, y: 0 };
     var pointer = { x: -9999, y: -9999, active: false };
     var running = false;
     var rafId = null;
@@ -319,9 +434,10 @@
     var FRAME_INTERVAL = 1000 / 30;
 
     var isSmall = window.matchMedia('(max-width: 600px)').matches;
-    var NODE_COUNT = isSmall ? 34 : 60;
-    var LINK_DIST = isSmall ? 125 : 165;
+    var SPOKE_COUNT = isSmall ? 10 : 15;
+    var RING_COUNT = isSmall ? 5 : 7;
     var TOUCH_RADIUS = isSmall ? 110 : 150;
+    var MAX_SHIMMERS = isSmall ? 1 : 2;
     var pulseT = 0;
 
     var prevW = 0;
@@ -354,15 +470,100 @@
 
     function seedNodes() {
       nodes = [];
-      for (var i = 0; i < NODE_COUNT; i++) {
-        var x = Math.random() * w;
-        var y = Math.random() * h;
-        nodes.push({
-          x: x, y: y,
-          ox: x, oy: y,
-          vx: 0, vy: 0
-        });
+      spokes = [];
+      edges = [];
+      shimmers = [];
+      var cx = w / 2;
+      var cy = h * 0.42;
+      var radiusX = Math.min(w, h) * 0.44;
+      var radiusY = radiusX;
+
+      centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
+
+      var spokeAngles = [];
+      for (var s = 0; s < SPOKE_COUNT; s++) {
+        var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
+        spokeAngles.push(angle);
+        var ring = [];
+        for (var r = 1; r <= RING_COUNT; r++) {
+          var frac = r / RING_COUNT;
+          var jitter = 1 + (Math.random() - 0.5) * 0.02;
+          var rx = radiusX * frac * jitter;
+          var ry = radiusY * frac * jitter;
+          var x = cx + Math.cos(angle) * rx;
+          var y = cy + Math.sin(angle) * ry;
+          var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * Math.PI * 2 };
+          nodes.push(node);
+          ring.push(node);
+        }
+        spokes.push(ring);
       }
+
+      for (var s2 = 0; s2 < spokes.length; s2++) {
+        var ring2 = spokes[s2];
+        edges.push({ a: centerNode, b: ring2[0], sag: 0.05, seed: Math.random() * 10 });
+        for (var r2 = 0; r2 < ring2.length - 1; r2++) {
+          edges.push({ a: ring2[r2], b: ring2[r2 + 1], sag: 0.05, seed: Math.random() * 10 });
+        }
+      }
+      for (var r3 = 0; r3 < RING_COUNT; r3++) {
+        for (var s3 = 0; s3 < spokes.length; s3++) {
+          var a3 = spokes[s3][r3];
+          var b3 = spokes[(s3 + 1) % spokes.length][r3];
+          if (a3 && b3) edges.push({ a: a3, b: b3, sag: 0.09, seed: Math.random() * 10, isRing: true });
+        }
+      }
+
+      var anchorEvery = 3;
+      for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
+        var outerNode = spokes[sa][spokes[sa].length - 1];
+        var aAngle = spokeAngles[sa];
+        var anchorPt = rayToRectEdge(cx, cy, aAngle, w, h, 4);
+        var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
+        edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
+      }
+
+      var topIdx = 0, topDiff = Infinity;
+      for (var ti = 0; ti < spokeAngles.length; ti++) {
+        var norm = ((spokeAngles[ti] % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        var diff = Math.abs(norm - Math.PI * 1.5);
+        diff = Math.min(diff, Math.PI * 2 - diff);
+        if (diff < topDiff) { topDiff = diff; topIdx = ti; }
+      }
+      var topOuter = spokes[topIdx][spokes[topIdx].length - 1];
+      var topAnchorPt = rayToRectEdge(cx, cy, spokeAngles[topIdx], w, h, 4);
+      var topAnchorNode = { x: topAnchorPt.x, y: topAnchorPt.y, ox: topAnchorPt.x, oy: topAnchorPt.y, vx: 0, vy: 0 };
+      edges.push({ a: topOuter, b: topAnchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
+    }
+
+    function rayToRectEdge(cx, cy, angle, w, h, pad) {
+      var dx = Math.cos(angle), dy = Math.sin(angle);
+      var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
+      var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
+      var t = Math.min(tX, tY);
+      return { x: cx + dx * t, y: cy + dy * t };
+    }
+
+    function spawnShimmer() {
+      if (!edges.length || shimmers.length >= MAX_SHIMMERS) return;
+      var edge = edges[Math.floor(Math.random() * edges.length)];
+      shimmers.push({ edge: edge, t: 0, speed: 0.008 + Math.random() * 0.006, reverse: Math.random() < 0.5 });
+    }
+
+    function curvePoint(a, b, sag, seed, t) {
+      var mx = (a.x + b.x) / 2;
+      var my = (a.y + b.y) / 2;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / dist, ny = dx / dist;
+      var wobble = Math.sin(pulseT * 0.5 + seed) * 0.5 + 0.5;
+      var offset = dist * sag * wobble;
+      var cxp = mx + nx * offset;
+      var cyp = my + ny * offset;
+      var it = 1 - t;
+      var x = it * it * a.x + 2 * it * t * cxp + t * t * b.x;
+      var y = it * it * a.y + 2 * it * t * cyp + t * t * b.y;
+      return { x: x, y: y, ctrlX: cxp, ctrlY: cyp };
     }
 
     function step(node) {
@@ -370,6 +571,9 @@
       var dyHome = node.oy - node.y;
       node.vx += dxHome * 0.004;
       node.vy += dyHome * 0.004;
+
+      node.vx += Math.sin(pulseT * 0.4 + node.seed) * 0.025;
+      node.vy += Math.cos(pulseT * 0.4 + node.seed * 1.3) * 0.025;
 
       if (pointer.active) {
         var dx = node.x - pointer.x;
@@ -388,41 +592,63 @@
       node.y += node.vy;
     }
 
+    function drawEdge(edge, alpha) {
+      var a = edge.a, b = edge.b;
+      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / dist, ny = dx / dist;
+      var wobble = Math.sin(pulseT * 0.5 + edge.seed) * 0.5 + 0.5;
+      var offset = dist * edge.sag * wobble;
+      var cxp = mx + nx * offset, cyp = my + ny * offset;
+
+      ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
+      ctx.stroke();
+    }
+
     function draw() {
       ctx.clearRect(0, 0, w, h);
       ctx.lineWidth = 1;
       pulseT += 0.02;
       var pulse = 0.75 + Math.sin(pulseT) * 0.25;
+      var baseAlpha = 0.5 * pulse;
 
       for (var i = 0; i < nodes.length; i++) {
         step(nodes[i]);
       }
 
-      for (var i = 0; i < nodes.length; i++) {
-        for (var j = i + 1; j < nodes.length; j++) {
-          var a = nodes[i], b = nodes[j];
-          var dx = a.x - b.x, dy = a.y - b.y;
-          var dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < LINK_DIST) {
-            var alpha = (1 - dist / LINK_DIST) * 0.4 * pulse;
-            ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-        }
+      for (var e = 0; e < edges.length; e++) {
+        var edge = edges[e];
+        var edgeAlpha = edge.isAnchor ? baseAlpha * 0.45 : (edge.isRing ? baseAlpha * 0.75 : baseAlpha);
+        drawEdge(edge, edgeAlpha);
       }
 
       for (var i = 0; i < nodes.length; i++) {
         var n = nodes[i];
         ctx.beginPath();
-        ctx.arc(n.x, n.y, 6 * pulse, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,199,102,' + (0.10 * pulse).toFixed(3) + ')';
+        ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
+        ctx.fill();
+      }
+
+      if (Math.random() < 0.02) spawnShimmer();
+      for (var si = shimmers.length - 1; si >= 0; si--) {
+        var sh = shimmers[si];
+        sh.t += sh.speed;
+        if (sh.t >= 1) { shimmers.splice(si, 1); continue; }
+        var tt = sh.reverse ? 1 - sh.t : sh.t;
+        var pos = curvePoint(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, tt);
+        var fade = Math.sin(sh.t * Math.PI);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,240,200,' + (0.15 * fade).toFixed(3) + ')';
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.7, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,199,102,' + (0.6 * pulse + 0.2).toFixed(3) + ')';
+        ctx.arc(pos.x, pos.y, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,247,225,' + (0.9 * fade).toFixed(3) + ')';
         ctx.fill();
       }
     }
@@ -560,6 +786,52 @@
     window.addEventListener('scroll', requestTick, { passive: true });
     window.addEventListener('resize', requestTick);
     requestTick();
+  })();
+  </script>
+  <script>
+  (function () {
+    var mark = document.querySelector('.hero-mark-inner');
+    var hero = document.querySelector('.hero');
+    if (!mark || !hero) return;
+
+    /* Scroll fade — logo softly fades, shrinks and drifts up as you scroll past the hero */
+    var ticking = false;
+    function updateScrollFade() {
+      ticking = false;
+      var rect = hero.getBoundingClientRect();
+      var fadeRange = hero.offsetHeight * 0.5;
+      var scrolled = Math.min(Math.max(-rect.top, 0), fadeRange);
+      var progress = fadeRange > 0 ? scrolled / fadeRange : 0;
+      mark.style.opacity = (1 - progress).toFixed(3);
+      mark.style.transform = 'translateY(' + (-progress * 14).toFixed(1) + 'px) scale(' + (1 - progress * 0.1).toFixed(3) + ')';
+    }
+    function onScroll() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(updateScrollFade);
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    updateScrollFade();
+
+    /* Tap interaction — a soft gold ring burst + brief bright flash */
+    var ring = mark.querySelector('.hero-mark-tap-ring');
+    var img = mark.querySelector('.hero-mark-img');
+    var flashTimer = null;
+    function burst() {
+      if (!ring || !img) return;
+      ring.classList.remove('burst');
+      img.classList.remove('flash');
+      void ring.offsetWidth;
+      ring.classList.add('burst');
+      img.classList.add('flash');
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(function () {
+        ring.classList.remove('burst');
+        img.classList.remove('flash');
+      }, 800);
+    }
+    mark.addEventListener('click', burst);
   })();
   </script>
 </body>
