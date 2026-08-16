@@ -6,12 +6,16 @@
 // restrained, cinematic horizontal slide — the outgoing page
 // slides fully off-screen, then the incoming page slides in
 // from the opposite edge. Direction is decided by where the
-// user tapped (left half vs right half), so it never feels
-// like one fixed, repetitive motion. Falls back to a normal
-// page load for any page that hasn't been upgraded yet (no
-// #page-wrap found), or for anything outside its scope
-// (external links, downloads, target=_blank). Reduced-motion
-// users skip the animation but still get the flash-free swap.
+// user tapped (left half vs right half). Real browser back/
+// forward is handled the same way, and never gets silently
+// dropped — every navigation gets its own "generation id" so a
+// stale in-flight transition can never leave the page stuck
+// mid-transform (which is what caused the crooked/blank-screen
+// bug on back navigation). Falls back to a normal page load for
+// any page that hasn't been upgraded yet (no #page-wrap found),
+// or for anything outside its scope (external links, downloads,
+// target=_blank). Reduced-motion users skip the animation but
+// still get the flash-free swap.
 // ============================================================
 
 (function () {
@@ -24,8 +28,8 @@
   var DUR_OUT = 320;
   var DUR_IN = 460;
   var cache = Object.create(null);
-  var busy = false;
   var lastReverse = false; // remembers which way the last transition moved
+  var navId = 0; // bumped on every navigation; stale async work checks this and bails
 
   // ---------- inject transition + pulse styles once ----------
   (function injectStyles() {
@@ -37,10 +41,10 @@
       "pointer-events:none;z-index:9999;transform:scale(0.4);opacity:0.85;" +
       "animation:sfPulseOut .6s cubic-bezier(.22,1,.36,1) forwards;}" +
       "@keyframes sfPulseOut{to{transform:scale(3.4);opacity:0;}}" +
-      /* "fwd" = whole canvas sweeps LEFTWARD (used when tap lands on the right half) */
+      /* "fwd" = whole canvas sweeps LEFTWARD (tap on the right half) */
       ".sf-out-fwd{animation:sfOutFwd " + DUR_OUT + "ms cubic-bezier(.55,0,.35,1) forwards;}" +
       ".sf-in-fwd{animation:sfInFwd " + DUR_IN + "ms cubic-bezier(.16,1,.3,1) forwards;}" +
-      /* "back" = whole canvas sweeps RIGHTWARD (used when tap lands on the left half, or real browser-back) */
+      /* "back" = whole canvas sweeps RIGHTWARD (tap on the left half, or real browser-back) */
       ".sf-out-back{animation:sfOutBack " + DUR_OUT + "ms cubic-bezier(.55,0,.35,1) forwards;}" +
       ".sf-in-back{animation:sfInBack " + DUR_IN + "ms cubic-bezier(.16,1,.3,1) forwards;}" +
       "@keyframes sfOutFwd{to{transform:translateX(-100%);}}" +
@@ -52,6 +56,10 @@
     styleEl.textContent = css;
     document.head.appendChild(styleEl);
   })();
+
+  function clearAnimClasses() {
+    wrap.classList.remove("sf-out-fwd", "sf-out-back", "sf-in-fwd", "sf-in-back");
+  }
 
   // ---------- link eligibility ----------
   function isEligibleLink(a) {
@@ -154,8 +162,8 @@
     var pushHistory = opts.pushHistory !== false;
     var hash = opts.hash || "";
 
-    if (busy) return;
-    busy = true;
+    navId++;
+    var myId = navId; // this navigation's own id — any older in-flight work checks against navId and bails
     lastReverse = reverseMotion;
 
     if (!isBack) {
@@ -169,22 +177,21 @@
     var fetchPromise = fetchPage(fetchUrl);
 
     function finish(html) {
-      applySwap(html, fullUrl, reverseMotion, pushHistory, hash, opts.restoreScroll);
+      if (myId !== navId) return; // a newer navigation already took over — drop this stale one
+      applySwap(html, fullUrl, reverseMotion, pushHistory, hash, opts.restoreScroll, myId);
     }
 
     if (reduceMotion) {
-      fetchPromise
-        .then(function (html) {
-          finish(html);
-          busy = false;
-        })
-        .catch(function () {
-          window.location.href = fullUrl;
-        });
+      fetchPromise.then(finish).catch(function () {
+        if (myId === navId) window.location.href = fullUrl;
+      });
       return;
     }
 
-    wrap.classList.remove("sf-in-fwd", "sf-in-back");
+    // always start from a clean slate — clears any stuck transform from an
+    // interrupted previous transition before starting the new one
+    clearAnimClasses();
+    void wrap.offsetWidth;
     wrap.classList.add(reverseMotion ? "sf-out-back" : "sf-out-fwd");
 
     Promise.all([fetchPromise, waitAnimEnd(wrap)])
@@ -192,11 +199,13 @@
         finish(res[0]);
       })
       .catch(function () {
-        window.location.href = fullUrl;
+        if (myId === navId) window.location.href = fullUrl;
       });
   }
 
-  function applySwap(html, fullUrl, reverseMotion, pushHistory, hash, restoreScroll) {
+  function applySwap(html, fullUrl, reverseMotion, pushHistory, hash, restoreScroll, myId) {
+    if (myId !== navId) return; // stale — a newer navigation is already in progress
+
     var extracted = extractWrap(html);
     if (!extracted.wrapHTML) {
       // destination page hasn't been upgraded with #page-wrap yet — fall back safely
@@ -204,7 +213,7 @@
       return;
     }
 
-    wrap.classList.remove("sf-out-fwd", "sf-out-back");
+    clearAnimClasses();
     wrap.innerHTML = extracted.wrapHTML;
     document.title = extracted.title;
     runInlineScripts(wrap);
@@ -234,21 +243,22 @@
     trackPageview();
 
     if (reduceMotion) {
-      busy = false;
       prefetchVisibleLinks();
       return;
     }
 
     void wrap.offsetWidth; // force reflow so the enter animation restarts cleanly
     wrap.classList.add(reverseMotion ? "sf-in-back" : "sf-in-fwd");
-    wrap.addEventListener("animationend", function handler() {
+
+    var cleaned = false;
+    function cleanup() {
+      if (cleaned || myId !== navId) return; // don't wipe a newer transition's classes
+      cleaned = true;
       wrap.classList.remove("sf-in-fwd", "sf-in-back");
-      wrap.removeEventListener("animationend", handler);
-      busy = false;
-    });
-    setTimeout(function () {
-      busy = false;
-    }, DUR_IN + 150);
+      wrap.removeEventListener("animationend", cleanup);
+    }
+    wrap.addEventListener("animationend", cleanup);
+    setTimeout(cleanup, DUR_IN + 150); // guaranteed cleanup even if animationend never fires
 
     prefetchVisibleLinks();
   }
