@@ -3,12 +3,15 @@
 //
 // Intercepts internal navigation, fetches the destination page
 // in the background, and swaps #page-wrap's content with a
-// restrained, cinematic motion sequence — no reload flash, no
-// loading-screen feeling. Falls back to a normal page load for
-// any page that hasn't been upgraded yet (no #page-wrap found),
-// or for anything outside its scope (external links, downloads,
-// target=_blank, reduced-motion users skip the animation but
-// still get the flash-free swap).
+// restrained, cinematic horizontal slide — the outgoing page
+// slides fully off-screen, then the incoming page slides in
+// from the opposite edge. Direction is decided by where the
+// user tapped (left half vs right half), so it never feels
+// like one fixed, repetitive motion. Falls back to a normal
+// page load for any page that hasn't been upgraded yet (no
+// #page-wrap found), or for anything outside its scope
+// (external links, downloads, target=_blank). Reduced-motion
+// users skip the animation but still get the flash-free swap.
 // ============================================================
 
 (function () {
@@ -18,28 +21,32 @@
   var wrap = document.getElementById("page-wrap");
   if (!wrap) return; // this page hasn't been upgraded — do nothing, normal links work as-is
 
-  var DUR_OUT = 300;
-  var DUR_IN = 420;
+  var DUR_OUT = 320;
+  var DUR_IN = 460;
   var cache = Object.create(null);
   var busy = false;
+  var lastReverse = false; // remembers which way the last transition moved
 
   // ---------- inject transition + pulse styles once ----------
   (function injectStyles() {
     var css =
-      "#page-wrap{display:block;}" +
+      "body{overflow-x:hidden;}" +
+      "#page-wrap{display:block;will-change:transform;}" +
       ".sf-pulse{position:fixed;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;" +
       "background:radial-gradient(circle, rgba(232,199,102,0.5), rgba(232,199,102,0) 72%);" +
       "pointer-events:none;z-index:9999;transform:scale(0.4);opacity:0.85;" +
       "animation:sfPulseOut .6s cubic-bezier(.22,1,.36,1) forwards;}" +
       "@keyframes sfPulseOut{to{transform:scale(3.4);opacity:0;}}" +
+      /* "fwd" = whole canvas sweeps LEFTWARD (used when tap lands on the right half) */
       ".sf-out-fwd{animation:sfOutFwd " + DUR_OUT + "ms cubic-bezier(.55,0,.35,1) forwards;}" +
       ".sf-in-fwd{animation:sfInFwd " + DUR_IN + "ms cubic-bezier(.16,1,.3,1) forwards;}" +
+      /* "back" = whole canvas sweeps RIGHTWARD (used when tap lands on the left half, or real browser-back) */
       ".sf-out-back{animation:sfOutBack " + DUR_OUT + "ms cubic-bezier(.55,0,.35,1) forwards;}" +
       ".sf-in-back{animation:sfInBack " + DUR_IN + "ms cubic-bezier(.16,1,.3,1) forwards;}" +
-      "@keyframes sfOutFwd{to{opacity:0;transform:translateY(-16px) scale(.985);}}" +
-      "@keyframes sfInFwd{from{opacity:0;transform:translateY(20px) scale(.99);}to{opacity:1;transform:translateY(0) scale(1);}}" +
-      "@keyframes sfOutBack{to{opacity:0;transform:translateY(16px) scale(.985);}}" +
-      "@keyframes sfInBack{from{opacity:0;transform:translateY(-20px) scale(.99);}to{opacity:1;transform:translateY(0) scale(1);}}" +
+      "@keyframes sfOutFwd{to{transform:translateX(-100%);}}" +
+      "@keyframes sfInFwd{from{transform:translateX(100%);}to{transform:translateX(0);}}" +
+      "@keyframes sfOutBack{to{transform:translateX(100%);}}" +
+      "@keyframes sfInBack{from{transform:translateX(-100%);}to{transform:translateX(0);}}" +
       "@media (prefers-reduced-motion: reduce){.sf-pulse{display:none;}}";
     var styleEl = document.createElement("style");
     styleEl.textContent = css;
@@ -142,12 +149,14 @@
   // ---------- core navigate/apply ----------
   function navigate(fetchUrl, fullUrl, opts) {
     opts = opts || {};
-    var isBack = !!opts.isBack;
+    var isBack = !!opts.isBack; // true only for real browser back/forward
+    var reverseMotion = !!opts.reverseMotion; // true = canvas sweeps rightward
     var pushHistory = opts.pushHistory !== false;
     var hash = opts.hash || "";
 
     if (busy) return;
     busy = true;
+    lastReverse = reverseMotion;
 
     if (!isBack) {
       window.history.replaceState(
@@ -160,7 +169,7 @@
     var fetchPromise = fetchPage(fetchUrl);
 
     function finish(html) {
-      applySwap(html, fullUrl, isBack, pushHistory, hash, opts.restoreScroll);
+      applySwap(html, fullUrl, reverseMotion, pushHistory, hash, opts.restoreScroll);
     }
 
     if (reduceMotion) {
@@ -176,7 +185,7 @@
     }
 
     wrap.classList.remove("sf-in-fwd", "sf-in-back");
-    wrap.classList.add(isBack ? "sf-out-back" : "sf-out-fwd");
+    wrap.classList.add(reverseMotion ? "sf-out-back" : "sf-out-fwd");
 
     Promise.all([fetchPromise, waitAnimEnd(wrap)])
       .then(function (res) {
@@ -187,7 +196,7 @@
       });
   }
 
-  function applySwap(html, fullUrl, isBack, pushHistory, hash, restoreScroll) {
+  function applySwap(html, fullUrl, reverseMotion, pushHistory, hash, restoreScroll) {
     var extracted = extractWrap(html);
     if (!extracted.wrapHTML) {
       // destination page hasn't been upgraded with #page-wrap yet — fall back safely
@@ -231,7 +240,7 @@
     }
 
     void wrap.offsetWidth; // force reflow so the enter animation restarts cleanly
-    wrap.classList.add(isBack ? "sf-in-back" : "sf-in-fwd");
+    wrap.classList.add(reverseMotion ? "sf-in-back" : "sf-in-fwd");
     wrap.addEventListener("animationend", function handler() {
       wrap.classList.remove("sf-in-fwd", "sf-in-back");
       wrap.removeEventListener("animationend", handler);
@@ -274,9 +283,14 @@
       var fetchKey = url.origin + url.pathname + url.search;
       var fullUrl = url.href;
 
+      // direction comes from where the tap landed: left half → sweep right, right half → sweep left
+      var x = typeof e.clientX === "number" ? e.clientX : window.innerWidth / 2;
+      var y = typeof e.clientY === "number" ? e.clientY : window.innerHeight / 2;
+      var reverseMotion = x < window.innerWidth / 2;
+
       e.preventDefault();
-      spawnPulse(e.clientX, e.clientY);
-      navigate(fetchKey, fullUrl, { isBack: false, hash: url.hash });
+      spawnPulse(x, y);
+      navigate(fetchKey, fullUrl, { isBack: false, reverseMotion: reverseMotion, hash: url.hash });
     },
     true
   );
@@ -291,6 +305,7 @@
       pushHistory: false,
       restoreScroll: restoreScroll,
       hash: url.hash,
+      reverseMotion: !lastReverse, // retrace the motion in the opposite direction
     });
   });
 
