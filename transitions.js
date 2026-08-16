@@ -7,15 +7,21 @@
 // slides fully off-screen, then the incoming page slides in
 // from the opposite edge. Direction is decided by where the
 // user tapped (left half vs right half). Real browser back/
-// forward is handled the same way, and never gets silently
+// forward is handled the same way and never gets silently
 // dropped — every navigation gets its own "generation id" so a
 // stale in-flight transition can never leave the page stuck
-// mid-transform (which is what caused the crooked/blank-screen
-// bug on back navigation). Falls back to a normal page load for
-// any page that hasn't been upgraded yet (no #page-wrap found),
-// or for anything outside its scope (external links, downloads,
-// target=_blank). Reduced-motion users skip the animation but
-// still get the flash-free swap.
+// mid-transform.
+//
+// Pages that don't have #page-wrap yet (not upgraded) are left
+// alone entirely, and any navigation that fails to find
+// #page-wrap on the destination page safely falls back to a
+// real browser navigation — but always resets the outgoing
+// page's transform first, so if the browser's back-forward
+// cache (bfcache) freezes this page for later, it freezes it
+// in its normal resting state, not mid-slide. A pageshow safety
+// net does the same cleanup if a stuck state ever gets restored
+// from bfcache anyway. This is what caused the black screen on
+// hardware/gesture back button.
 // ============================================================
 
 (function () {
@@ -59,7 +65,16 @@
 
   function clearAnimClasses() {
     wrap.classList.remove("sf-out-fwd", "sf-out-back", "sf-in-fwd", "sf-in-back");
+    wrap.style.transform = ""; // belt-and-suspenders: kill any leftover inline transform too
   }
+
+  // if this page is ever restored from the browser's bfcache, make sure it's
+  // not frozen mid-transition — this is the actual fix for the black screen
+  window.addEventListener("pageshow", function (e) {
+    if (e.persisted) {
+      clearAnimClasses();
+    }
+  });
 
   // ---------- link eligibility ----------
   function isEligibleLink(a) {
@@ -154,6 +169,13 @@
     }
   }
 
+  // falls back to a real navigation — always resetting this page's transform
+  // first so a bfcache snapshot (if the browser makes one) is clean
+  function realNavigate(fullUrl) {
+    clearAnimClasses();
+    window.location.href = fullUrl;
+  }
+
   // ---------- core navigate/apply ----------
   function navigate(fetchUrl, fullUrl, opts) {
     opts = opts || {};
@@ -183,7 +205,7 @@
 
     if (reduceMotion) {
       fetchPromise.then(finish).catch(function () {
-        if (myId === navId) window.location.href = fullUrl;
+        if (myId === navId) realNavigate(fullUrl);
       });
       return;
     }
@@ -199,7 +221,7 @@
         finish(res[0]);
       })
       .catch(function () {
-        if (myId === navId) window.location.href = fullUrl;
+        if (myId === navId) realNavigate(fullUrl);
       });
   }
 
@@ -209,7 +231,7 @@
     var extracted = extractWrap(html);
     if (!extracted.wrapHTML) {
       // destination page hasn't been upgraded with #page-wrap yet — fall back safely
-      window.location.href = fullUrl;
+      realNavigate(fullUrl);
       return;
     }
 
