@@ -110,7 +110,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="page-wrap">
     <section class="hero" style="padding-top:90px; padding-bottom:40px;">
       <p class="eyebrow center reveal"><a href="india.html" style="color:inherit;">← FOR INDIA</a></p>
       <h1 class="hero-title" style="font-size:clamp(2rem, 5vw, 3.2rem);">Fashion Finds</h1>
@@ -129,6 +129,65 @@
         <a href="https://pin.it/4OG3bUqMz" class="btn btn-primary" target="_blank" rel="noopener">Follow on Pinterest</a>
       </div>
     </section>
+
+    <script>
+    (function () {
+      var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+
+      function ensureSupabaseLib(callback) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          callback();
+          return;
+        }
+        var existing = document.querySelector('script[data-supabase-lib]');
+        if (existing) {
+          existing.addEventListener('load', callback, { once: true });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.setAttribute('data-supabase-lib', 'true');
+        s.onload = callback;
+        document.head.appendChild(s);
+      }
+
+      async function loadProducts() {
+        var grid = document.getElementById('productGrid');
+        if (!grid) return;
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        var res = await sb
+          .from('products')
+          .select('*')
+          .eq('category', 'fashion-finds')
+          .eq('region', 'india')
+          .eq('active', true)
+          .order('created_at', { ascending: true });
+
+        var data = res.data, error = res.error;
+
+        if (error) {
+          grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+          return;
+        }
+        if (!data || data.length === 0) {
+          grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+          return;
+        }
+
+        grid.innerHTML = data.map(function (p) {
+          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+            '<div class="product-body"><span class="product-tag">Fashion Finds</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+          '</a>';
+        }).join('');
+      }
+
+      var grid0 = document.getElementById('productGrid');
+      if (grid0) grid0.innerHTML = '<p class="state-msg">Loading products...</p>';
+      ensureSupabaseLib(loadProducts);
+    })();
+    </script>
   </main>
 
   <footer class="footer">
@@ -158,47 +217,6 @@
   </footer>
 
   <script src="script.js"></script>
-  <script>
-    const SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function loadProducts() {
-      const grid = document.getElementById('productGrid');
-      const { data, error } = await sb
-        .from('products')
-        .select('*')
-        .eq('category', 'fashion-finds')
-        .eq('region', 'india')
-        .eq('active', true)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
-        return;
-      }
-
-      grid.innerHTML = data.map(p => `
-        <a href="${p.affiliate_link}" class="product-card" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="${p.image_url || ''}" alt="${p.title}" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Fashion Finds</span>
-            <h3>${p.title}</h3>
-            <p>${p.description || ''}</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-      `).join('');
-    }
-
-    loadProducts();
-  </script>
+  <script src="transitions.js"></script>
 </body>
 </html>
