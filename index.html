@@ -243,8 +243,7 @@
   </div>
   <div class="grain"></div>
 
-  <div id="page-wrap">
-  <!-- ================= NAV ================= -->
+  <!-- ================= NAV (persistent — outside #page-wrap, never swapped) ================= -->
   <header class="nav" id="nav">
     <div class="nav-inner">
       <a href="index.html" class="logo"><img src="assets/images/spoider-logo-vector.svg" alt="Spoider Finds" class="logo-img">Spoider<span class="logo-accent">Finds</span></a>
@@ -273,7 +272,7 @@
     <path id="threadPath" d="M2,0 L2,3000" />
   </svg>
 
-  <main>
+  <main id="page-wrap">
     <!-- ================= HERO ================= -->
     <section class="hero">
       <div class="aurora" aria-hidden="true">
@@ -520,9 +519,429 @@
         <a href="https://pin.it/4OG3bUqMz" class="btn btn-primary" target="_blank" rel="noopener">Follow on Pinterest</a>
       </div>
     </section>
+
+    <script>
+    (function () {
+      var canvas = document.getElementById('webCanvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var hero = canvas.closest('.hero');
+      var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var nodes = [];
+      var spokes = [];
+      var edges = [];
+      var shimmers = [];
+      var centerNode = { x: 0, y: 0 };
+      var pointer = { x: -9999, y: -9999, active: false };
+      var running = false;
+      var rafId = null;
+      var lastFrame = 0;
+      var FRAME_INTERVAL = 1000 / 30;
+
+      var isSmall = window.matchMedia('(max-width: 600px)').matches;
+      var SPOKE_COUNT = isSmall ? 10 : 15;
+      var RING_COUNT = isSmall ? 5 : 7;
+      var TOUCH_RADIUS = isSmall ? 110 : 150;
+      var MAX_SHIMMERS = isSmall ? 1 : 2;
+      var pulseT = 0;
+
+      var prevW = 0;
+      var resizeTimer = null;
+
+      function resize() {
+        var rect = hero.getBoundingClientRect();
+        var newW = rect.width;
+        var newH = rect.height;
+        var widthChanged = Math.abs(newW - prevW) > 2;
+
+        w = newW;
+        h = newH;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        if (widthChanged || nodes.length === 0) {
+          seedNodes();
+        }
+        prevW = newW;
+      }
+
+      function onWindowResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resize, 120);
+      }
+
+      function seedNodes() {
+        nodes = [];
+        spokes = [];
+        edges = [];
+        shimmers = [];
+        var cx = w / 2;
+        var cy = h * 0.42;
+        var radiusX = Math.min(w, h) * 0.44;
+        var radiusY = radiusX;
+
+        centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
+
+        var spokeAngles = [];
+        for (var s = 0; s < SPOKE_COUNT; s++) {
+          var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
+          spokeAngles.push(angle);
+          var ring = [];
+          for (var r = 1; r <= RING_COUNT; r++) {
+            var frac = r / RING_COUNT;
+            var jitter = 1 + (Math.random() - 0.5) * 0.02;
+            var rx = radiusX * frac * jitter;
+            var ry = radiusY * frac * jitter;
+            var x = cx + Math.cos(angle) * rx;
+            var y = cy + Math.sin(angle) * ry;
+            var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * Math.PI * 2 };
+            nodes.push(node);
+            ring.push(node);
+          }
+          spokes.push(ring);
+        }
+
+        for (var s2 = 0; s2 < spokes.length; s2++) {
+          var ring2 = spokes[s2];
+          edges.push({ a: centerNode, b: ring2[0], sag: 0.05, seed: Math.random() * 10 });
+          for (var r2 = 0; r2 < ring2.length - 1; r2++) {
+            edges.push({ a: ring2[r2], b: ring2[r2 + 1], sag: 0.05, seed: Math.random() * 10 });
+          }
+        }
+        for (var r3 = 0; r3 < RING_COUNT; r3++) {
+          for (var s3 = 0; s3 < spokes.length; s3++) {
+            var a3 = spokes[s3][r3];
+            var b3 = spokes[(s3 + 1) % spokes.length][r3];
+            if (a3 && b3) edges.push({ a: a3, b: b3, sag: 0.09, seed: Math.random() * 10, isRing: true });
+          }
+        }
+
+        var anchorEvery = 3;
+        for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
+          var outerNode = spokes[sa][spokes[sa].length - 1];
+          var aAngle = spokeAngles[sa];
+          var anchorPt = rayToRectEdge(cx, cy, aAngle, w, h, 4);
+          var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
+          edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
+        }
+
+        var topIdx = 0, topDiff = Infinity;
+        for (var ti = 0; ti < spokeAngles.length; ti++) {
+          var norm = ((spokeAngles[ti] % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+          var diff = Math.abs(norm - Math.PI * 1.5);
+          diff = Math.min(diff, Math.PI * 2 - diff);
+          if (diff < topDiff) { topDiff = diff; topIdx = ti; }
+        }
+        var topOuter = spokes[topIdx][spokes[topIdx].length - 1];
+        var topAnchorPt = rayToRectEdge(cx, cy, spokeAngles[topIdx], w, h, 4);
+        var topAnchorNode = { x: topAnchorPt.x, y: topAnchorPt.y, ox: topAnchorPt.x, oy: topAnchorPt.y, vx: 0, vy: 0 };
+        edges.push({ a: topOuter, b: topAnchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
+      }
+
+      function rayToRectEdge(cx, cy, angle, w, h, pad) {
+        var dx = Math.cos(angle), dy = Math.sin(angle);
+        var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
+        var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
+        var t = Math.min(tX, tY);
+        return { x: cx + dx * t, y: cy + dy * t };
+      }
+
+      function spawnShimmer() {
+        if (!edges.length || shimmers.length >= MAX_SHIMMERS) return;
+        var edge = edges[Math.floor(Math.random() * edges.length)];
+        shimmers.push({ edge: edge, t: 0, speed: 0.008 + Math.random() * 0.006, reverse: Math.random() < 0.5 });
+      }
+
+      function curvePoint(a, b, sag, seed, t) {
+        var mx = (a.x + b.x) / 2;
+        var my = (a.y + b.y) / 2;
+        var dx = b.x - a.x, dy = b.y - a.y;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var nx = -dy / dist, ny = dx / dist;
+        var wobble = Math.sin(pulseT * 0.5 + seed) * 0.5 + 0.5;
+        var offset = dist * sag * wobble;
+        var cxp = mx + nx * offset;
+        var cyp = my + ny * offset;
+        var it = 1 - t;
+        var x = it * it * a.x + 2 * it * t * cxp + t * t * b.x;
+        var y = it * it * a.y + 2 * it * t * cyp + t * t * b.y;
+        return { x: x, y: y, ctrlX: cxp, ctrlY: cyp };
+      }
+
+      function step(node) {
+        var dxHome = node.ox - node.x;
+        var dyHome = node.oy - node.y;
+        node.vx += dxHome * 0.004;
+        node.vy += dyHome * 0.004;
+
+        node.vx += Math.sin(pulseT * 0.4 + node.seed) * 0.025;
+        node.vy += Math.cos(pulseT * 0.4 + node.seed * 1.3) * 0.025;
+
+        if (pointer.active) {
+          var dx = node.x - pointer.x;
+          var dy = node.y - pointer.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < TOUCH_RADIUS && dist > 0.01) {
+            var force = (1 - dist / TOUCH_RADIUS) * 2.2;
+            node.vx += (dx / dist) * force;
+            node.vy += (dy / dist) * force;
+          }
+        }
+
+        node.vx *= 0.9;
+        node.vy *= 0.9;
+        node.x += node.vx;
+        node.y += node.vy;
+      }
+
+      function drawEdge(edge, alpha) {
+        var a = edge.a, b = edge.b;
+        var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        var dx = b.x - a.x, dy = b.y - a.y;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var nx = -dy / dist, ny = dx / dist;
+        var wobble = Math.sin(pulseT * 0.5 + edge.seed) * 0.5 + 0.5;
+        var offset = dist * edge.sag * wobble;
+        var cxp = mx + nx * offset, cyp = my + ny * offset;
+
+        ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
+        ctx.stroke();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        ctx.lineWidth = 1;
+        pulseT += 0.02;
+        var pulse = 0.75 + Math.sin(pulseT) * 0.25;
+        var baseAlpha = 0.5 * pulse;
+
+        for (var i = 0; i < nodes.length; i++) {
+          step(nodes[i]);
+        }
+
+        for (var e = 0; e < edges.length; e++) {
+          var edge = edges[e];
+          var edgeAlpha = edge.isAnchor ? baseAlpha * 0.45 : (edge.isRing ? baseAlpha * 0.75 : baseAlpha);
+          drawEdge(edge, edgeAlpha);
+        }
+
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        if (Math.random() < 0.02) spawnShimmer();
+        for (var si = shimmers.length - 1; si >= 0; si--) {
+          var sh = shimmers[si];
+          sh.t += sh.speed;
+          if (sh.t >= 1) { shimmers.splice(si, 1); continue; }
+          var tt = sh.reverse ? 1 - sh.t : sh.t;
+          var pos = curvePoint(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, tt);
+          var fade = Math.sin(sh.t * Math.PI);
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,240,200,' + (0.15 * fade).toFixed(3) + ')';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, 1.6, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,247,225,' + (0.9 * fade).toFixed(3) + ')';
+          ctx.fill();
+        }
+      }
+
+      function loop(ts) {
+        if (!running) return;
+        if (ts - lastFrame >= FRAME_INTERVAL) {
+          lastFrame = ts;
+          draw();
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function start() {
+        if (running) return;
+        running = true;
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function stop() {
+        running = false;
+        if (rafId) cancelAnimationFrame(rafId);
+      }
+
+      function setPointer(x, y, active) {
+        var rect = canvas.getBoundingClientRect();
+        pointer.x = x - rect.left;
+        pointer.y = y - rect.top;
+        pointer.active = active;
+      }
+
+      canvas.addEventListener('pointermove', function (e) {
+        setPointer(e.clientX, e.clientY, true);
+      }, { passive: true });
+
+      canvas.addEventListener('pointerleave', function () {
+        pointer.active = false;
+      }, { passive: true });
+
+      canvas.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches[0]) {
+          setPointer(e.touches[0].clientX, e.touches[0].clientY, true);
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchend', function () {
+        pointer.active = false;
+      }, { passive: true });
+
+      window.addEventListener('resize', onWindowResize);
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) start(); else stop();
+          });
+        }, { threshold: 0.05 });
+        io.observe(hero);
+      } else {
+        start();
+      }
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop(); else if (hero.getBoundingClientRect().top < window.innerHeight) start();
+      });
+
+      resize();
+    })();
+    </script>
+
+    <script>
+    (function () {
+      var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
+      if (!cards.length) return;
+
+      var MIN_SCALE = 0.82;
+      var MAX_SCALE = 1;
+      var active = new Set();
+      var ticking = false;
+      var lastScrollY = -1;
+
+      cards.forEach(function (card) {
+        card.style.transformOrigin = '50% 65%';
+        card.style.willChange = 'transform';
+        card.style.transitionProperty = 'opacity';
+      });
+
+      function smoothstep(t) {
+        t = Math.max(0, Math.min(1, t));
+        return t * t * (3 - 2 * t);
+      }
+
+      function updateCard(card) {
+        var rect = card.getBoundingClientRect();
+        var vh = window.innerHeight;
+        var start = vh;
+        var end = vh * 0.62;
+        var raw = (start - rect.top) / (start - end);
+        var p = smoothstep(raw);
+        var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
+        card.style.transform = 'scale(' + scale.toFixed(3) + ')';
+      }
+
+      function onFrame() {
+        ticking = false;
+        if (window.scrollY === lastScrollY) return;
+        lastScrollY = window.scrollY;
+        active.forEach(updateCard);
+      }
+
+      function requestTick() {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(onFrame);
+        }
+      }
+
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              active.add(entry.target);
+              updateCard(entry.target);
+            } else {
+              active.delete(entry.target);
+            }
+          });
+        }, { rootMargin: '25% 0px 25% 0px', threshold: 0 });
+
+        cards.forEach(function (card) { io.observe(card); });
+      } else {
+        cards.forEach(function (card) { active.add(card); });
+      }
+
+      window.addEventListener('scroll', requestTick, { passive: true });
+      window.addEventListener('resize', requestTick);
+      requestTick();
+    })();
+    </script>
+    <script>
+    (function () {
+      var mark = document.querySelector('.hero-mark-inner');
+      var hero = document.querySelector('.hero');
+      if (!mark || !hero) return;
+
+      /* Scroll fade — logo softly fades, shrinks and drifts up as you scroll past the hero */
+      var ticking = false;
+      function updateScrollFade() {
+        ticking = false;
+        var rect = hero.getBoundingClientRect();
+        var fadeRange = hero.offsetHeight * 0.5;
+        var scrolled = Math.min(Math.max(-rect.top, 0), fadeRange);
+        var progress = fadeRange > 0 ? scrolled / fadeRange : 0;
+        mark.style.opacity = (1 - progress).toFixed(3);
+        mark.style.transform = 'translateY(' + (-progress * 14).toFixed(1) + 'px) scale(' + (1 - progress * 0.1).toFixed(3) + ')';
+      }
+      function onScroll() {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(updateScrollFade);
+        }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      updateScrollFade();
+
+      /* Tap interaction — a soft gold ring burst + brief bright flash */
+      var ring = mark.querySelector('.hero-mark-tap-ring');
+      var img = mark.querySelector('.hero-mark-img');
+      var flashTimer = null;
+      function burst() {
+        if (!ring || !img) return;
+        ring.classList.remove('burst');
+        img.classList.remove('flash');
+        void ring.offsetWidth;
+        ring.classList.add('burst');
+        img.classList.add('flash');
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(function () {
+          ring.classList.remove('burst');
+          img.classList.remove('flash');
+        }, 800);
+      }
+      mark.addEventListener('click', burst);
+    })();
+    </script>
   </main>
 
-  <!-- ================= FOOTER ================= -->
+  <!-- ================= FOOTER (persistent — outside #page-wrap, never swapped) ================= -->
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-brand">
@@ -548,427 +967,6 @@
     </div>
     <p class="footer-signature">Founder <span class="gold-text">~</span> Spoider</p>
   </footer>
-
-  <script>
-  (function () {
-    var canvas = document.getElementById('webCanvas');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var hero = canvas.closest('.hero');
-    var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var nodes = [];
-    var spokes = [];
-    var edges = [];
-    var shimmers = [];
-    var centerNode = { x: 0, y: 0 };
-    var pointer = { x: -9999, y: -9999, active: false };
-    var running = false;
-    var rafId = null;
-    var lastFrame = 0;
-    var FRAME_INTERVAL = 1000 / 30;
-
-    var isSmall = window.matchMedia('(max-width: 600px)').matches;
-    var SPOKE_COUNT = isSmall ? 10 : 15;
-    var RING_COUNT = isSmall ? 5 : 7;
-    var TOUCH_RADIUS = isSmall ? 110 : 150;
-    var MAX_SHIMMERS = isSmall ? 1 : 2;
-    var pulseT = 0;
-
-    var prevW = 0;
-    var resizeTimer = null;
-
-    function resize() {
-      var rect = hero.getBoundingClientRect();
-      var newW = rect.width;
-      var newH = rect.height;
-      var widthChanged = Math.abs(newW - prevW) > 2;
-
-      w = newW;
-      h = newH;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      if (widthChanged || nodes.length === 0) {
-        seedNodes();
-      }
-      prevW = newW;
-    }
-
-    function onWindowResize() {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(resize, 120);
-    }
-
-    function seedNodes() {
-      nodes = [];
-      spokes = [];
-      edges = [];
-      shimmers = [];
-      var cx = w / 2;
-      var cy = h * 0.42;
-      var radiusX = Math.min(w, h) * 0.44;
-      var radiusY = radiusX;
-
-      centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
-
-      var spokeAngles = [];
-      for (var s = 0; s < SPOKE_COUNT; s++) {
-        var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
-        spokeAngles.push(angle);
-        var ring = [];
-        for (var r = 1; r <= RING_COUNT; r++) {
-          var frac = r / RING_COUNT;
-          var jitter = 1 + (Math.random() - 0.5) * 0.02;
-          var rx = radiusX * frac * jitter;
-          var ry = radiusY * frac * jitter;
-          var x = cx + Math.cos(angle) * rx;
-          var y = cy + Math.sin(angle) * ry;
-          var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * Math.PI * 2 };
-          nodes.push(node);
-          ring.push(node);
-        }
-        spokes.push(ring);
-      }
-
-      for (var s2 = 0; s2 < spokes.length; s2++) {
-        var ring2 = spokes[s2];
-        edges.push({ a: centerNode, b: ring2[0], sag: 0.05, seed: Math.random() * 10 });
-        for (var r2 = 0; r2 < ring2.length - 1; r2++) {
-          edges.push({ a: ring2[r2], b: ring2[r2 + 1], sag: 0.05, seed: Math.random() * 10 });
-        }
-      }
-      for (var r3 = 0; r3 < RING_COUNT; r3++) {
-        for (var s3 = 0; s3 < spokes.length; s3++) {
-          var a3 = spokes[s3][r3];
-          var b3 = spokes[(s3 + 1) % spokes.length][r3];
-          if (a3 && b3) edges.push({ a: a3, b: b3, sag: 0.09, seed: Math.random() * 10, isRing: true });
-        }
-      }
-
-      var anchorEvery = 3;
-      for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
-        var outerNode = spokes[sa][spokes[sa].length - 1];
-        var aAngle = spokeAngles[sa];
-        var anchorPt = rayToRectEdge(cx, cy, aAngle, w, h, 4);
-        var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
-        edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
-      }
-
-      var topIdx = 0, topDiff = Infinity;
-      for (var ti = 0; ti < spokeAngles.length; ti++) {
-        var norm = ((spokeAngles[ti] % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-        var diff = Math.abs(norm - Math.PI * 1.5);
-        diff = Math.min(diff, Math.PI * 2 - diff);
-        if (diff < topDiff) { topDiff = diff; topIdx = ti; }
-      }
-      var topOuter = spokes[topIdx][spokes[topIdx].length - 1];
-      var topAnchorPt = rayToRectEdge(cx, cy, spokeAngles[topIdx], w, h, 4);
-      var topAnchorNode = { x: topAnchorPt.x, y: topAnchorPt.y, ox: topAnchorPt.x, oy: topAnchorPt.y, vx: 0, vy: 0 };
-      edges.push({ a: topOuter, b: topAnchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
-    }
-
-    function rayToRectEdge(cx, cy, angle, w, h, pad) {
-      var dx = Math.cos(angle), dy = Math.sin(angle);
-      var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
-      var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
-      var t = Math.min(tX, tY);
-      return { x: cx + dx * t, y: cy + dy * t };
-    }
-
-    function spawnShimmer() {
-      if (!edges.length || shimmers.length >= MAX_SHIMMERS) return;
-      var edge = edges[Math.floor(Math.random() * edges.length)];
-      shimmers.push({ edge: edge, t: 0, speed: 0.008 + Math.random() * 0.006, reverse: Math.random() < 0.5 });
-    }
-
-    function curvePoint(a, b, sag, seed, t) {
-      var mx = (a.x + b.x) / 2;
-      var my = (a.y + b.y) / 2;
-      var dx = b.x - a.x, dy = b.y - a.y;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      var nx = -dy / dist, ny = dx / dist;
-      var wobble = Math.sin(pulseT * 0.5 + seed) * 0.5 + 0.5;
-      var offset = dist * sag * wobble;
-      var cxp = mx + nx * offset;
-      var cyp = my + ny * offset;
-      var it = 1 - t;
-      var x = it * it * a.x + 2 * it * t * cxp + t * t * b.x;
-      var y = it * it * a.y + 2 * it * t * cyp + t * t * b.y;
-      return { x: x, y: y, ctrlX: cxp, ctrlY: cyp };
-    }
-
-    function step(node) {
-      var dxHome = node.ox - node.x;
-      var dyHome = node.oy - node.y;
-      node.vx += dxHome * 0.004;
-      node.vy += dyHome * 0.004;
-
-      node.vx += Math.sin(pulseT * 0.4 + node.seed) * 0.025;
-      node.vy += Math.cos(pulseT * 0.4 + node.seed * 1.3) * 0.025;
-
-      if (pointer.active) {
-        var dx = node.x - pointer.x;
-        var dy = node.y - pointer.y;
-        var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < TOUCH_RADIUS && dist > 0.01) {
-          var force = (1 - dist / TOUCH_RADIUS) * 2.2;
-          node.vx += (dx / dist) * force;
-          node.vy += (dy / dist) * force;
-        }
-      }
-
-      node.vx *= 0.9;
-      node.vy *= 0.9;
-      node.x += node.vx;
-      node.y += node.vy;
-    }
-
-    function drawEdge(edge, alpha) {
-      var a = edge.a, b = edge.b;
-      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      var dx = b.x - a.x, dy = b.y - a.y;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      var nx = -dy / dist, ny = dx / dist;
-      var wobble = Math.sin(pulseT * 0.5 + edge.seed) * 0.5 + 0.5;
-      var offset = dist * edge.sag * wobble;
-      var cxp = mx + nx * offset, cyp = my + ny * offset;
-
-      ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
-      ctx.stroke();
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, w, h);
-      ctx.lineWidth = 1;
-      pulseT += 0.02;
-      var pulse = 0.75 + Math.sin(pulseT) * 0.25;
-      var baseAlpha = 0.5 * pulse;
-
-      for (var i = 0; i < nodes.length; i++) {
-        step(nodes[i]);
-      }
-
-      for (var e = 0; e < edges.length; e++) {
-        var edge = edges[e];
-        var edgeAlpha = edge.isAnchor ? baseAlpha * 0.45 : (edge.isRing ? baseAlpha * 0.75 : baseAlpha);
-        drawEdge(edge, edgeAlpha);
-      }
-
-      for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i];
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
-        ctx.fill();
-      }
-
-      if (Math.random() < 0.02) spawnShimmer();
-      for (var si = shimmers.length - 1; si >= 0; si--) {
-        var sh = shimmers[si];
-        sh.t += sh.speed;
-        if (sh.t >= 1) { shimmers.splice(si, 1); continue; }
-        var tt = sh.reverse ? 1 - sh.t : sh.t;
-        var pos = curvePoint(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, tt);
-        var fade = Math.sin(sh.t * Math.PI);
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,240,200,' + (0.15 * fade).toFixed(3) + ')';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 1.6, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,247,225,' + (0.9 * fade).toFixed(3) + ')';
-        ctx.fill();
-      }
-    }
-
-    function loop(ts) {
-      if (!running) return;
-      if (ts - lastFrame >= FRAME_INTERVAL) {
-        lastFrame = ts;
-        draw();
-      }
-      rafId = requestAnimationFrame(loop);
-    }
-
-    function start() {
-      if (running) return;
-      running = true;
-      rafId = requestAnimationFrame(loop);
-    }
-
-    function stop() {
-      running = false;
-      if (rafId) cancelAnimationFrame(rafId);
-    }
-
-    function setPointer(x, y, active) {
-      var rect = canvas.getBoundingClientRect();
-      pointer.x = x - rect.left;
-      pointer.y = y - rect.top;
-      pointer.active = active;
-    }
-
-    canvas.addEventListener('pointermove', function (e) {
-      setPointer(e.clientX, e.clientY, true);
-    }, { passive: true });
-
-    canvas.addEventListener('pointerleave', function () {
-      pointer.active = false;
-    }, { passive: true });
-
-    canvas.addEventListener('touchmove', function (e) {
-      if (e.touches && e.touches[0]) {
-        setPointer(e.touches[0].clientX, e.touches[0].clientY, true);
-      }
-    }, { passive: true });
-
-    canvas.addEventListener('touchend', function () {
-      pointer.active = false;
-    }, { passive: true });
-
-    window.addEventListener('resize', onWindowResize);
-
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) start(); else stop();
-        });
-      }, { threshold: 0.05 });
-      io.observe(hero);
-    } else {
-      start();
-    }
-
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) stop(); else if (hero.getBoundingClientRect().top < window.innerHeight) start();
-    });
-
-    resize();
-  })();
-  </script>
-
-  <script>
-  (function () {
-    var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
-    if (!cards.length) return;
-
-    var MIN_SCALE = 0.82;
-    var MAX_SCALE = 1;
-    var active = new Set();
-    var ticking = false;
-    var lastScrollY = -1;
-
-    cards.forEach(function (card) {
-      card.style.transformOrigin = '50% 65%';
-      card.style.willChange = 'transform';
-      card.style.transitionProperty = 'opacity';
-    });
-
-    function smoothstep(t) {
-      t = Math.max(0, Math.min(1, t));
-      return t * t * (3 - 2 * t);
-    }
-
-    function updateCard(card) {
-      var rect = card.getBoundingClientRect();
-      var vh = window.innerHeight;
-      var start = vh;
-      var end = vh * 0.62;
-      var raw = (start - rect.top) / (start - end);
-      var p = smoothstep(raw);
-      var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
-      card.style.transform = 'scale(' + scale.toFixed(3) + ')';
-    }
-
-    function onFrame() {
-      ticking = false;
-      if (window.scrollY === lastScrollY) return;
-      lastScrollY = window.scrollY;
-      active.forEach(updateCard);
-    }
-
-    function requestTick() {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(onFrame);
-      }
-    }
-
-    if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            active.add(entry.target);
-            updateCard(entry.target);
-          } else {
-            active.delete(entry.target);
-          }
-        });
-      }, { rootMargin: '25% 0px 25% 0px', threshold: 0 });
-
-      cards.forEach(function (card) { io.observe(card); });
-    } else {
-      cards.forEach(function (card) { active.add(card); });
-    }
-
-    window.addEventListener('scroll', requestTick, { passive: true });
-    window.addEventListener('resize', requestTick);
-    requestTick();
-  })();
-  </script>
-  <script>
-  (function () {
-    var mark = document.querySelector('.hero-mark-inner');
-    var hero = document.querySelector('.hero');
-    if (!mark || !hero) return;
-
-    /* Scroll fade — logo softly fades, shrinks and drifts up as you scroll past the hero */
-    var ticking = false;
-    function updateScrollFade() {
-      ticking = false;
-      var rect = hero.getBoundingClientRect();
-      var fadeRange = hero.offsetHeight * 0.5;
-      var scrolled = Math.min(Math.max(-rect.top, 0), fadeRange);
-      var progress = fadeRange > 0 ? scrolled / fadeRange : 0;
-      mark.style.opacity = (1 - progress).toFixed(3);
-      mark.style.transform = 'translateY(' + (-progress * 14).toFixed(1) + 'px) scale(' + (1 - progress * 0.1).toFixed(3) + ')';
-    }
-    function onScroll() {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(updateScrollFade);
-      }
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    updateScrollFade();
-
-    /* Tap interaction — a soft gold ring burst + brief bright flash */
-    var ring = mark.querySelector('.hero-mark-tap-ring');
-    var img = mark.querySelector('.hero-mark-img');
-    var flashTimer = null;
-    function burst() {
-      if (!ring || !img) return;
-      ring.classList.remove('burst');
-      img.classList.remove('flash');
-      void ring.offsetWidth;
-      ring.classList.add('burst');
-      img.classList.add('flash');
-      clearTimeout(flashTimer);
-      flashTimer = setTimeout(function () {
-        ring.classList.remove('burst');
-        img.classList.remove('flash');
-      }, 800);
-    }
-    mark.addEventListener('click', burst);
-  })();
-  </script>
-  </div>
 
   <script src="script.js"></script>
   <script src="transitions.js"></script>
