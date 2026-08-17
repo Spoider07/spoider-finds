@@ -70,6 +70,36 @@
   .snap-reveal { opacity: 1; transform: none; transition: none; color: inherit; }
 }
 
+/* =========================================================
+   Split-reveal — unified typography motion system
+   Wraps each word (or preserved inline element, like <em> or
+   a colored <span>) in an overflow-hidden mask box. The word
+   slides up from below the mask, staggered word-by-word.
+   This is a whole-word transform animation only (no per-
+   character DOM, no opacity flicker, no layout thrash) — safe
+   and smooth on low-power devices. Two trigger modes:
+     - data-trigger="load"   → fires once, shortly after page load
+     - (default)              → fires once, on scroll into view
+   ========================================================= */
+.split-reveal .word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+.split-reveal .word-inner {
+  display: inline-block;
+  transform: translateY(115%);
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.split-reveal.is-visible .word-inner {
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .split-reveal .word-mask { overflow: visible; }
+  .split-reveal .word-inner { transform: none; transition: none; }
+}
+
 /* Hero entrance (plays once on load, not scroll-triggered) */
 .hero-enter {
   opacity: 0;
@@ -152,9 +182,10 @@ img { max-width: 100%; display: block; }
 .section-title {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
-  letter-spacing: -0.01em;
-  margin-bottom: 12px;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 14px;
 }
 .section-title.center { text-align: center; }
 
@@ -503,8 +534,8 @@ img { max-width: 100%; display: block; }
   font-family: var(--font-display);
   font-weight: 500;
   font-size: clamp(2.2rem, 6.5vw, 3.6rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   margin-bottom: 22px;
 }
 .hero-title em { font-style: italic; color: var(--text-secondary); }
@@ -697,7 +728,9 @@ img { max-width: 100%; display: block; }
    Starts slightly soft-focus, faded, and a touch larger, then
    settles into a still, sharp, in-focus state. Whole-element
    animation only (opacity/filter/transform), no per-character
-   JS — safe and smooth on Faraz's phone. */
+   JS — safe and smooth on Faraz's phone.
+   (Retained for other pages that still use it — index.html's
+   category title now uses .split-reveal instead.) */
 .crazy-title {
   filter: blur(10px);
   opacity: 0;
