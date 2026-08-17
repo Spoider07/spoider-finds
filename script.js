@@ -1,7 +1,8 @@
 // ============================================================
 // Spoider Finds — main script
 // Handles: mobile nav toggle, scroll-driven "thread" line,
-// footer utilities, reveal/count-up/snap animations.
+// footer utilities, reveal/count-up/snap animations, and the
+// unified split-reveal typography system.
 //
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
@@ -74,6 +75,110 @@
           }, 450);
         }, hideDelay);
       }
+    }
+  }
+
+  // ============================================================
+  // Split-reveal: unified word-mask typography system.
+  //
+  // Wraps each word of a heading in an overflow-hidden mask box,
+  // with the word sliding up from below on reveal. Inline
+  // formatting elements (e.g. <em>, a colored <span>) are kept
+  // intact as a single masked unit — their tag, class, and style
+  // are preserved untouched, just relocated inside the mask.
+  //
+  // Trigger modes:
+  //   data-trigger="load"  → reveals once, shortly after page load
+  //   (default)             → reveals once, on scroll into view
+  //
+  // Whole-word transform animation only (no per-character DOM,
+  // no opacity flicker) — safe and smooth on low-power devices.
+  // ============================================================
+  function splitIntoWordMasks(el) {
+    if (el.dataset.splitDone === "1") return;
+    el.dataset.splitDone = "1";
+
+    // Screen readers get the plain original text via aria-label;
+    // the generated mask markup is hidden from assistive tech.
+    el.setAttribute("aria-label", el.textContent.trim());
+
+    const originalNodes = Array.prototype.slice.call(el.childNodes);
+    el.innerHTML = "";
+
+    let wordIndex = 0;
+    const STAGGER = 0.055; // seconds between each word's reveal
+
+    function appendMaskedUnit(contentNode) {
+      const mask = document.createElement("span");
+      mask.className = "word-mask";
+      mask.setAttribute("aria-hidden", "true");
+      const inner = document.createElement("span");
+      inner.className = "word-inner";
+      inner.style.transitionDelay = (wordIndex * STAGGER).toFixed(3) + "s";
+      inner.appendChild(contentNode);
+      mask.appendChild(inner);
+      el.appendChild(mask);
+      wordIndex++;
+    }
+
+    originalNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const parts = node.textContent.split(/(\s+)/).filter((p) => p.length > 0);
+        parts.forEach((part) => {
+          if (/^\s+$/.test(part)) {
+            el.appendChild(document.createTextNode(part));
+          } else {
+            appendMaskedUnit(document.createTextNode(part));
+          }
+        });
+      } else if (node.nodeName === "BR") {
+        el.appendChild(node.cloneNode(true));
+      } else {
+        // element node (e.g. <em>, <span class="gold-text">) — kept
+        // whole and untouched, just moved inside the mask wrapper
+        appendMaskedUnit(node);
+      }
+    });
+  }
+
+  function initSplitReveal() {
+    const splitEls = document.querySelectorAll(".split-reveal");
+    if (!splitEls.length) return;
+
+    splitEls.forEach(splitIntoWordMasks);
+
+    if (prefersReducedMotion) {
+      splitEls.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+
+    const loadEls = [];
+    const scrollEls = [];
+    splitEls.forEach((el) => {
+      if (el.dataset.trigger === "load") loadEls.push(el);
+      else scrollEls.push(el);
+    });
+
+    loadEls.forEach((el) => {
+      const startDelay = parseFloat(el.dataset.delay || "0") * 1000;
+      setTimeout(() => el.classList.add("is-visible"), startDelay);
+    });
+
+    if (scrollEls.length && "IntersectionObserver" in window) {
+      const splitObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              splitObserver.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.35, rootMargin: "0px 0px -10% 0px" }
+      );
+      scrollEls.forEach((el) => splitObserver.observe(el));
+    } else {
+      scrollEls.forEach((el) => el.classList.add("is-visible"));
     }
   }
 
@@ -253,6 +358,9 @@
         snapEls.forEach((el) => el.classList.add("in-view", "settled"));
       }
     }
+
+    // ---- Split-reveal (unified word-mask typography system) ----
+    initSplitReveal();
 
     // ---- Scroll-reveal for sections and cards ----
     const revealEls = document.querySelectorAll(".reveal:not(.crazy-title)");
