@@ -156,6 +156,21 @@ h3.split-reveal .word-inner {
     filter 0.45s var(--ease),
     opacity 0.5s var(--ease);
 }
+
+/* Explicit visible-state override for every tier — must win over the
+   hidden-state tier rules above regardless of source order, since
+   ".hero-title.split-reveal .word-inner" and ".split-reveal.is-visible
+   .word-inner" have EQUAL specificity (3 classes each). Without this,
+   whichever rule is written later in the file wins, which previously
+   left hero-title words permanently stuck in their hidden pose. */
+.hero-title.split-reveal.is-visible .word-inner,
+.hero .split-reveal.is-visible .word-inner,
+.eyebrow.split-reveal.is-visible .word-inner,
+h3.split-reveal.is-visible .word-inner {
+  transform: translateY(0) rotate(0deg);
+  filter: blur(0);
+  opacity: 1;
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-title.split-reveal .word-inner,
   .hero .split-reveal .word-inner,
