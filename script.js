@@ -82,17 +82,27 @@
   // Split-reveal: unified word-mask typography system.
   //
   // Wraps each word of a heading in an overflow-hidden mask box,
-  // with the word sliding up from below on reveal. Inline
-  // formatting elements (e.g. <em>, a colored <span>) are kept
-  // intact as a single masked unit — their tag, class, and style
-  // are preserved untouched, just relocated inside the mask.
+  // with the word rising up from below on reveal while resolving
+  // from a soft blur + slight tilt into sharp focus (see the
+  // matching .split-reveal CSS). Inline formatting elements
+  // (e.g. <em>, a colored <span>) are kept intact as a single
+  // masked unit — their tag, class, and style are preserved
+  // untouched, just relocated inside the mask.
+  //
+  // Stagger timing (v2, organic):
+  //   Instead of a fixed per-word increment (which reads as
+  //   mechanical, like a typewriter), delay follows a power
+  //   curve — words start close together and fan out slightly
+  //   as the sequence progresses, which reads like a natural
+  //   ripple rather than a metronome. Noticeably longer words
+  //   get a small extra beat so they don't feel rushed past.
   //
   // Trigger modes:
   //   data-trigger="load"  → reveals once, shortly after page load
   //   (default)             → reveals once, on scroll into view
   //
-  // Whole-word transform animation only (no per-character DOM,
-  // no opacity flicker) — safe and smooth on low-power devices.
+  // Whole-word transform/filter animation only (no per-character
+  // DOM, no opacity flicker) — safe and smooth on low-power devices.
   // ============================================================
   function splitIntoWordMasks(el) {
     if (el.dataset.splitDone === "1") return;
@@ -106,15 +116,23 @@
     el.innerHTML = "";
 
     let wordIndex = 0;
-    const STAGGER = 0.055; // seconds between each word's reveal
+    const STAGGER_BASE = 0.07; // seconds — overall pace of the ripple
+    const STAGGER_POWER = 0.8; // <1 = starts snappier, eases out toward the end (organic, not linear)
+    const LONG_WORD_CHARS = 7; // words longer than this get a small extra beat
+    const LONG_WORD_BONUS = 0.02; // seconds
 
     function appendMaskedUnit(contentNode) {
+      const wordText = contentNode.textContent || "";
       const mask = document.createElement("span");
       mask.className = "word-mask";
       mask.setAttribute("aria-hidden", "true");
       const inner = document.createElement("span");
       inner.className = "word-inner";
-      inner.style.transitionDelay = (wordIndex * STAGGER).toFixed(3) + "s";
+
+      let delay = Math.pow(wordIndex, STAGGER_POWER) * STAGGER_BASE;
+      if (wordText.trim().length > LONG_WORD_CHARS) delay += LONG_WORD_BONUS;
+      inner.style.transitionDelay = delay.toFixed(3) + "s";
+
       inner.appendChild(contentNode);
       mask.appendChild(inner);
       el.appendChild(mask);
@@ -174,7 +192,7 @@
             }
           });
         },
-        { threshold: 0.35, rootMargin: "0px 0px -10% 0px" }
+        { threshold: 0.2, rootMargin: "0px 0px -8% 0px" }
       );
       scrollEls.forEach((el) => splitObserver.observe(el));
     } else {
