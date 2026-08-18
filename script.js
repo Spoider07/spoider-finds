@@ -84,18 +84,27 @@
   // Wraps each word of a heading in an overflow-hidden mask box,
   // with the word rising up from below on reveal while resolving
   // from a soft blur + slight tilt into sharp focus (see the
-  // matching .split-reveal CSS). Inline formatting elements
-  // (e.g. <em>, a colored <span>) are kept intact as a single
-  // masked unit — their tag, class, and style are preserved
-  // untouched, just relocated inside the mask.
+  // matching .split-reveal CSS). Inline formatting elements (e.g.
+  // <em>, a colored <span>) are preserved on a PER-WORD basis: if
+  // <em>Multiple Words</em> appears inside a heading, each word
+  // gets its own mask/stagger, each still wrapped in its own
+  // <em> clone — so the italic styling survives, and the element
+  // is never accidentally treated as one giant animated word.
   //
-  // Stagger timing (v2, organic):
-  //   Instead of a fixed per-word increment (which reads as
-  //   mechanical, like a typewriter), delay follows a power
-  //   curve — words start close together and fan out slightly
-  //   as the sequence progresses, which reads like a natural
-  //   ripple rather than a metronome. Noticeably longer words
-  //   get a small extra beat so they don't feel rushed past.
+  // Motion tiers (element decides its own pace/feel via context —
+  // see the matching .split-reveal CSS tiers):
+  //   .hero-title / anything inside .hero → dramatic, slow, spring
+  //   .eyebrow                             → restrained, fast, label-like
+  //   <h3>                                 → very subtle, fast
+  //   everything else (section headings)   → the base, controlled tier
+  //
+  // Stagger timing (organic, not mechanical):
+  //   Delay follows a power curve — words start close together and
+  //   fan out slightly as the sequence progresses, reading like a
+  //   natural ripple rather than a metronome. Noticeably longer
+  //   words get a small extra beat so they don't feel rushed past.
+  //   Each tier has its own pace so a small label doesn't take as
+  //   long to resolve as the hero headline.
   //
   // Trigger modes:
   //   data-trigger="load"  → reveals once, shortly after page load
@@ -104,6 +113,19 @@
   // Whole-word transform/filter animation only (no per-character
   // DOM, no opacity flicker) — safe and smooth on low-power devices.
   // ============================================================
+  function getStaggerTier(el) {
+    if (el.classList.contains("hero-title") || el.closest(".hero")) {
+      return { base: 0.09, power: 0.78, longBonus: 0.025 }; // hero — dramatic, slower fan-out
+    }
+    if (el.classList.contains("eyebrow")) {
+      return { base: 0.035, power: 0.9, longBonus: 0.01 }; // label — quick, restrained
+    }
+    if (el.tagName === "H3") {
+      return { base: 0.04, power: 0.9, longBonus: 0.01 }; // minor heading — quick, subtle
+    }
+    return { base: 0.065, power: 0.82, longBonus: 0.02 }; // section heading — the controlled default
+  }
+
   function splitIntoWordMasks(el) {
     if (el.dataset.splitDone === "1") return;
     el.dataset.splitDone = "1";
@@ -112,51 +134,67 @@
     // the generated mask markup is hidden from assistive tech.
     el.setAttribute("aria-label", el.textContent.trim());
 
+    const tier = getStaggerTier(el);
+    const LONG_WORD_CHARS = 7; // words longer than this get a small extra beat
+
     const originalNodes = Array.prototype.slice.call(el.childNodes);
     el.innerHTML = "";
 
     let wordIndex = 0;
-    const STAGGER_BASE = 0.07; // seconds — overall pace of the ripple
-    const STAGGER_POWER = 0.8; // <1 = starts snappier, eases out toward the end (organic, not linear)
-    const LONG_WORD_CHARS = 7; // words longer than this get a small extra beat
-    const LONG_WORD_BONUS = 0.02; // seconds
 
-    function appendMaskedUnit(contentNode) {
-      const wordText = contentNode.textContent || "";
+    // Rebuilds a word (or a whitespace run) wrapped in clones of any
+    // inline formatting elements it was found inside (innermost last),
+    // so <em>/<span class="gold-text">/etc. survive on a per-word basis.
+    function wrapInFormatting(text, formatChain) {
+      let node = document.createTextNode(text);
+      for (let i = formatChain.length - 1; i >= 0; i--) {
+        const wrapper = formatChain[i].cloneNode(false); // shallow clone: tag + attributes, no children
+        wrapper.appendChild(node);
+        node = wrapper;
+      }
+      return node;
+    }
+
+    function appendMaskedWord(wordText, formatChain) {
       const mask = document.createElement("span");
       mask.className = "word-mask";
       mask.setAttribute("aria-hidden", "true");
       const inner = document.createElement("span");
       inner.className = "word-inner";
 
-      let delay = Math.pow(wordIndex, STAGGER_POWER) * STAGGER_BASE;
-      if (wordText.trim().length > LONG_WORD_CHARS) delay += LONG_WORD_BONUS;
+      let delay = Math.pow(wordIndex, tier.power) * tier.base;
+      if (wordText.trim().length > LONG_WORD_CHARS) delay += tier.longBonus;
       inner.style.transitionDelay = delay.toFixed(3) + "s";
 
-      inner.appendChild(contentNode);
+      inner.appendChild(wrapInFormatting(wordText, formatChain));
       mask.appendChild(inner);
       el.appendChild(mask);
       wordIndex++;
     }
 
-    originalNodes.forEach((node) => {
+    // Walks the original nodes, tracking the chain of inline formatting
+    // elements (e.g. [em] or [em, span.gold-text]) currently wrapping
+    // each piece of text, so every individual word can be masked and
+    // staggered while still carrying its formatting.
+    function walk(node, formatChain) {
       if (node.nodeType === Node.TEXT_NODE) {
         const parts = node.textContent.split(/(\s+)/).filter((p) => p.length > 0);
         parts.forEach((part) => {
           if (/^\s+$/.test(part)) {
-            el.appendChild(document.createTextNode(part));
+            el.appendChild(wrapInFormatting(part, formatChain));
           } else {
-            appendMaskedUnit(document.createTextNode(part));
+            appendMaskedWord(part, formatChain);
           }
         });
       } else if (node.nodeName === "BR") {
         el.appendChild(node.cloneNode(true));
-      } else {
-        // element node (e.g. <em>, <span class="gold-text">) — kept
-        // whole and untouched, just moved inside the mask wrapper
-        appendMaskedUnit(node);
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const childChain = formatChain.concat([node]);
+        Array.prototype.slice.call(node.childNodes).forEach((child) => walk(child, childChain));
       }
-    });
+    }
+
+    originalNodes.forEach((node) => walk(node, []));
   }
 
   function initSplitReveal() {
