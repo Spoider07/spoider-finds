@@ -7,8 +7,9 @@
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
 // (see transitions.js). One-time, page-independent behaviors
-// (cursor trail, first-load intro overlay) live in bindGlobalOnce()
-// and only ever run once per real browser session.
+// (cursor trail, first-load intro overlay, global tap-spark)
+// live in bindGlobalOnce() and only ever run once per real
+// browser session.
 // ============================================================
 
 (function () {
@@ -75,6 +76,52 @@
           }, 450);
         }, hideDelay);
       }
+    }
+
+    // ---- Global tap-spark: a restrained, premium micro-feedback on
+    // interactive taps. A small radial gold spark spawns at the exact
+    // tap point and fades out — never a bounce, never a ripple that
+    // fills the element. Deliberately understated so it reads as
+    // polish, not decoration. Bound once on document via delegation,
+    // so it survives every AJAX page swap without rebinding. Skips
+    // .hero-mark-inner entirely — that element already has its own
+    // dedicated burst/flash treatment, and layering this on top would
+    // double up and look cheap. ----
+    if (!prefersReducedMotion) {
+      const sparkStyle = document.createElement("style");
+      sparkStyle.textContent =
+        ".sf-tap-spark{position:fixed;width:8px;height:8px;margin:-4px 0 0 -4px;" +
+        "border-radius:50%;pointer-events:none;z-index:9999;" +
+        "background:radial-gradient(circle, rgba(255,241,204,0.9) 0%, rgba(232,199,102,0.55) 45%, rgba(232,199,102,0) 75%);" +
+        "transform:scale(0.3);opacity:0.9;" +
+        "animation:sfTapSparkOut .48s cubic-bezier(.22,1,.36,1) forwards;}" +
+        "@keyframes sfTapSparkOut{to{transform:scale(2.6);opacity:0;}}";
+      document.head.appendChild(sparkStyle);
+
+      const TAP_SPARK_SELECTOR =
+        "a, button, .btn, .category-card, .product-card, .trust-card, .latest-item, .india-pill";
+
+      function spawnTapSpark(x, y) {
+        const spark = document.createElement("span");
+        spark.className = "sf-tap-spark";
+        spark.style.left = x + "px";
+        spark.style.top = y + "px";
+        document.body.appendChild(spark);
+        setTimeout(() => {
+          if (spark.parentNode) spark.remove();
+        }, 520);
+      }
+
+      document.addEventListener(
+        "pointerdown",
+        (e) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+          const target = e.target.closest(TAP_SPARK_SELECTOR);
+          if (!target || target.closest(".hero-mark-inner")) return;
+          spawnTapSpark(e.clientX, e.clientY);
+        },
+        { passive: true }
+      );
     }
   }
 
