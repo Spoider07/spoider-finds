@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .thread-cta {
       max-width: 480px;
@@ -59,6 +60,17 @@
       margin: 0 0 1.3rem;
       line-height: 1.5;
     }
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
+    }
+    #productGrid .product-card {
+      opacity: 1 !important;
+      transform: none !important;
+    }
   </style>
 </head>
 <body>
@@ -92,40 +104,8 @@
     </section>
 
     <section class="featured" id="products">
-      <div class="product-grid">
-        <a href="https://amzn.to/4fDBOAr" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/aesthetic-alien-wallet.jpg" alt="Aesthetic bifold wallet with alien UFO graphic print" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Aesthetic Alien Space Wallet</h3>
-            <p>A fun bifold wallet with a cosmic UFO print and built-in card holder.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/3SBZUTn" class="product-card reveal" style="--reveal-delay:0.08s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/f566889325db22663b46fa4b393f16d0.jpg" alt="Casio Vintage digital watch with stainless steel band" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Casio Vintage Digital Watch</h3>
-            <p>Classic retro stainless steel build with LED light, alarm, and 7-year battery life.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/4wT5qzK" class="product-card reveal" style="--reveal-delay:0.13s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/4e1de9bce635fa32e7b2c734f91ed9ba.jpg" alt="Maneki Neko lucky cat keychain with Feng Shui coins" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Maneki Neko Lucky Cat Keychain</h3>
-            <p>A brass Feng Shui good luck charm — a unique daily-carry gift piece.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
+      <div class="product-grid" id="productGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
 
       <div class="thread-cta reveal">
@@ -135,6 +115,65 @@
         <a href="https://pin.it/4OG3bUqMz" class="btn btn-primary" target="_blank" rel="noopener">Follow on Pinterest</a>
       </div>
     </section>
+
+    <script>
+    (function () {
+      var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+
+      function ensureSupabaseLib(callback) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          callback();
+          return;
+        }
+        var existing = document.querySelector('script[data-supabase-lib]');
+        if (existing) {
+          existing.addEventListener('load', callback, { once: true });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.setAttribute('data-supabase-lib', 'true');
+        s.onload = callback;
+        document.head.appendChild(s);
+      }
+
+      async function loadProducts() {
+        var grid = document.getElementById('productGrid');
+        if (!grid) return;
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        var res = await sb
+          .from('products')
+          .select('*')
+          .eq('category', 'accessories')
+          .eq('region', 'us')
+          .eq('active', true)
+          .order('created_at', { ascending: false });
+
+        var data = res.data, error = res.error;
+
+        if (error) {
+          grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+          return;
+        }
+        if (!data || data.length === 0) {
+          grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+          return;
+        }
+
+        grid.innerHTML = data.map(function (p) {
+          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+            '<div class="product-body"><span class="product-tag">Accessories</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+          '</a>';
+        }).join('');
+      }
+
+      var grid0 = document.getElementById('productGrid');
+      if (grid0) grid0.innerHTML = '<p class="state-msg">Loading products...</p>';
+      ensureSupabaseLib(loadProducts);
+    })();
+    </script>
   </main>
 
   <footer class="footer">
