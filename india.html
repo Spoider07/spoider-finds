@@ -21,6 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .nav-badge-new {
       display: inline-block;
@@ -84,6 +85,13 @@
       width: auto;
       vertical-align: middle;
       margin-right: 2px;
+    }
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
     }
 
     /* ===== Hero mark: static spider logo, layered premium glow ===== */
@@ -319,73 +327,8 @@
         </div>
         <a href="#categories" class="link-arrow">View all →</a>
       </div>
-      <div class="product-grid">
-        <a href="https://www.amazon.in/Lukzer-Engineered-Computer-Shelves-Workstation/dp/B0BPY92JFN?linkCode=ll2&tag=spoiderfinds2-21&linkId=8e5231674a72d5aa7e8f9c76095fd4d4&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2018.49.09.png" alt="Lukzer engineered wood modern desk with one-tier shelf" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>Lukzer Modern Desk — With Shelf</h3>
-            <p>An engineered-wood computer desk with a one-tier open shelf below — clean lines for office or home.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://www.amazon.in/Xech-Bluetooth-Speaker-Clock-Ellipse/dp/B0CBRZ44TV?linkCode=ll2&tag=spoiderfinds2-21&linkId=53776ee149da0e2679f7a0c959724a76&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.08s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.45.16%20%281%29.png" alt="XECH bluetooth speaker desk clock with pen holder" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>XECH Bluetooth Speaker Desk Clock</h3>
-            <p>A smart table clock and Bluetooth speaker in one — doubles as a bedside clock with a built-in pen holder.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://www.amazon.in/ShopMantra-Funk-Printed-Leather-Wallet/dp/B09N1Q1BD3?crid=X2R3UVY57UBB&dib=eyJ2IjoiMSJ9.WONOVYY7rJCzLmHwHF0Asv8mVAwwd4Fd1NRjNW31VvysJWZMIkHp52Pu3Ig9Q5Izc6V4dz20w0eZXS4vpDAbf-ZhD_IOMV4hY113hpiG0QA5IC2K1M1LpoN2fUiutkPv3ueCWmNgGn951CFSl6jAgsKqQZ6btDeWqMCZqejw5rx66Tpsjbm5DrebQwn5vWmBsVa9ZL9ek94_fPk2ddx6U7xY8wY53vdWjNpJuj60jiBsTJeHDn_dG_YJf9-6p3RsmM8xke6RG6BUepTlkXdVWnrYS9X6V281VJPREor0dgA.W6Ccdr32pGXcjI6VwzPPW9Gcbx7EgtPlk8CD22jVCIo&dib_tag=se&keywords=aesthetic%2Bwallet%2Bfor%2Bmen&qid=1785850374&sprefix=aesthetic%2Bwallet%2Caps%2C499&sr=8-18&th=1&linkCode=ll2&tag=spoiderfinds2-21&linkId=e4d3507095af87cf3aa51bfa6d4addce&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.13s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.05.34.png" alt="ShopMantra funky colour-splash print leather wallet" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>ShopMantra Funky Print Leather Wallet</h3>
-            <p>A bold colour-splash printed leather wallet — a unique statement piece for everyday carry.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://www.amazon.in/Walizza-Lifestyle-Waterproof-Compartment-Matte-Black/dp/B0GC7GV6SH?crid=3PZDXQSG5VC1A&dib=eyJ2IjoiMSJ9.JQBqcJnixUxY14mszzGOSc0pRcISwfJNRe-bLHTK3jFkiqnrlE_Cza1l89vKAyhTr_in1CWUciNdst16Mpce0K4qvHMrdRguUX30IbHn6DPtYC0Vh8gPyF6g2upWs1ln1G7M9wnYE7Hjvhyx5d4PanjB_sWON65Vdd9AGHTzplsyUWMFtAsn8R6-0JKWLpM9AtTg36SQNnBWNAeIS2J_5lCl4xxhCD9NznOC0LNBR6U0zvn0nNYVzpdV_C__Q4I5MI1NQ5tku5J871TknvCmNyNd-WLHyIkuzgXaHIu3tDE.VNTKMrBJs1WihONtMnITH5YnLRBRvhVI7IFhLLs5ngQ&dib_tag=se&keywords=Everyday%2Bcarry&qid=1785851045&sprefix=everyday%2Bcarry%2Caps%2C563&sr=8-19&th=1&linkCode=ll2&tag=spoiderfinds2-21&linkId=66aaed77736c910781ff85d3fc395681&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.18s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.15.46.png" alt="Walizza waterproof matte black sling bag" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Walizza Waterproof Sling Bag — Matte Black</h3>
-            <p>A multi-compartment waterproof sling bag built for travel, cycling, and everyday carry.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://www.amazon.in/PRADHAN-ACCESSORIES-Anti-Tarnish-Adjustable-Jewellery/dp/B0FW513BLN?crid=26QHWZLJ6T4GJ&dib=eyJ2IjoiMSJ9.B2ajK1Q7IdEV-Y4I6I60jc87RhctOUSAeNZ_hIBjJ91hv7ftFgERWYyKqnTMvoOZP6VPPoL4B8GuFkZTNxfXIfbNf4boG0OT3AfeGZvoCHfB03d1zZ6cOfmKchjc6xf_IuUaQ5LA4e0UFgG1026DO7cOulVlCefe1gtQZQ-pTYJO_uwIkFI0NJegO8mOUW7fMQA34TiW05R7qIkKqn1qUAczjCkGCqG5SP-U44ivoTpRhtGzPMts96z1QO9jfhML9iiHWIYDoAQblILlfilf0VQqxklOOJaijpk0Gyp4yAg.llq2wgLrLU_oiwM2oaPZdztTElI291AZCuo9ZH98Q-A&dib_tag=se&keywords=aesthetic%2Baccessories%2Bfor%2Bmen&qid=1785853455&sprefix=Aesthetic%2Bac%2Caps%2C375&sr=8-7&th=1&linkCode=ll2&tag=spoiderfinds2-21&linkId=3b442e38bb302db8ab516c7f4cb2b5e2&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.23s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.58.22.png" alt="Silver spider and spiderweb pendant necklace set" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Spider Pendant Necklace Set — Anti Tarnish</h3>
-            <p>A silver spider and spiderweb pendant duo, anti-tarnish finish — unique and adjustable, great for gifting.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://www.amazon.in/FireBees-Mounted-Bookshelf-Floating-Decorative/dp/B0FBW7J2JF?crid=2XYKV08CUTK61&dib=eyJ2IjoiMSJ9.CJEZc7srZbiIueo6t49hlkE-xxFYiuFvfc0L_osQZMFGo-y0kas1_GWxY8s7d0BuKjMrWKSw6XQzeNEwFV6JXhSIjYV3VDecQEvC_WtyBUCV3F7ZUMkI0N2NSDrQLNPVWEBwVLqIjoFRBxXsFvNai2rCCqmO1EWY1W72NvLq8FgQelL_8Vomq6_Le3RLtdzJVH5QCLsPrVhxx67fQn0gWT48d6h4JEG1XQXp8C3SUfMRpsFqs3a5yUNwAONYGNcm9SYd5NZQ6SPLKg6qmJ5liwozLmwe41KSmhCsgVyEoCk.E0hOVVTzAlmVOGxYuCGAMDUZj6d_C0D20plb0biSDUY&dib_tag=se&keywords=floating%2Bshelf&qid=1785851732&sprefix=Floating%2B%2Caps%2C504&sr=8-7&th=1&linkCode=ll2&tag=spoiderfinds2-21&linkId=572c9298cfd01ccb4d03d54c40f15b23&ref_=as_li_ss_tl" class="product-card reveal" style="--reveal-delay:0.28s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="Untitled%20-%2004%20August%202026%20at%2019.28.18.png" alt="Set of three dark wood floating wall shelves with black brackets" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Amazon Finds</span>
-            <h3>FireBees Floating Wall Shelves — Set of 3</h3>
-            <p>Dark wood floating shelves with black metal brackets — great for plants, books, and decor styling.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
+      <div class="product-grid" id="featuredGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
     </section>
 
@@ -694,7 +637,8 @@
     </script>
 
     <script>
-    (function () {
+    /* Reusable scroll-scale for Featured cards — re-runnable after Supabase injects cards */
+    window.initFeaturedScale = function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
 
@@ -760,8 +704,10 @@
       window.addEventListener('scroll', requestTick, { passive: true });
       window.addEventListener('resize', requestTick);
       requestTick();
-    })();
+    };
+    window.initFeaturedScale();
     </script>
+
     <script>
     (function () {
       var mark = document.querySelector('.hero-mark-inner');
@@ -806,6 +752,75 @@
         }, 800);
       }
       mark.addEventListener('click', burst);
+    })();
+    </script>
+
+    <!-- ================= FEATURED — Supabase loader (India) ================= -->
+    <script>
+    (function () {
+      var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+      var CATEGORY_LABELS = {
+        'desk-setup': 'Desk Setup',
+        'fashion-finds': 'Fashion Finds',
+        'accessories': 'Accessories',
+        'amazon-finds': 'Amazon Finds'
+      };
+
+      function ensureSupabaseLib(callback) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          callback();
+          return;
+        }
+        var existing = document.querySelector('script[data-supabase-lib]');
+        if (existing) {
+          existing.addEventListener('load', callback, { once: true });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.setAttribute('data-supabase-lib', 'true');
+        s.onload = callback;
+        document.head.appendChild(s);
+      }
+
+      async function loadFeatured() {
+        var grid = document.getElementById('featuredGrid');
+        if (!grid) return;
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        var res = await sb
+          .from('products')
+          .select('*')
+          .eq('region', 'india')
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        var data = res.data, error = res.error;
+
+        if (error) {
+          grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+          return;
+        }
+        if (!data || data.length === 0) {
+          grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+          return;
+        }
+
+        grid.innerHTML = data.map(function (p) {
+          var tag = CATEGORY_LABELS[p.category] || p.category;
+          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+            '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+          '</a>';
+        }).join('');
+
+        if (window.initFeaturedScale) window.initFeaturedScale();
+      }
+
+      var grid0 = document.getElementById('featuredGrid');
+      if (grid0) grid0.innerHTML = '<p class="state-msg">Loading products...</p>';
+      ensureSupabaseLib(loadFeatured);
     })();
     </script>
   </main>
