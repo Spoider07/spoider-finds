@@ -35,6 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .hero { position: relative; z-index: 0; }
     .web-canvas {
@@ -121,6 +122,13 @@
       width: auto;
       vertical-align: middle;
       margin-right: 2px;
+    }
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
     }
 
     /* ===== Hero mark: static spider logo, layered premium glow ===== */
@@ -373,95 +381,8 @@
         </div>
         <a href="#categories" class="link-arrow">View all →</a>
       </div>
-      <div class="product-grid">
-        <a href="https://amzn.to/4h19PvI" class="product-card reveal" style="--reveal-delay:0.03s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/levitating-moon-lamp.jpg" alt="Levitating LED moon lamp with galaxy design, floating above a wooden base" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>Levitating Moon Lamp</h3>
-            <p>A 3D-printed galaxy lamp that floats and spins in mid-air — 16 colors, 20 lighting modes.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/3T87LIA" class="product-card reveal" style="--reveal-delay:0.08s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/robotic-charger-block.jpg" alt="UGREEN robotic-style GaN fast charger with LED screen" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Amazon Finds</span>
-            <h3>Robotic Charger Block</h3>
-            <p>A 30W GaN fast charger with a playful LED face — genuinely useful and fun on a desk.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/4beSCex" class="product-card reveal" style="--reveal-delay:0.13s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/92d6b34d824eab71d661b7b6a2be2345.jpg" alt="Iron Man Arc Reactor LED desk lamp with rechargeable touch control" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>Iron Man Arc Reactor Lamp</h3>
-            <p>Marvel-inspired rechargeable LED lamp with touch/remote control — a superhero glow for your desk.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/3To1fNP" class="product-card reveal" style="--reveal-delay:0.18s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/5349fd8153ecf121ee14b136b5a0cc66.jpg" alt="Retro PC-style Bluetooth speaker with pixel display" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Desk Setup</span>
-            <h3>Retro PC-Style Bluetooth Speaker</h3>
-            <p>Pixel display with DIY faces, Bluetooth & USB audio, and an alarm clock — retro charm for your setup.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/4eIiJwO" class="product-card reveal" style="--reveal-delay:0.23s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/ddc0b64cc6355f777da2e2085d4f0321.jpg" alt="Japanese streetwear hoodie with sakura pagoda graphic print" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Fashion Finds</span>
-            <h3>Japanese Streetwear Hoodie</h3>
-            <p>Hand-illustrated sakura pagoda graphic, oversized fit, premium cotton blend.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/3TEpVld" class="product-card reveal" style="--reveal-delay:0.28s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/c9ef2b0bfa372d26dd302b695ec59ad1.jpg" alt="Vintage goth punk acid wash oversized t-shirt with angel wing cross graphic" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Fashion Finds</span>
-            <h3>Vintage Goth Punk Tee</h3>
-            <p>Acid wash oversized fit with a bold angel-wing cross graphic — grunge streetwear aesthetic.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/3SBZUTn" class="product-card reveal" style="--reveal-delay:0.33s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/f566889325db22663b46fa4b393f16d0.jpg" alt="Casio Vintage digital watch with stainless steel band" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Casio Vintage Digital Watch</h3>
-            <p>Classic retro stainless steel build with LED light, alarm, and 7-year battery life.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
-        <a href="https://amzn.to/4wT5qzK" class="product-card reveal" style="--reveal-delay:0.38s;" target="_blank" rel="sponsored noopener nofollow">
-          <div class="product-image">
-            <img src="assets/images/4e1de9bce635fa32e7b2c734f91ed9ba.jpg" alt="Maneki Neko lucky cat keychain with Feng Shui coins" loading="lazy">
-          </div>
-          <div class="product-body">
-            <span class="product-tag">Accessories</span>
-            <h3>Maneki Neko Lucky Cat Keychain</h3>
-            <p>A brass Feng Shui good luck charm — a unique daily-carry gift piece.</p>
-            <span class="product-link">View on Amazon →</span>
-          </div>
-        </a>
+      <div class="product-grid" id="featuredGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
     </section>
 
@@ -825,7 +746,8 @@
     </script>
 
     <script>
-    (function () {
+    /* Reusable scroll-scale for Featured cards — re-runnable after Supabase injects cards */
+    window.initFeaturedScale = function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
 
@@ -891,8 +813,10 @@
       window.addEventListener('scroll', requestTick, { passive: true });
       window.addEventListener('resize', requestTick);
       requestTick();
-    })();
+    };
+    window.initFeaturedScale();
     </script>
+
     <script>
     (function () {
       var mark = document.querySelector('.hero-mark-inner');
@@ -937,6 +861,75 @@
         }, 800);
       }
       mark.addEventListener('click', burst);
+    })();
+    </script>
+
+    <!-- ================= FEATURED — Supabase loader (US) ================= -->
+    <script>
+    (function () {
+      var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+      var CATEGORY_LABELS = {
+        'desk-setup': 'Desk Setup',
+        'fashion-finds': 'Fashion Finds',
+        'accessories': 'Accessories',
+        'amazon-finds': 'Amazon Finds'
+      };
+
+      function ensureSupabaseLib(callback) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          callback();
+          return;
+        }
+        var existing = document.querySelector('script[data-supabase-lib]');
+        if (existing) {
+          existing.addEventListener('load', callback, { once: true });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.setAttribute('data-supabase-lib', 'true');
+        s.onload = callback;
+        document.head.appendChild(s);
+      }
+
+      async function loadFeatured() {
+        var grid = document.getElementById('featuredGrid');
+        if (!grid) return;
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        var res = await sb
+          .from('products')
+          .select('*')
+          .eq('region', 'us')
+          .eq('active', true)
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        var data = res.data, error = res.error;
+
+        if (error) {
+          grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+          return;
+        }
+        if (!data || data.length === 0) {
+          grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+          return;
+        }
+
+        grid.innerHTML = data.map(function (p) {
+          var tag = CATEGORY_LABELS[p.category] || p.category;
+          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+            '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+          '</a>';
+        }).join('');
+
+        if (window.initFeaturedScale) window.initFeaturedScale();
+      }
+
+      var grid0 = document.getElementById('featuredGrid');
+      if (grid0) grid0.innerHTML = '<p class="state-msg">Loading products...</p>';
+      ensureSupabaseLib(loadFeatured);
     })();
     </script>
   </main>
