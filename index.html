@@ -893,6 +893,22 @@
         document.head.appendChild(s);
       }
 
+      /* Marks each product-image wrapper as loaded once its <img> finishes
+         loading (or errors), so the shimmer/wave loading effect turns off
+         instead of running forever on dynamically injected cards. */
+      function watchImagesForLoad(container) {
+        container.querySelectorAll('.product-image').forEach(function (wrapper) {
+          var img = wrapper.querySelector('img');
+          if (!img) return;
+          if (img.complete && img.naturalWidth > 0) {
+            wrapper.classList.add('img-loaded');
+          } else {
+            img.addEventListener('load', function () { wrapper.classList.add('img-loaded'); });
+            img.addEventListener('error', function () { wrapper.classList.add('img-loaded'); });
+          }
+        });
+      }
+
       async function loadFeatured() {
         var grid = document.getElementById('featuredGrid');
         if (!grid) return;
@@ -923,6 +939,8 @@
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
           '</a>';
         }).join('');
+
+        watchImagesForLoad(grid);
 
         if (window.initFeaturedScale) window.initFeaturedScale();
       }
