@@ -883,6 +883,8 @@ img { max-width: 100%; display: block; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  position: relative;
+  z-index: 2;
   transition: transform 0.3s var(--ease), border-color 0.3s var(--ease);
 }
 .product-card:hover {
