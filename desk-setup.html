@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .thread-cta {
       max-width: 480px;
@@ -59,24 +60,21 @@
       margin: 0 0 1.3rem;
       line-height: 1.5;
     }
-    /* Dynamically injected cards need to bypass the IntersectionObserver reveal system */
-    .product-card.db-card {
-      opacity: 1 !important;
-      transform: none !important;
-    }
-    .product-grid-loading {
+    .state-msg {
       text-align: center;
       padding: 3rem 1rem;
-      opacity: 0.6;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem;
+      opacity: 0.7;
+      font-size: 0.95rem;
+      grid-column: 1 / -1;
+    }
+    #productGrid .product-card {
+      opacity: 1 !important;
+      transform: none !important;
     }
   </style>
 </head>
 <body>
   <div class="grain"></div>
-
-  <div id="page-wrap">
   <header class="nav">
     <div class="nav-inner">
       <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
@@ -98,7 +96,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="page-wrap">
     <section class="hero" style="padding-top:90px; padding-bottom:40px;">
       <p class="eyebrow center reveal"><a href="index.html#categories" style="color:inherit;">← ALL CATEGORIES</a></p>
       <h1 class="hero-title" style="font-size:clamp(2rem, 5vw, 3.2rem);">Desk Setup</h1>
@@ -106,8 +104,8 @@
     </section>
 
     <section class="featured" id="products">
-      <div class="product-grid" id="deskSetupGrid">
-        <div class="product-grid-loading" id="deskSetupLoading">Loading finds…</div>
+      <div class="product-grid" id="productGrid">
+        <p class="state-msg">Loading products...</p>
       </div>
 
       <div class="thread-cta reveal">
@@ -117,6 +115,65 @@
         <a href="https://pin.it/4OG3bUqMz" class="btn btn-primary" target="_blank" rel="noopener">Follow on Pinterest</a>
       </div>
     </section>
+
+    <script>
+    (function () {
+      var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+
+      function ensureSupabaseLib(callback) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+          callback();
+          return;
+        }
+        var existing = document.querySelector('script[data-supabase-lib]');
+        if (existing) {
+          existing.addEventListener('load', callback, { once: true });
+          return;
+        }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.setAttribute('data-supabase-lib', 'true');
+        s.onload = callback;
+        document.head.appendChild(s);
+      }
+
+      async function loadProducts() {
+        var grid = document.getElementById('productGrid');
+        if (!grid) return;
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        var res = await sb
+          .from('products')
+          .select('*')
+          .eq('category', 'desk-setup')
+          .eq('region', 'us')
+          .eq('active', true)
+          .order('created_at', { ascending: false });
+
+        var data = res.data, error = res.error;
+
+        if (error) {
+          grid.innerHTML = '<p class="state-msg">Could not load products right now. Please refresh.</p>';
+          return;
+        }
+        if (!data || data.length === 0) {
+          grid.innerHTML = '<p class="state-msg">No products yet — check back soon.</p>';
+          return;
+        }
+
+        grid.innerHTML = data.map(function (p) {
+          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+            '<div class="product-body"><span class="product-tag">Desk Setup</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+          '</a>';
+        }).join('');
+      }
+
+      var grid0 = document.getElementById('productGrid');
+      if (grid0) grid0.innerHTML = '<p class="state-msg">Loading products...</p>';
+      ensureSupabaseLib(loadProducts);
+    })();
+    </script>
   </main>
 
   <footer class="footer">
@@ -144,99 +201,8 @@
     </div>
     <p class="footer-signature">Founder <span class="gold-text">~</span> Spoider</p>
   </footer>
-  </div>
 
   <script src="script.js"></script>
-
-  <script>
-  (function () {
-    var SUPABASE_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
-    var SUPABASE_KEY = "sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ";
-
-    function ensureSupabaseLib(cb) {
-      if (window.supabase && window.supabase.createClient) {
-        cb();
-        return;
-      }
-      var existing = document.querySelector('script[data-supabase-lib]');
-      if (existing) {
-        existing.addEventListener('load', cb);
-        return;
-      }
-      var s = document.createElement('script');
-      s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      s.setAttribute('data-supabase-lib', 'true');
-      s.onload = cb;
-      document.head.appendChild(s);
-    }
-
-    function escapeHtml(str) {
-      var div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
-    }
-
-    function renderProducts(products) {
-      var grid = document.getElementById('deskSetupGrid');
-      if (!grid) return;
-
-      if (!products || products.length === 0) {
-        grid.innerHTML = '<div class="product-grid-loading">No finds yet — check back soon.</div>';
-        return;
-      }
-
-      var html = '';
-      products.forEach(function (p, i) {
-        var delay = (0.03 + i * 0.05).toFixed(2);
-        html += '' +
-          '<a href="' + escapeHtml(p.affiliate_link) + '" class="product-card db-card" style="--reveal-delay:' + delay + 's;" target="_blank" rel="sponsored noopener nofollow">' +
-            '<div class="product-image">' +
-              '<img src="' + escapeHtml(p.image_url) + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
-            '</div>' +
-            '<div class="product-body">' +
-              '<span class="product-tag">Desk Setup</span>' +
-              '<h3>' + escapeHtml(p.title) + '</h3>' +
-              '<p>' + escapeHtml(p.description) + '</p>' +
-              '<span class="product-link">View on Amazon →</span>' +
-            '</div>' +
-          '</a>';
-      });
-      grid.innerHTML = html;
-    }
-
-    function loadProducts() {
-      var grid = document.getElementById('deskSetupGrid');
-      if (!grid) return;
-
-      ensureSupabaseLib(function () {
-        try {
-          var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-          client
-            .from('products')
-            .select('*')
-            .eq('category', 'desk-setup')
-            .eq('region', 'us')
-            .eq('active', true)
-            .order('created_at', { ascending: false })
-            .then(function (res) {
-              if (res.error) {
-                console.error('Supabase fetch error:', res.error);
-                grid.innerHTML = '<div class="product-grid-loading">Couldn\'t load finds right now.</div>';
-                return;
-              }
-              renderProducts(res.data);
-            });
-        } catch (e) {
-          console.error(e);
-          grid.innerHTML = '<div class="product-grid-loading">Couldn\'t load finds right now.</div>';
-        }
-      });
-    }
-
-    loadProducts();
-  })();
-  </script>
-
   <script src="transitions.js"></script>
 </body>
 </html>
