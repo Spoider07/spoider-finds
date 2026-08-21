@@ -1238,3 +1238,87 @@ img { max-width: 100%; display: block; }
   .footer-inner { flex-direction: column; }
   .footer-bottom { flex-direction: column; }
 }
+
+/* =========================================================
+   DESKTOP POLISH
+   Everything above this point was tuned mobile-first, which is
+   why wide screens felt like a stretched-out mobile column with
+   empty black margins. These overrides only kick in above 1024px
+   so mobile stays byte-for-byte the same. Three things happen:
+   1) Containers widen a bit + get real side padding so content
+      doesn't float in a narrow strip with dead space either side.
+   2) Type and card padding scale up so desktop reads as
+      "designed for desktop", not "mobile zoomed in".
+   3) The product grid moves from CSS columns (which order cards
+      top-to-bottom-then-next-column — confusing on wide screens)
+      to a proper CSS grid with natural left-to-right order.
+   ========================================================= */
+@media (min-width: 1024px) {
+  .nav-inner {
+    max-width: 1320px;
+    padding: 20px 40px;
+  }
+
+  .hero {
+    max-width: 900px;
+    padding: 150px 24px 100px;
+  }
+  .hero-title {
+    font-size: clamp(3.4rem, 4.6vw, 4.6rem);
+  }
+  .hero-sub {
+    max-width: 600px;
+    font-size: 1.12rem;
+  }
+  .hero-actions { margin-bottom: 64px; }
+  .hero-stats { gap: 44px; }
+  .stat-num { font-size: 1.7rem; }
+
+  .categories {
+    max-width: 1320px;
+    padding: 120px 40px;
+  }
+  .category-grid { gap: 24px; margin-top: 52px; }
+  .category-card { padding: 38px 30px; }
+  .category-card h3 { font-size: 1.25rem; }
+
+  .featured {
+    max-width: 1320px;
+    padding: 50px 40px 110px;
+  }
+  .product-grid {
+    columns: initial;
+    column-gap: initial;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 26px;
+  }
+  .product-card { margin-bottom: 0; }
+  .product-body { padding: 26px; }
+
+  .trust { padding: 130px 40px; }
+  .trust-grid { max-width: 1100px; gap: 60px; margin-top: 52px; }
+
+  .latest { max-width: 900px; padding: 130px 40px; }
+  .latest-item { padding: 28px 0; }
+
+  .cta { padding: 40px 40px 130px; }
+  .cta-inner { padding: 72px 50px; max-width: 700px; }
+
+  .founder { padding: 30px 40px 40px; }
+  .founder-card { padding: 60px 44px; max-width: 620px; }
+
+  .footer { padding: 76px 40px 34px; }
+  .footer-inner { max-width: 1320px; }
+}
+
+@media (min-width: 1440px) {
+  .nav-inner,
+  .categories,
+  .featured,
+  .footer-inner {
+    max-width: 1440px;
+  }
+  .hero { max-width: 960px; }
+  .hero-title { font-size: clamp(3.6rem, 4vw, 4.9rem); }
+}
