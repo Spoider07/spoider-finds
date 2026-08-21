@@ -1253,7 +1253,7 @@ img { max-width: 100%; display: block; }
       top-to-bottom-then-next-column — confusing on wide screens)
       to a proper CSS grid with natural left-to-right order.
    ========================================================= */
-@media (min-width: 1024px) {
+@media (min-width: 960px) {
   .nav-inner {
     max-width: 1320px;
     padding: 20px 40px;
