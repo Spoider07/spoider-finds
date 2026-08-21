@@ -302,6 +302,18 @@ img { max-width: 100%; display: block; }
   transition: stroke-dasharray 0.1s linear;
 }
 
+/* Guarantees ALL page content (every page's <main id="page-wrap">)
+   stacks above the fixed thread line, site-wide, in one place.
+   Without this, individual sections had to each remember to set
+   their own position:relative + z-index:2 to clear the thread —
+   any page/section that forgot would show the gold line bleeding
+   over product images and cards. This single rule fixes it
+   everywhere, on every current and future page, permanently. */
+#page-wrap {
+  position: relative;
+  z-index: 2;
+}
+
 /* =========================================================
    Page-load intro overlay
    A brief brand-mark reveal that plays once per session on
