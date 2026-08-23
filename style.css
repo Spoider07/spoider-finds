@@ -1322,3 +1322,134 @@ img { max-width: 100%; display: block; }
   .hero { max-width: 960px; }
   .hero-title { font-size: clamp(3.6rem, 4vw, 4.9rem); }
 }
+
+/* =========================================================
+   HERO — HOME PAGE DESKTOP REDESIGN
+   The mobile-first hero above (single centered column) reads
+   as a stretched-out mobile layout on wide screens — a narrow
+   strip of text with dead black space either side, and a hero
+   that opens on a tall, mostly-empty screen (see Apple's hero
+   for the contrast: wide, confident, two halves working
+   together instead of one skinny centered column).
+
+   This section rebuilds ONLY the homepage hero into a proper
+   two-column layout at desktop widths: copy + CTAs on the
+   left, the spider mark grown into a real anchor visual on
+   the right, with the spoke-web canvas re-centered behind it
+   (handled in index.html's own inline script, since the canvas
+   is unique to that page).
+
+   Scoped entirely to .hero--home (not the shared .hero class),
+   so india.html / about.html / category-page heroes — which
+   still use plain .hero — are completely untouched. Mobile is
+   untouched too: everything below lives inside min-width:960px,
+   and .hero--home simply doesn't exist as a selector target
+   below that width.
+
+   A few rules below use the compound ".hero--home .hero-mark-inner"
+   form instead of a single class. That's deliberate: those
+   properties (hero-mark-inner/img size, hero-text-glow position,
+   india-pill margin) are also set inside index.html's own inline
+   <style> block, which loads AFTER this stylesheet in the
+   document — so a plain single-class rule here would lose to
+   that inline rule. The extra ".hero--home" ancestor bumps
+   specificity just enough to win, without needing !important.
+   ========================================================= */
+@media (min-width: 960px) {
+  .hero--home {
+    max-width: 1180px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-areas:
+      "eyebrow eyebrow"
+      "title   mark"
+      "sub     mark"
+      "actions mark"
+      "stats   mark"
+      "pill    pill";
+    column-gap: 64px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .hero--home .eyebrow { grid-area: eyebrow; }
+
+  .hero--home .hero-title {
+    grid-area: title;
+    margin-bottom: 28px;
+  }
+
+  .hero--home .hero-sub {
+    grid-area: sub;
+    max-width: 460px;
+    margin: 0 0 40px;
+  }
+
+  .hero--home .hero-actions {
+    grid-area: actions;
+    justify-content: flex-start;
+    margin-bottom: 52px;
+  }
+
+  .hero--home .hero-stats {
+    grid-area: stats;
+    justify-content: flex-start;
+  }
+
+  .hero--home .hero-mark {
+    grid-area: mark;
+    margin-bottom: 0;
+    justify-self: center;
+  }
+
+  /* India pill becomes a full-width closing row under both
+     columns — reads as an intentional second CTA that wraps
+     up the hero, not a leftover mobile element trailing behind
+     the stats. */
+  .hero--home .india-pill {
+    grid-area: pill;
+    margin: 56px auto 0;
+  }
+
+  /* The mark grows from a small corner logo into a real anchor
+     visual — the right column needs enough visual weight to
+     balance the text column, the way Apple's hero art does. */
+  .hero--home .hero-mark-inner {
+    width: 208px;
+    height: 208px;
+  }
+  .hero--home .hero-mark-img {
+    width: 208px;
+    height: 208px;
+  }
+  .hero--home .hero-mark::before {
+    width: 248px;
+    height: 248px;
+  }
+
+  /* A slow, thin rotating ring around the mark — restrained on
+     purpose. One extra layer of premium framing, not a second
+     effect competing with the existing halo/glint system. */
+  .hero--home .hero-mark-inner::after {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    border-radius: 50%;
+    border: 1px solid rgba(201, 168, 118, 0.16);
+    pointer-events: none;
+    animation: heroMarkRingRotate 70s linear infinite;
+  }
+  @keyframes heroMarkRingRotate {
+    to { transform: rotate(360deg); }
+  }
+
+  /* The dark radial glow that keeps hero copy legible over the
+     web canvas shifts to sit behind the text column instead of
+     pooling in the old centered layout's middle. */
+  .hero--home .hero-text-glow {
+    left: 32%;
+    top: 44%;
+    width: min(50%, 560px);
+    height: 80%;
+  }
+}
