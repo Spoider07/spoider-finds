@@ -282,7 +282,7 @@
 
   <main id="page-wrap">
     <!-- ================= HERO ================= -->
-    <section class="hero">
+    <section class="hero hero--home">
       <div class="aurora" aria-hidden="true">
         <span class="aurora-blob aurora-blob--1"></span>
         <span class="aurora-blob aurora-blob--2"></span>
@@ -460,6 +460,7 @@
       var FRAME_INTERVAL = 1000 / 30;
 
       var isSmall = window.matchMedia('(max-width: 600px)').matches;
+      var isDesktop = window.matchMedia('(min-width: 960px)').matches;
       var SPOKE_COUNT = isSmall ? 10 : 15;
       var RING_COUNT = isSmall ? 5 : 7;
       var TOUCH_RADIUS = isSmall ? 110 : 150;
@@ -470,6 +471,7 @@
       var resizeTimer = null;
 
       function resize() {
+        isDesktop = window.matchMedia('(min-width: 960px)').matches;
         var rect = hero.getBoundingClientRect();
         var newW = rect.width;
         var newH = rect.height;
@@ -499,8 +501,8 @@
         spokes = [];
         edges = [];
         shimmers = [];
-        var cx = w / 2;
-        var cy = h * 0.42;
+        var cx = isDesktop ? w * 0.73 : w / 2;
+        var cy = isDesktop ? h * 0.52 : h * 0.42;
         var radiusX = Math.min(w, h) * 0.44;
         var radiusY = radiusX;
 
