@@ -137,11 +137,17 @@
       margin-right: 2px;
     }
     /* Light mode: the gold logo mark has very little contrast sitting
-       directly on ivory nav/footer — a soft dark contact-shadow gives
-       it an edge instead of it blending flat into the background. */
+       directly on ivory nav/footer — a thin dark keyline (via stacked
+       zero-blur drop-shadows, same trick as the hero mark) gives it a
+       real edge instead of it blending flat into the background. */
     html[data-theme="light"] .logo-img,
     html[data-theme="light"] .footer-logo-img {
-      filter: drop-shadow(0 1px 1.5px rgba(60, 45, 20, 0.3));
+      filter:
+        drop-shadow(0.5px 0 0 rgba(40, 32, 16, 0.8))
+        drop-shadow(-0.5px 0 0 rgba(40, 32, 16, 0.8))
+        drop-shadow(0 0.5px 0 rgba(40, 32, 16, 0.8))
+        drop-shadow(0 -0.5px 0 rgba(40, 32, 16, 0.8))
+        drop-shadow(0 1px 1.5px rgba(60, 45, 20, 0.25));
     }
     .state-msg {
       text-align: center;
