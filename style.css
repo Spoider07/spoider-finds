@@ -16,6 +16,19 @@
   --gold-bright: #e8c766;
   --gold-dim: rgba(201, 168, 118, 0.15);
 
+  /* Theme-aware helper tokens (used where a flat color/rgba was
+     previously hardcoded so those spots follow the theme too) */
+  --glow-rgb: 10, 10, 11;               /* dark-pool glow behind hero text / image vignette */
+  --shimmer-a: #1a1a1c;                 /* product-image placeholder gradient */
+  --shimmer-b: #0a0a0b;
+  --shadow-soft: rgba(0, 0, 0, 0.6);    /* card/nav drop shadows */
+
+  --web-line: 201, 168, 118;            /* spider-web canvas thread color */
+  --web-node: 232, 199, 102;            /* spider-web canvas node color */
+  --web-shimmer-core: 255, 247, 225;    /* traveling shimmer particle core */
+  --web-shimmer-glow: 255, 240, 200;    /* traveling shimmer particle glow */
+  --web-alpha-mult: 1;                  /* overall web opacity multiplier */
+
   --font-display: "Fraunces", serif;
   --font-body: "Inter", -apple-system, sans-serif;
   --font-mono: "Space Mono", monospace;
@@ -28,8 +41,57 @@
   --ease-spring: cubic-bezier(0.19, 1.04, 0.28, 1); /* controlled, slight overshoot — hero tier only */
 }
 
+/* =========================================================
+   LIGHT THEME — warm ivory + charcoal + champagne gold.
+   User-controlled only (no prefers-color-scheme). Toggled via
+   html[data-theme="light"], set/read by script.js + localStorage.
+   Same architecture, same components — only the palette shifts.
+   ========================================================= */
+html[data-theme="light"] {
+  --bg: #f7f5f0;
+  --bg-elevated: #fbfaf7;
+  --surface: #ffffff;
+  --surface-hover: #fcfaf5;
+  --border: #e5e0d6;
+  --text-primary: #171717;
+  --text-secondary: #5f5c56;
+  --text-muted: #858078;
+  --gold: #b89555;
+  --gold-bright: #c6a15b;
+  --gold-dim: rgba(184, 149, 85, 0.14);
+
+  --glow-rgb: 247, 245, 240;
+  --shimmer-a: #fbfaf7;
+  --shimmer-b: #f2eee5;
+  --shadow-soft: rgba(35, 30, 20, 0.14);
+
+  --web-line: 184, 149, 85;
+  --web-node: 198, 161, 91;
+  --web-shimmer-core: 255, 250, 240;
+  --web-shimmer-glow: 230, 210, 175;
+  --web-alpha-mult: 0.5;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* =========================================================
+   Theme transition sweep
+   A short-lived expanding circle (created/animated by script.js
+   via the Web Animations API, in the destination theme's
+   --bg-elevated color) covers the screen, the theme attribute
+   flips underneath it while fully covered, then it fades out to
+   reveal the already-settled new theme. No global !important
+   transition hack needed — the swap itself is instant but hidden.
+   ========================================================= */
+.theme-sweep {
+  position: fixed;
+  border-radius: 50%;
+  z-index: 99999;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: width, height, opacity;
 }
 
 /* =========================================================
@@ -236,6 +298,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  transition: background-color 0.4s var(--ease), color 0.4s var(--ease);
 }
 
 a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
@@ -450,13 +513,19 @@ img { max-width: 100%; display: block; }
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
-  transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+html[data-theme="light"] .nav {
+  background: rgba(247, 245, 240, 0.72);
 }
 .nav.scrolled {
   background: rgba(8, 8, 9, 0.88);
   backdrop-filter: blur(26px);
   -webkit-backdrop-filter: blur(26px);
-  box-shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 32px -16px var(--shadow-soft);
+}
+html[data-theme="light"] .nav.scrolled {
+  background: rgba(251, 250, 247, 0.9);
 }
 .nav-inner {
   max-width: 1180px;
@@ -515,6 +584,40 @@ img { max-width: 100%; display: block; }
 .nav-links a.active::after { transform: scaleX(1); }
 .nav-links a.active { color: var(--gold); }
 
+/* =========================================================
+   Theme toggle
+   Compact circular icon button, always visible (both mobile
+   and desktop nav), sitting between the nav links and the
+   mobile hamburger. Sun/moon swap is pure CSS via the
+   html[data-theme] attribute selector — script.js only ever
+   flips that attribute + fires the sweep transition.
+   ========================================================= */
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  cursor: pointer;
+  margin-left: 22px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.2s var(--ease);
+}
+.theme-toggle:hover {
+  border-color: var(--gold-dim);
+  transform: translateY(-1px);
+}
+.theme-toggle:active { transform: scale(0.92); }
+.theme-toggle svg { display: block; width: 16px; height: 16px; }
+.theme-toggle .icon-moon { display: none; }
+html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
+
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -525,13 +628,14 @@ img { max-width: 100%; display: block; }
   background: none;
   border: none;
   cursor: pointer;
+  margin-left: 14px;
 }
 .nav-toggle span {
   display: block;
   width: 100%;
   height: 1.5px;
   background: var(--text-primary);
-  transition: transform 0.25s var(--ease), opacity 0.25s var(--ease);
+  transition: transform 0.25s var(--ease), opacity 0.25s var(--ease), background 0.3s var(--ease);
 }
 .nav-toggle.active span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
 .nav-toggle.active span:nth-child(2) { opacity: 0; }
@@ -560,6 +664,7 @@ img { max-width: 100%; display: block; }
 @media (max-width: 760px) {
   .nav-links { display: none; }
   .nav-toggle { display: flex; }
+  .theme-toggle { margin-left: auto; }
 }
 
 /* =========================================================
@@ -586,11 +691,13 @@ img { max-width: 100%; display: block; }
   filter: blur(90px);
   opacity: 0.4;
 }
+html[data-theme="light"] .aurora { opacity: 0.22; }
 .aurora-blob {
   position: absolute;
   border-radius: 50%;
   mix-blend-mode: screen;
 }
+html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 .aurora-blob--1 {
   width: 55%;
   height: 55%;
@@ -750,7 +857,7 @@ img { max-width: 100%; display: block; }
   transform: translateY(-6px);
   border-color: var(--gold-dim);
   background: var(--surface-hover);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--gold-dim);
+  box-shadow: 0 20px 40px -20px var(--shadow-soft), 0 0 0 1px var(--gold-dim);
 }
 .category-card:active {
   transform: scale(0.97);
@@ -902,7 +1009,7 @@ img { max-width: 100%; display: block; }
 .product-card:hover {
   transform: translateY(-6px);
   border-color: var(--gold-dim);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--gold-dim);
+  box-shadow: 0 20px 40px -20px var(--shadow-soft), 0 0 0 1px var(--gold-dim);
 }
 .product-card:active {
   transform: scale(0.98);
@@ -913,7 +1020,7 @@ img { max-width: 100%; display: block; }
 
 .product-image {
   min-height: 160px;
-  background: linear-gradient(135deg, #1a1a1c, #0a0a0b);
+  background: linear-gradient(135deg, var(--shimmer-a), var(--shimmer-b));
   position: relative;
   overflow: hidden;
 }
@@ -950,7 +1057,7 @@ img { max-width: 100%; display: block; }
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10, 10, 11, 0.35), transparent 45%);
+  background: linear-gradient(to top, rgba(var(--glow-rgb), 0.35), transparent 45%);
   pointer-events: none;
 }
 .product-icon {
@@ -1231,7 +1338,7 @@ img { max-width: 100%; display: block; }
   transform: translateY(-2px);
   border-color: var(--gold-dim);
   background: var(--surface-hover);
-  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--gold-dim);
+  box-shadow: 0 12px 28px -16px var(--shadow-soft), 0 0 0 1px var(--gold-dim);
 }
 
 @media (max-width: 600px) {
@@ -1252,6 +1359,11 @@ img { max-width: 100%; display: block; }
    3) The product grid moves from CSS columns (which order cards
       top-to-bottom-then-next-column — confusing on wide screens)
       to a proper CSS grid with natural left-to-right order.
+
+   NOTE: untouched by the light-mode work — this section is pure
+   layout/breakpoint logic and doesn't reference any color token,
+   so it's unaffected either way while desktop layout is still
+   being iterated on separately.
    ========================================================= */
 @media (min-width: 960px) {
   .nav-inner {
@@ -1325,35 +1437,10 @@ img { max-width: 100%; display: block; }
 
 /* =========================================================
    HERO — HOME PAGE DESKTOP REDESIGN
-   The mobile-first hero above (single centered column) reads
-   as a stretched-out mobile layout on wide screens — a narrow
-   strip of text with dead black space either side, and a hero
-   that opens on a tall, mostly-empty screen (see Apple's hero
-   for the contrast: wide, confident, two halves working
-   together instead of one skinny centered column).
-
-   This section rebuilds ONLY the homepage hero into a proper
-   two-column layout at desktop widths: copy + CTAs on the
-   left, the spider mark grown into a real anchor visual on
-   the right, with the spoke-web canvas re-centered behind it
-   (handled in index.html's own inline script, since the canvas
-   is unique to that page).
-
-   Scoped entirely to .hero--home (not the shared .hero class),
-   so india.html / about.html / category-page heroes — which
-   still use plain .hero — are completely untouched. Mobile is
-   untouched too: everything below lives inside min-width:960px,
-   and .hero--home simply doesn't exist as a selector target
-   below that width.
-
-   A few rules below use the compound ".hero--home .hero-mark-inner"
-   form instead of a single class. That's deliberate: those
-   properties (hero-mark-inner/img size, hero-text-glow position,
-   india-pill margin) are also set inside index.html's own inline
-   <style> block, which loads AFTER this stylesheet in the
-   document — so a plain single-class rule here would lose to
-   that inline rule. The extra ".hero--home" ancestor bumps
-   specificity just enough to win, without needing !important.
+   Untouched by the light-mode work. Pure layout (grid areas,
+   sizes, positions) — no hardcoded colors live here, so it
+   inherits the theme automatically without needing edits, and
+   nothing below is modified while this is still WIP separately.
    ========================================================= */
 @media (min-width: 960px) {
   .hero--home {
