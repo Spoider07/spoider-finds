@@ -29,6 +29,22 @@
   --web-shimmer-glow: 255, 240, 200;    /* traveling shimmer particle glow */
   --web-alpha-mult: 1;                  /* overall web opacity multiplier */
 
+  /* Hero mark (spider logo) glow layers — tuned per-theme so the
+     gold linework has real contrast against its background instead
+     of just matching it. Dark mode: gold-on-black, glow reads as
+     light. Light mode: needs a deeper, warmer gold + a soft dark
+     contact-shadow underneath, or it visually disappears into the
+     ivory instead of reading as a floating, lit object. */
+  --mark-halo-a: rgba(220, 185, 120, 0.22);
+  --mark-halo-b: rgba(180, 140, 70, 0.08);
+  --mark-ping-border: rgba(232, 199, 102, 0.55);
+  --mark-tap-border: rgba(255, 241, 204, 0.75);
+  --mark-glint-bg: rgba(255, 247, 225, 0.85);
+  --mark-glow-min: drop-shadow(0 0 3px rgba(232, 199, 102, 0.22)) drop-shadow(0 0 6px rgba(180, 140, 70, 0.1));
+  --mark-glow-max: drop-shadow(0 0 9px rgba(232, 199, 102, 0.4)) drop-shadow(0 0 4px rgba(255, 238, 190, 0.22));
+  --mark-flash-min: drop-shadow(0 0 4px rgba(232, 199, 102, 0.25)) drop-shadow(0 0 8px rgba(180, 140, 70, 0.14));
+  --mark-flash-max: drop-shadow(0 0 22px rgba(255, 238, 190, 0.9)) drop-shadow(0 0 10px rgba(232, 199, 102, 0.6));
+
   --font-display: "Fraunces", serif;
   --font-body: "Inter", -apple-system, sans-serif;
   --font-mono: "Space Mono", monospace;
@@ -65,11 +81,24 @@ html[data-theme="light"] {
   --shimmer-b: #f2eee5;
   --shadow-soft: rgba(35, 30, 20, 0.14);
 
-  --web-line: 184, 149, 85;
-  --web-node: 198, 161, 91;
+  --web-line: 168, 128, 68;
+  --web-node: 184, 143, 78;
   --web-shimmer-core: 255, 250, 240;
-  --web-shimmer-glow: 230, 210, 175;
-  --web-alpha-mult: 0.5;
+  --web-shimmer-glow: 214, 180, 130;
+  --web-alpha-mult: 0.62;
+
+  /* Hero mark — richer, more saturated gold + an actual dark
+     contact-shadow (not just a lighter gold glow) so the linework
+     separates from the ivory instead of blending into it. */
+  --mark-halo-a: rgba(184, 149, 85, 0.4);
+  --mark-halo-b: rgba(140, 108, 55, 0.16);
+  --mark-ping-border: rgba(150, 112, 55, 0.55);
+  --mark-tap-border: rgba(90, 68, 30, 0.55);
+  --mark-glint-bg: rgba(120, 90, 42, 0.65);
+  --mark-glow-min: drop-shadow(0 1px 1px rgba(60, 45, 20, 0.28)) drop-shadow(0 0 4px rgba(184, 149, 85, 0.35));
+  --mark-glow-max: drop-shadow(0 1px 2px rgba(60, 45, 20, 0.4)) drop-shadow(0 0 8px rgba(184, 149, 85, 0.55));
+  --mark-flash-min: drop-shadow(0 1px 1px rgba(60, 45, 20, 0.3)) drop-shadow(0 0 6px rgba(184, 149, 85, 0.4));
+  --mark-flash-max: drop-shadow(0 1px 2px rgba(60, 45, 20, 0.45)) drop-shadow(0 0 16px rgba(150, 112, 55, 0.75));
 }
 
 @media (prefers-reduced-motion: reduce) {
