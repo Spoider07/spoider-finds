@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Theme anti-flash: must run before any CSS paints. Reads the
+       user's stored preference and sets data-theme on <html> before
+       the page renders, so a returning Light-mode user never sees a
+       flash of the default Dark theme. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('sf-theme');
+        if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XHQ6BSWKH"></script>
   <script>
@@ -60,7 +73,7 @@
       width: 110px;
       height: 110px;
       transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(10,10,11,0.9) 0%, rgba(10,10,11,0.5) 45%, rgba(10,10,11,0) 75%);
+      background: radial-gradient(circle, rgba(var(--glow-rgb), 0.9) 0%, rgba(var(--glow-rgb), 0.5) 45%, rgba(var(--glow-rgb), 0) 75%);
       z-index: -1;
       pointer-events: none;
     }
@@ -71,7 +84,7 @@
       transform: translate(-50%, -50%);
       width: min(94%, 780px);
       height: 68%;
-      background: radial-gradient(ellipse at center, rgba(10,10,11,0.55) 0%, rgba(10,10,11,0.3) 45%, rgba(10,10,11,0) 78%);
+      background: radial-gradient(ellipse at center, rgba(var(--glow-rgb), 0.55) 0%, rgba(var(--glow-rgb), 0.3) 45%, rgba(var(--glow-rgb), 0) 78%);
       z-index: 1;
       pointer-events: none;
     }
@@ -262,6 +275,15 @@
         <a href="#latest">Latest</a>
         <a href="india.html">🇮🇳 For India<span class="nav-badge-new">NEW</span></a>
       </nav>
+      <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/>
+        </svg>
+      </button>
       <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -459,6 +481,22 @@
       var lastFrame = 0;
       var FRAME_INTERVAL = 1000 / 30;
 
+      // ---- Theme-aware colors: read once, refresh on toggle ----
+      // Colors live as CSS custom properties (":root" / light override)
+      // so a single event listener keeps the canvas in sync with the
+      // rest of the site without redrawing per-frame lookups.
+      var THEME = { line: '201,168,118', node: '232,199,102', shimCore: '255,247,225', shimGlow: '255,240,200', alphaMult: 1 };
+      function readThemeVars() {
+        var cs = getComputedStyle(document.documentElement);
+        THEME.line = (cs.getPropertyValue('--web-line') || THEME.line).trim();
+        THEME.node = (cs.getPropertyValue('--web-node') || THEME.node).trim();
+        THEME.shimCore = (cs.getPropertyValue('--web-shimmer-core') || THEME.shimCore).trim();
+        THEME.shimGlow = (cs.getPropertyValue('--web-shimmer-glow') || THEME.shimGlow).trim();
+        THEME.alphaMult = parseFloat(cs.getPropertyValue('--web-alpha-mult')) || 1;
+      }
+      readThemeVars();
+      window.addEventListener('sf-theme-change', readThemeVars);
+
       var isSmall = window.matchMedia('(max-width: 600px)').matches;
       var isDesktop = window.matchMedia('(min-width: 960px)').matches;
       var SPOKE_COUNT = isSmall ? 10 : 15;
@@ -630,7 +668,7 @@
         var offset = dist * edge.sag * wobble;
         var cxp = mx + nx * offset, cyp = my + ny * offset;
 
-        ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
+        ctx.strokeStyle = 'rgba(' + THEME.line + ',' + alpha.toFixed(3) + ')';
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
@@ -642,7 +680,7 @@
         ctx.lineWidth = 1;
         pulseT += 0.02;
         var pulse = 0.75 + Math.sin(pulseT) * 0.25;
-        var baseAlpha = 0.5 * pulse;
+        var baseAlpha = 0.5 * pulse * THEME.alphaMult;
 
         for (var i = 0; i < nodes.length; i++) {
           step(nodes[i]);
@@ -658,7 +696,7 @@
           var n = nodes[i];
           ctx.beginPath();
           ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
+          ctx.fillStyle = 'rgba(' + THEME.node + ',' + ((0.55 * pulse + 0.15) * THEME.alphaMult).toFixed(3) + ')';
           ctx.fill();
         }
 
@@ -672,11 +710,11 @@
           var fade = Math.sin(sh.t * Math.PI);
           ctx.beginPath();
           ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,240,200,' + (0.15 * fade).toFixed(3) + ')';
+          ctx.fillStyle = 'rgba(' + THEME.shimGlow + ',' + (0.15 * fade * THEME.alphaMult).toFixed(3) + ')';
           ctx.fill();
           ctx.beginPath();
           ctx.arc(pos.x, pos.y, 1.6, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,247,225,' + (0.9 * fade).toFixed(3) + ')';
+          ctx.fillStyle = 'rgba(' + THEME.shimCore + ',' + (0.9 * fade * THEME.alphaMult).toFixed(3) + ')';
           ctx.fill();
         }
       }
