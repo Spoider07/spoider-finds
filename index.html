@@ -136,6 +136,13 @@
       vertical-align: middle;
       margin-right: 2px;
     }
+    /* Light mode: the gold logo mark has very little contrast sitting
+       directly on ivory nav/footer — a soft dark contact-shadow gives
+       it an edge instead of it blending flat into the background. */
+    html[data-theme="light"] .logo-img,
+    html[data-theme="light"] .footer-logo-img {
+      filter: drop-shadow(0 1px 1.5px rgba(60, 45, 20, 0.3));
+    }
     .state-msg {
       text-align: center;
       padding: 3rem 1rem;
@@ -163,7 +170,7 @@
       position: absolute;
       inset: -18%;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(220,185,120,0.22) 0%, rgba(180,140,70,0.08) 48%, transparent 75%);
+      background: radial-gradient(circle, var(--mark-halo-a) 0%, var(--mark-halo-b) 48%, transparent 75%);
       filter: blur(14px);
       z-index: 0;
       pointer-events: none;
@@ -177,7 +184,7 @@
       position: absolute;
       inset: -4%;
       border-radius: 50%;
-      border: 1px solid rgba(232,199,102,0.55);
+      border: 1px solid var(--mark-ping-border);
       opacity: 0;
       z-index: 0;
       pointer-events: none;
@@ -191,7 +198,7 @@
       position: absolute;
       inset: -6%;
       border-radius: 50%;
-      border: 1.5px solid rgba(255,241,204,0.75);
+      border: 1.5px solid var(--mark-tap-border);
       opacity: 0;
       z-index: 3;
       pointer-events: none;
@@ -212,19 +219,19 @@
       object-fit: contain;
       transform-origin: center;
       animation: markGlowPulse 7s ease-in-out infinite;
-      filter: drop-shadow(0 0 4px rgba(232,199,102,0.28)) drop-shadow(0 0 8px rgba(180,140,70,0.16));
+      filter: var(--mark-glow-min);
     }
     @keyframes markGlowPulse {
-      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)) drop-shadow(0 0 6px rgba(180,140,70,0.1)); opacity: 0.95; transform: scale(1); }
-      50%      { filter: drop-shadow(0 0 9px rgba(232,199,102,0.4)) drop-shadow(0 0 4px rgba(255,238,190,0.22)); opacity: 1; transform: scale(1.02); }
+      0%, 100% { filter: var(--mark-glow-min); opacity: 0.95; transform: scale(1); }
+      50%      { filter: var(--mark-glow-max); opacity: 1; transform: scale(1.02); }
     }
     .hero-mark-img.flash {
       animation: markGlowPulse 7s ease-in-out infinite, markTapFlash 0.55s ease-out;
     }
     @keyframes markTapFlash {
-      0%   { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
-      30%  { filter: drop-shadow(0 0 22px rgba(255,238,190,0.9)) drop-shadow(0 0 10px rgba(232,199,102,0.6)); }
-      100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
+      0%   { filter: var(--mark-flash-min); }
+      30%  { filter: var(--mark-flash-max); }
+      100% { filter: var(--mark-flash-min); }
     }
     .hero-mark-glint {
       position: absolute;
@@ -233,7 +240,7 @@
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,247,225,0.85), transparent 70%);
+      background: radial-gradient(circle, var(--mark-glint-bg), transparent 70%);
       filter: blur(1.5px);
       mix-blend-mode: screen;
       z-index: 2;
@@ -250,6 +257,14 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
+    }
+    /* "screen" blend mode only ever lightens — perfect for a bright
+       glint against dark mode's near-black hero, but it washes a
+       glint out to nothing against light mode's ivory. "multiply"
+       darkens instead, so the same glint reads as a small warm glint
+       of light on either background. */
+    html[data-theme="light"] .hero-mark-glint {
+      mix-blend-mode: multiply;
     }
 
   </style>
