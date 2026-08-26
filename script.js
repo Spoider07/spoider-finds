@@ -1,15 +1,18 @@
 // ============================================================
 // Spoider Finds — main script
 // Handles: mobile nav toggle, scroll-driven "thread" line,
-// footer utilities, reveal/count-up/snap animations, and the
-// unified split-reveal typography system.
+// footer utilities, reveal/count-up/snap animations, the
+// unified split-reveal typography system, and the user-controlled
+// light/dark theme toggle (sweep transition + persistence).
 //
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
 // (see transitions.js). One-time, page-independent behaviors
-// (cursor trail, first-load intro overlay, global tap-spark)
-// live in bindGlobalOnce() and only ever run once per real
-// browser session.
+// (cursor trail, first-load intro overlay, global tap-spark,
+// theme toggle binding) live in bindGlobalOnce() and only ever
+// run once per real browser session — the toggle button lives
+// in the persistent <header class="nav">, outside #page-wrap,
+// so it survives every AJAX swap untouched.
 // ============================================================
 
 (function () {
@@ -19,9 +22,133 @@
   let globalBound = false;
   let pageCleanupFns = [];
 
+  // ============================================================
+  // Theme toggle (user-controlled, persisted via localStorage)
+  //
+  // Default is Dark. html[data-theme="light"] is what the CSS
+  // keys off of — this script only ever sets/reads that one
+  // attribute plus localStorage. The anti-flash inline script in
+  // each page's <head> already sets the attribute before first
+  // paint if Light was previously chosen, so this code never has
+  // to "fix" an initial flash — it only handles the toggle itself.
+  //
+  // Transition: an expanding circle (Web Animations API), grown
+  // from the tapped button's position in the DESTINATION theme's
+  // --bg-elevated color, fully covers the viewport. Once covered,
+  // the data-theme attribute flips (invisible, since it's hidden
+  // under the circle), then the circle fades out to reveal the
+  // already-settled new theme. Reads as a soft cinematic sweep
+  // rather than an instant color swap, without needing a heavy
+  // global !important transition on every element.
+  // ============================================================
+  const THEME_KEY = "sf-theme";
+
+  function getStoredTheme() {
+    try {
+      return localStorage.getItem(THEME_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setStoredTheme(value) {
+    try {
+      localStorage.setItem(THEME_KEY, value);
+    } catch (e) {
+      /* localStorage unavailable (privacy mode etc.) — theme just won't persist */
+    }
+  }
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  }
+
+  function updateToggleUI() {
+    const isLight = currentTheme() === "light";
+    document.querySelectorAll(".theme-toggle").forEach((btn) => {
+      btn.setAttribute("aria-pressed", isLight ? "true" : "false");
+      btn.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
+    });
+  }
+
+  function flipTheme(nextTheme) {
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    setStoredTheme(nextTheme);
+    updateToggleUI();
+    window.dispatchEvent(new CustomEvent("sf-theme-change", { detail: { theme: nextTheme } }));
+  }
+
+  function runThemeSweep(nextTheme, originX, originY) {
+    const root = document.documentElement;
+
+    if (prefersReducedMotion || typeof root.animate !== "function") {
+      flipTheme(nextTheme);
+      return;
+    }
+
+    // Read the destination theme's elevated background color by
+    // briefly flipping the attribute, reading the computed value,
+    // then reverting — the actual (visible) flip happens later,
+    // once the sweep circle has fully covered the screen.
+    const prevTheme = currentTheme();
+    root.setAttribute("data-theme", nextTheme);
+    const destColor = getComputedStyle(root).getPropertyValue("--bg-elevated").trim() || "#0a0a0b";
+    root.setAttribute("data-theme", prevTheme);
+
+    const maxDist = Math.hypot(
+      Math.max(originX, window.innerWidth - originX),
+      Math.max(originY, window.innerHeight - originY)
+    );
+    const size = maxDist * 2.3;
+
+    const sweep = document.createElement("div");
+    sweep.className = "theme-sweep";
+    sweep.style.top = originY + "px";
+    sweep.style.left = originX + "px";
+    sweep.style.width = "0px";
+    sweep.style.height = "0px";
+    sweep.style.background = destColor;
+    document.body.appendChild(sweep);
+
+    const grow = sweep.animate(
+      [
+        { width: "0px", height: "0px" },
+        { width: size + "px", height: size + "px" },
+      ],
+      { duration: 480, easing: "cubic-bezier(0.22,1,0.36,1)", fill: "forwards" }
+    );
+
+    grow.onfinish = () => {
+      flipTheme(nextTheme);
+      const fade = sweep.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: 260,
+        easing: "ease",
+        fill: "forwards",
+      });
+      fade.onfinish = () => {
+        if (sweep.parentNode) sweep.remove();
+      };
+    };
+  }
+
+  function bindThemeToggle() {
+    updateToggleUI();
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".theme-toggle");
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const next = currentTheme() === "light" ? "dark" : "light";
+      runThemeSweep(next, x, y);
+    });
+  }
+
   function bindGlobalOnce() {
     if (globalBound) return;
     globalBound = true;
+
+    bindThemeToggle();
 
     // ---- Cursor-trail particles (fine-pointer / desktop only) ----
     if (supportsHoverFine && !prefersReducedMotion) {
@@ -86,7 +213,8 @@
     // so it survives every AJAX page swap without rebinding. Skips
     // .hero-mark-inner entirely — that element already has its own
     // dedicated burst/flash treatment, and layering this on top would
-    // double up and look cheap. ----
+    // double up and look cheap. Also skips .theme-toggle — that has
+    // its own sweep transition and doesn't need the generic spark. ----
     if (!prefersReducedMotion) {
       const sparkStyle = document.createElement("style");
       sparkStyle.textContent =
@@ -117,7 +245,7 @@
         (e) => {
           if (e.pointerType === "mouse" && e.button !== 0) return;
           const target = e.target.closest(TAP_SPARK_SELECTOR);
-          if (!target || target.closest(".hero-mark-inner")) return;
+          if (!target || target.closest(".hero-mark-inner") || target.closest(".theme-toggle")) return;
           spawnTapSpark(e.clientX, e.clientY);
         },
         { passive: true }
