@@ -273,9 +273,47 @@
       mix-blend-mode: multiply;
     }
 
+    /* ===== TEMP DEBUG BADGE — remove after testing ===== */
+    #sfDebugBadge {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      z-index: 999999;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #0f0;
+      line-height: 1.5;
+      pointer-events: none;
+      white-space: pre;
+    }
   </style>
 </head>
 <body>
+  <!-- ===== TEMP DEBUG BADGE — remove after testing ===== -->
+  <div id="sfDebugBadge"></div>
+  <script>
+    (function () {
+      function updateDebugBadge() {
+        var el = document.getElementById('sfDebugBadge');
+        if (!el) return;
+        var w = window.innerWidth;
+        var is960 = window.matchMedia('(min-width: 960px)').matches;
+        var is1440 = window.matchMedia('(min-width: 1440px)').matches;
+        el.textContent =
+          'innerWidth: ' + w + 'px\n' +
+          '>=960px: ' + is960 + '\n' +
+          '>=1440px: ' + is1440;
+      }
+      window.addEventListener('resize', updateDebugBadge);
+      window.addEventListener('DOMContentLoaded', updateDebugBadge);
+      updateDebugBadge();
+    })();
+  </script>
+
   <div class="page-loader" id="pageLoader">
     <svg class="loader-mark" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
       <path class="loader-thread" pathLength="1" d="M32 2 L32 32" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
@@ -502,10 +540,6 @@
       var lastFrame = 0;
       var FRAME_INTERVAL = 1000 / 30;
 
-      // ---- Theme-aware colors: read once, refresh on toggle ----
-      // Colors live as CSS custom properties (":root" / light override)
-      // so a single event listener keeps the canvas in sync with the
-      // rest of the site without redrawing per-frame lookups.
       var THEME = { line: '201,168,118', node: '232,199,102', shimCore: '255,247,225', shimGlow: '255,240,200', alphaMult: 1 };
       function readThemeVars() {
         var cs = getComputedStyle(document.documentElement);
@@ -555,13 +589,6 @@
         resizeTimer = setTimeout(resize, 120);
       }
 
-      // Returns the web's center point in canvas-local coordinates.
-      // Desktop: read the ACTUAL rendered position of the spider mark
-      // (.hero-mark-inner) via getBoundingClientRect, so the web is
-      // always centered exactly on the logo regardless of how the
-      // grid layout shifts the mark column — no more guessed
-      // percentages (w*0.73 etc.) drifting out of sync with the logo.
-      // Mobile: unchanged, logo sits centered above the text block.
       function getWebCenter() {
         if (isDesktop) {
           var markEl = hero.querySelector('.hero-mark-inner');
@@ -831,7 +858,6 @@
     </script>
 
     <script>
-    /* Reusable scroll-scale for Featured cards — re-runnable after Supabase injects cards */
     window.initFeaturedScale = function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
@@ -908,7 +934,6 @@
       var hero = document.querySelector('.hero');
       if (!mark || !hero) return;
 
-      /* Scroll fade — logo softly fades, shrinks and drifts up as you scroll past the hero */
       var ticking = false;
       function updateScrollFade() {
         ticking = false;
@@ -928,7 +953,6 @@
       window.addEventListener('scroll', onScroll, { passive: true });
       updateScrollFade();
 
-      /* Tap interaction — a soft gold ring burst + brief bright flash */
       var ring = mark.querySelector('.hero-mark-tap-ring');
       var img = mark.querySelector('.hero-mark-img');
       var flashTimer = null;
@@ -978,9 +1002,6 @@
         document.head.appendChild(s);
       }
 
-      /* Marks each product-image wrapper as loaded once its <img> finishes
-         loading (or errors), so the shimmer/wave loading effect turns off
-         instead of running forever on dynamically injected cards. */
       function watchImagesForLoad(container) {
         container.querySelectorAll('.product-image').forEach(function (wrapper) {
           var img = wrapper.querySelector('img');
