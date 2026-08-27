@@ -1408,6 +1408,19 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .nav-inner {
     max-width: 1320px;
     padding: 20px 40px;
+    /* Desktop-only fix: with justify-content:space-between and only
+       3 flex children (logo, nav-links, theme-toggle — nav-toggle is
+       display:none up here), space-between spreads them evenly across
+       the FULL width, which drags nav-links toward the middle of the
+       bar instead of hugging the right side next to the logo. Switch
+       to flex-start and push the link group to the right with margin-
+       left:auto instead, so it reads as a normal "logo left / links +
+       toggle grouped right" navbar. Mobile (<960px, where nav-links is
+       display:none anyway) is untouched. */
+    justify-content: flex-start;
+  }
+  .nav-links {
+    margin-left: auto;
   }
 
   .hero {
@@ -1520,6 +1533,13 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .hero--home .hero-stats {
     grid-area: stats;
     justify-content: flex-start;
+    /* Desktop-only fix: match the width of .hero-sub/.hero-actions
+       above it. Without a max-width, the flex row can stretch past
+       the text column's natural width (since grid areas don't clip
+       their content), making the 11+ / 4 / 100% cluster drift right
+       and look disconnected/"to the side" instead of sitting flush
+       under the paragraph and buttons like the rest of the column. */
+    max-width: 460px;
   }
 
   .hero--home .hero-mark {
