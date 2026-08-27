@@ -555,13 +555,37 @@
         resizeTimer = setTimeout(resize, 120);
       }
 
+      // Returns the web's center point in canvas-local coordinates.
+      // Desktop: read the ACTUAL rendered position of the spider mark
+      // (.hero-mark-inner) via getBoundingClientRect, so the web is
+      // always centered exactly on the logo regardless of how the
+      // grid layout shifts the mark column — no more guessed
+      // percentages (w*0.73 etc.) drifting out of sync with the logo.
+      // Mobile: unchanged, logo sits centered above the text block.
+      function getWebCenter() {
+        if (isDesktop) {
+          var markEl = hero.querySelector('.hero-mark-inner');
+          if (markEl) {
+            var markRect = markEl.getBoundingClientRect();
+            var heroRect = hero.getBoundingClientRect();
+            return {
+              x: (markRect.left - heroRect.left) + markRect.width / 2,
+              y: (markRect.top - heroRect.top) + markRect.height / 2
+            };
+          }
+          return { x: w * 0.73, y: h * 0.52 };
+        }
+        return { x: w / 2, y: h * 0.42 };
+      }
+
       function seedNodes() {
         nodes = [];
         spokes = [];
         edges = [];
         shimmers = [];
-        var cx = isDesktop ? w * 0.73 : w / 2;
-        var cy = isDesktop ? h * 0.52 : h * 0.42;
+        var center = getWebCenter();
+        var cx = center.x;
+        var cy = center.y;
         var radiusX = Math.min(w, h) * 0.44;
         var radiusY = radiusX;
 
