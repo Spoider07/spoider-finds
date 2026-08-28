@@ -800,8 +800,9 @@
 
       window.addEventListener('resize', onWindowResize);
 
+      var io = null;
       if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
+        io = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
             if (entry.isIntersecting) start(); else stop();
           });
@@ -811,15 +812,36 @@
         start();
       }
 
-      document.addEventListener('visibilitychange', function () {
+      function onVisibilityChange() {
         if (document.hidden) stop(); else if (hero.getBoundingClientRect().top < window.innerHeight) start();
-      });
+      }
+      document.addEventListener('visibilitychange', onVisibilityChange);
 
       resize();
+
+      // This whole IIFE re-runs every time the SPA transition swaps this
+      // markup back in (e.g. navigating away and back to a page with this
+      // hero). Without a teardown, every re-run stacked a brand-new set of
+      // window/document listeners + its own RAF loop on top of the previous
+      // instance's — canvases kept animating in the background after their
+      // DOM node was gone, and resize/visibility handlers piled up forever.
+      // transitions.js calls every registered cleanup right before it wipes
+      // #page-wrap's content on the next navigation.
+      if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        window.SpoiderPage.onCleanup(function () {
+          stop();
+          clearTimeout(resizeTimer);
+          window.removeEventListener('resize', onWindowResize);
+          window.removeEventListener('sf-theme-change', readThemeVars);
+          document.removeEventListener('visibilitychange', onVisibilityChange);
+          if (io) io.disconnect();
+        });
+      }
     })();
     </script>
 
     <script>
+    var sfFeaturedCleanupRegistered = false;
     window.initFeaturedScale = function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
@@ -926,8 +948,9 @@
         }
       }
 
+      var io = null;
       if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
+        io = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
             if (entry.isIntersecting) {
               active.add(entry.target);
@@ -946,6 +969,20 @@
       window.addEventListener('scroll', requestTick, { passive: true });
       window.addEventListener('resize', requestTick);
       requestTick();
+
+      // initFeaturedScale runs twice per page load (once too early with zero
+      // cards -> bails above, once for real once Supabase's products land),
+      // and this whole script re-fires on every SPA swap back to a page with
+      // #featured. Register the teardown only once we've actually attached
+      // listeners, and only once per page instance.
+      if (!sfFeaturedCleanupRegistered && window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        sfFeaturedCleanupRegistered = true;
+        window.SpoiderPage.onCleanup(function () {
+          window.removeEventListener('scroll', requestTick);
+          window.removeEventListener('resize', requestTick);
+          if (io) io.disconnect();
+        });
+      }
     };
     window.initFeaturedScale();
     </script>
@@ -1032,6 +1069,18 @@
         }, 800);
       }
       mark.addEventListener('click', burst);
+
+      // Same fix as the other two hero scripts: this IIFE re-runs on every
+      // SPA swap back to a page with this hero mark, so its window-level
+      // scroll listener and pending RAF/timer need to be torn down before
+      // the next swap, or they keep stacking.
+      if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        window.SpoiderPage.onCleanup(function () {
+          window.removeEventListener('scroll', onScroll);
+          if (parallaxRaf) cancelAnimationFrame(parallaxRaf);
+          clearTimeout(flashTimer);
+        });
+      }
     })();
     </script>
 
