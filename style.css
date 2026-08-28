@@ -905,6 +905,24 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   box-shadow: 0 0 32px -4px rgba(201, 168, 118, 0.55), 0 0 0 1px var(--gold);
   transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), border-color 0.15s var(--ease);
 }
+/* Desktop-only: when one category card is hovered, its immediate
+   neighbours in the row pick up a faint gold border tint too — reads
+   as a thread of attention passing along the row instead of a single
+   isolated card lighting up, echoing the "four threads" idea. Pure
+   CSS (:has), no JS needed; falls back to no-op on unsupported
+   browsers since the base :hover rule above already covers the
+   hovered card itself. */
+@media (min-width: 960px) {
+  .category-grid:has(.category-card:nth-child(1):hover) .category-card:nth-child(2),
+  .category-grid:has(.category-card:nth-child(2):hover) .category-card:nth-child(1),
+  .category-grid:has(.category-card:nth-child(2):hover) .category-card:nth-child(3),
+  .category-grid:has(.category-card:nth-child(3):hover) .category-card:nth-child(2),
+  .category-grid:has(.category-card:nth-child(3):hover) .category-card:nth-child(4),
+  .category-grid:has(.category-card:nth-child(4):hover) .category-card:nth-child(3) {
+    border-color: var(--gold-dim);
+    transition: border-color 0.4s var(--ease) 0.05s;
+  }
+}
 .category-glow {
   position: absolute;
   top: -40%;
