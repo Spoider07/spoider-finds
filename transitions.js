@@ -22,6 +22,21 @@
 // net does the same cleanup if a stuck state ever gets restored
 // from bfcache anyway. This is what caused the black screen on
 // hardware/gesture back button.
+//
+// CLEANUP REGISTRY (window.SpoiderPage.onCleanup):
+// Per-page inline scripts (hero canvas, card tilt, mark parallax,
+// etc.) attach window/document listeners, IntersectionObservers,
+// and requestAnimationFrame loops. Since those scripts just
+// re-execute every time this file swaps them back into #page-wrap,
+// without a teardown step every one of those would stack a fresh
+// copy on top of the last — repeated navigation to the same page
+// silently piled up duplicate resize/scroll/visibility handlers
+// and RAF loops running against detached DOM nodes, which is real,
+// compounding CPU/battery drain on a phone. Any inline script that
+// adds a persistent listener should call
+// window.SpoiderPage.onCleanup(fn) once, right after it attaches
+// its listeners — fn is called (and then discarded) right before
+// the NEXT page swap wipes #page-wrap's content.
 // ============================================================
 
 (function () {
@@ -36,6 +51,26 @@
   var cache = Object.create(null);
   var lastReverse = false; // remembers which way the last transition moved
   var navId = 0; // bumped on every navigation; stale async work checks this and bails
+
+  // ---------- cleanup registry ----------
+  // Don't clobber SpoiderPage if script.js already put something on it
+  // (e.g. .init for nav/theme-toggle wiring) — only add what's missing.
+  window.SpoiderPage = window.SpoiderPage || {};
+  window.SpoiderPage._cleanups = window.SpoiderPage._cleanups || [];
+  window.SpoiderPage.onCleanup = function (fn) {
+    if (typeof fn === "function") window.SpoiderPage._cleanups.push(fn);
+  };
+  function runPageCleanups() {
+    var fns = window.SpoiderPage._cleanups;
+    window.SpoiderPage._cleanups = [];
+    for (var i = 0; i < fns.length; i++) {
+      try {
+        fns[i]();
+      } catch (e) {
+        // one page's teardown misbehaving should never block navigation
+      }
+    }
+  }
 
   // ---------- inject transition + pulse styles once ----------
   (function injectStyles() {
@@ -234,6 +269,12 @@
       realNavigate(fullUrl);
       return;
     }
+
+    // Tear down whatever the OUTGOING page's inline scripts registered
+    // (canvas RAF loops, resize/scroll/visibility listeners, observers)
+    // before we rip its markup out from under them. This must happen
+    // before innerHTML is replaced.
+    runPageCleanups();
 
     clearAnimClasses();
     wrap.innerHTML = extracted.wrapHTML;
