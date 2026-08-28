@@ -829,11 +829,70 @@
       var active = new Set();
       var ticking = false;
       var lastScrollY = -1;
+      var isDesktopTilt = window.matchMedia('(min-width: 960px)').matches;
+      var MAX_TILT = 6; // degrees — kept small, this is a premium detail, not a gimmick
 
       cards.forEach(function (card) {
         card.style.transformOrigin = '50% 65%';
         card.style.willChange = 'transform';
         card.style.transitionProperty = 'opacity';
+        card.dataset.scale = MAX_SCALE;
+        card.dataset.hover = '0';
+        card.dataset.tiltX = '0';
+        card.dataset.tiltY = '0';
+
+        // Every effect (scroll scale, hover lift, cursor tilt) writes to
+        // this one function instead of touching card.style.transform
+        // directly — otherwise whichever effect ran last wins and the
+        // others silently stop working (that was the earlier bug: CSS
+        // :hover's translateY was being wiped every scroll frame by the
+        // scale-only inline style).
+        function paint() {
+          var scale = parseFloat(card.dataset.scale);
+          var lift = card.dataset.hover === '1' ? -6 : 0;
+          var tiltX = parseFloat(card.dataset.tiltX);
+          var tiltY = parseFloat(card.dataset.tiltY);
+          card.style.transform =
+            'perspective(900px) scale(' + scale.toFixed(3) + ') translateY(' + lift + 'px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg)';
+        }
+        card._paint = paint;
+
+        if (isDesktopTilt) {
+          var tiltRaf = null;
+          var targetTX = 0, targetTY = 0;
+          function easeTilt() {
+            var curTX = parseFloat(card.dataset.tiltX);
+            var curTY = parseFloat(card.dataset.tiltY);
+            curTX += (targetTX - curTX) * 0.15;
+            curTY += (targetTY - curTY) * 0.15;
+            card.dataset.tiltX = curTX;
+            card.dataset.tiltY = curTY;
+            paint();
+            if (Math.abs(targetTX - curTX) > 0.05 || Math.abs(targetTY - curTY) > 0.05) {
+              tiltRaf = requestAnimationFrame(easeTilt);
+            } else {
+              tiltRaf = null;
+            }
+          }
+          card.addEventListener('mouseenter', function () {
+            card.dataset.hover = '1';
+            paint();
+          });
+          card.addEventListener('mousemove', function (e) {
+            var rect = card.getBoundingClientRect();
+            var relX = (e.clientX - rect.left) / rect.width - 0.5;
+            var relY = (e.clientY - rect.top) / rect.height - 0.5;
+            targetTY = relX * MAX_TILT;
+            targetTX = relY * -MAX_TILT;
+            if (!tiltRaf) tiltRaf = requestAnimationFrame(easeTilt);
+          });
+          card.addEventListener('mouseleave', function () {
+            card.dataset.hover = '0';
+            targetTX = 0;
+            targetTY = 0;
+            if (!tiltRaf) tiltRaf = requestAnimationFrame(easeTilt);
+          });
+        }
       });
 
       function smoothstep(t) {
@@ -849,7 +908,8 @@
         var raw = (start - rect.top) / (start - end);
         var p = smoothstep(raw);
         var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
-        card.style.transform = 'scale(' + scale.toFixed(3) + ')';
+        card.dataset.scale = scale;
+        card._paint();
       }
 
       function onFrame() {
@@ -889,6 +949,7 @@
     };
     window.initFeaturedScale();
     </script>
+
 
     <script>
     (function () {
