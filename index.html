@@ -350,7 +350,7 @@
         <a href="#categories" class="btn btn-ghost">Browse Categories</a>
       </div>
       <div class="hero-stats hero-enter">
-        <div class="stat"><span class="stat-num" data-count-to="11" data-suffix="+">11+</span><span class="stat-label">Curated Finds</span></div>
+        <div class="stat"><span class="stat-num" id="stat-curated-count" data-count-to="11" data-suffix="+">11+</span><span class="stat-label">Curated Finds</span></div>
         <div class="stat-divider"></div>
         <div class="stat"><span class="stat-num" data-count-to="4" data-suffix="">4</span><span class="stat-label">Categories</span></div>
         <div class="stat-divider"></div>
@@ -1167,6 +1167,7 @@
       ensureSupabaseLib(loadFeatured);
     })();
     </script>
+
   </main>
 
   <!-- ================= FOOTER (persistent — outside #page-wrap, never swapped) ================= -->
