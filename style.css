@@ -905,6 +905,34 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   box-shadow: 0 0 32px -4px rgba(201, 168, 118, 0.55), 0 0 0 1px var(--gold);
   transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), border-color 0.15s var(--ease);
 }
+/* =========================================================
+   Thread-catch line — a thin gold gradient bar that grows in
+   across the top edge of each category card, driven by
+   --thread-catch (0 → 1), which script.js sets every scroll
+   frame while the hero-to-categories transition is playing
+   (see initHeroWebToGridThread). Reads as the overhead spider
+   web's threads "landing" into the grid, one card at a time,
+   right as the hero canvas fades out above — motion continuity
+   between the two sections instead of two disconnected reveals.
+   No CSS transition on purpose: the value is already being
+   driven smoothly every animation frame by JS, same pattern as
+   the .thread SVG draw and the featured-card scroll-scale — a
+   CSS transition here would just fight and lag behind scroll.
+   ========================================================= */
+.category-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--gold-bright), var(--gold) 65%, transparent);
+  transform-origin: left center;
+  transform: scaleX(var(--thread-catch, 0));
+  opacity: var(--thread-catch, 0);
+  pointer-events: none;
+}
 /* Desktop-only: when one category card is hovered, its immediate
    neighbours in the row pick up a faint gold border tint too — reads
    as a thread of attention passing along the row instead of a single
