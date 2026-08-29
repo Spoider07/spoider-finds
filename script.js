@@ -33,14 +33,23 @@
   // paint if Light was previously chosen, so this code never has
   // to "fix" an initial flash — it only handles the toggle itself.
   //
-  // Transition: an expanding circle (Web Animations API), grown
-  // from the tapped button's position in the DESTINATION theme's
-  // --bg-elevated color, fully covers the viewport. Once covered,
-  // the data-theme attribute flips (invisible, since it's hidden
-  // under the circle), then the circle fades out to reveal the
-  // already-settled new theme. Reads as a soft cinematic sweep
-  // rather than an instant color swap, without needing a heavy
-  // global !important transition on every element.
+  // Transition, three layered effects:
+  //   1) Shockwave ring — a thin gold ring bursts outward from
+  //      the tapped button the instant it's pressed, reading as
+  //      an energy pulse that precedes the color fill.
+  //   2) Sweep — an expanding circle (Web Animations API), grown
+  //      from the tapped button's position in the DESTINATION
+  //      theme's --bg-elevated color, fully covers the viewport.
+  //      Once covered, data-theme flips (invisible, hidden under
+  //      the circle), then the circle fades to reveal the new
+  //      theme already settled.
+  //   3) Icon morph — the sun/moon glyph itself rotates + blurs
+  //      out as the sweep grows, then rotates + blurs back in
+  //      once the theme has flipped underneath the cover, instead
+  //      of an instant CSS display swap.
+  //   4) Depth-pulse — a brief whole-page blur (camera focus-pull)
+  //      timed to the moment of the flip, resolving to sharp just
+  //      as the sweep fades away.
   // ============================================================
   const THEME_KEY = "sf-theme";
 
@@ -79,7 +88,61 @@
     window.dispatchEvent(new CustomEvent("sf-theme-change", { detail: { theme: nextTheme } }));
   }
 
-  function runThemeSweep(nextTheme, originX, originY) {
+  // Runs the icon morph-out immediately (before the sweep even
+  // finishes growing) and hands back a function to trigger the
+  // morph-in once the theme has actually flipped. Forces both
+  // icons visible via inline style during the transition window
+  // (overriding the CSS display:none rule that normally hides
+  // whichever one doesn't match the current theme) so the
+  // outgoing glyph has something to animate out on, and the
+  // incoming glyph has something to animate in on. Inline styles
+  // are cleared once the incoming glyph settles, handing control
+  // back to the normal CSS rules.
+  function morphToggleIcon(btn) {
+    if (!btn) return function () {};
+    const sun = btn.querySelector(".icon-sun");
+    const moon = btn.querySelector(".icon-moon");
+    if (sun) sun.style.display = "inline-flex";
+    if (moon) moon.style.display = "inline-flex";
+    btn.classList.add("morphing");
+
+    return function morphIn() {
+      btn.classList.remove("morphing");
+      requestAnimationFrame(() => {
+        btn.classList.add("morph-in");
+        setTimeout(() => {
+          btn.classList.remove("morph-in");
+          if (sun) sun.style.display = "";
+          if (moon) moon.style.display = "";
+        }, 420);
+      });
+    };
+  }
+
+  function spawnShockwave(originX, originY, size) {
+    const ring = document.createElement("div");
+    ring.className = "theme-shockwave";
+    ring.style.top = originY + "px";
+    ring.style.left = originX + "px";
+    ring.style.width = "0px";
+    ring.style.height = "0px";
+    document.body.appendChild(ring);
+
+    const ringSize = size * 0.62;
+    const anim = ring.animate(
+      [
+        { width: "0px", height: "0px", opacity: 1 },
+        { width: ringSize * 0.6 + "px", height: ringSize * 0.6 + "px", opacity: 0.55 },
+        { width: ringSize + "px", height: ringSize + "px", opacity: 0 },
+      ],
+      { duration: 520, easing: "cubic-bezier(0.16,1,0.3,1)", fill: "forwards" }
+    );
+    anim.onfinish = () => {
+      if (ring.parentNode) ring.remove();
+    };
+  }
+
+  function runThemeSweep(nextTheme, originX, originY, btnEl) {
     const root = document.documentElement;
 
     if (prefersReducedMotion || typeof root.animate !== "function") {
@@ -102,6 +165,12 @@
     );
     const size = maxDist * 2.3;
 
+    // 1) Shockwave — fires immediately, precedes the color fill
+    spawnShockwave(originX, originY, size);
+
+    // 3) Icon morph-out — fires immediately alongside the shockwave
+    const triggerMorphIn = morphToggleIcon(btnEl);
+
     const sweep = document.createElement("div");
     sweep.className = "theme-sweep";
     sweep.style.top = originY + "px";
@@ -121,6 +190,16 @@
 
     grow.onfinish = () => {
       flipTheme(nextTheme);
+
+      // 4) Depth-pulse — brief whole-page blur timed to the flip,
+      // resolving to sharp as the sweep fades out over it.
+      document.body.classList.add("sf-theme-focus-pulse");
+      setTimeout(() => document.body.classList.remove("sf-theme-focus-pulse"), 520);
+
+      // 3) Icon morph-in — now that data-theme has flipped, CSS
+      // points to the correct glyph; animate it in.
+      triggerMorphIn();
+
       const fade = sweep.animate([{ opacity: 1 }, { opacity: 0 }], {
         duration: 260,
         easing: "ease",
@@ -141,7 +220,7 @@
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
       const next = currentTheme() === "light" ? "dark" : "light";
-      runThemeSweep(next, x, y);
+      runThemeSweep(next, x, y, btn);
     });
   }
 
