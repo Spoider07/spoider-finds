@@ -16,31 +16,23 @@
   --gold-bright: #e8c766;
   --gold-dim: rgba(201, 168, 118, 0.15);
 
-  /* Theme-aware helper tokens (used where a flat color/rgba was
-     previously hardcoded so those spots follow the theme too) */
-  --glow-rgb: 10, 10, 11;               /* dark-pool glow behind hero text / image vignette */
-  --shimmer-a: #1a1a1c;                 /* product-image placeholder gradient */
+  --glow-rgb: 10, 10, 11;
+  --shimmer-a: #1a1a1c;
   --shimmer-b: #0a0a0b;
-  --shadow-soft: rgba(0, 0, 0, 0.6);    /* card/nav drop shadows */
+  --shadow-soft: rgba(0, 0, 0, 0.6);
 
-  --web-line: 201, 168, 118;            /* spider-web canvas thread color */
-  --web-node: 232, 199, 102;            /* spider-web canvas node color */
-  --web-shimmer-core: 255, 247, 225;    /* traveling shimmer particle core */
-  --web-shimmer-glow: 255, 240, 200;    /* traveling shimmer particle glow */
-  --web-alpha-mult: 1;                  /* overall web opacity multiplier */
+  --web-line: 201, 168, 118;
+  --web-node: 232, 199, 102;
+  --web-shimmer-core: 255, 247, 225;
+  --web-shimmer-glow: 255, 240, 200;
+  --web-alpha-mult: 1;
 
-  /* Hero mark (spider logo) glow layers — tuned per-theme so the
-     gold linework has real contrast against its background instead
-     of just matching it. Dark mode: gold-on-black, glow reads as
-     light. Light mode: needs a deeper, warmer gold + a soft dark
-     contact-shadow underneath, or it visually disappears into the
-     ivory instead of reading as a floating, lit object. */
   --mark-halo-a: rgba(220, 185, 120, 0.22);
   --mark-halo-b: rgba(180, 140, 70, 0.08);
   --mark-ping-border: rgba(232, 199, 102, 0.55);
   --mark-tap-border: rgba(255, 241, 204, 0.75);
   --mark-glint-bg: rgba(255, 247, 225, 0.85);
-  --mark-outline: ;                     /* dark mode: gold already contrasts against black, no outline needed */
+  --mark-outline: ;
   --mark-glow-min: drop-shadow(0 0 3px rgba(232, 199, 102, 0.22)) drop-shadow(0 0 6px rgba(180, 140, 70, 0.1));
   --mark-glow-max: drop-shadow(0 0 9px rgba(232, 199, 102, 0.4)) drop-shadow(0 0 4px rgba(255, 238, 190, 0.22));
   --mark-flash-min: drop-shadow(0 0 4px rgba(232, 199, 102, 0.25)) drop-shadow(0 0 8px rgba(180, 140, 70, 0.14));
@@ -55,15 +47,9 @@
   --radius-sm: 8px;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.19, 1.04, 0.28, 1); /* controlled, slight overshoot — hero tier only */
+  --ease-spring: cubic-bezier(0.19, 1.04, 0.28, 1);
 }
 
-/* =========================================================
-   LIGHT THEME — warm ivory + charcoal + champagne gold.
-   User-controlled only (no prefers-color-scheme). Toggled via
-   html[data-theme="light"], set/read by script.js + localStorage.
-   Same architecture, same components — only the palette shifts.
-   ========================================================= */
 html[data-theme="light"] {
   --bg: #f7f5f0;
   --bg-elevated: #fbfaf7;
@@ -88,13 +74,6 @@ html[data-theme="light"] {
   --web-shimmer-glow: 214, 180, 130;
   --web-alpha-mult: 0.62;
 
-  /* Hero mark — richer, more saturated gold + a real dark OUTLINE
-     (not just a soft glow) around the linework. A glow alone reads
-     fine on black; on ivory the thin gold strokes need an actual
-     dark edge to separate from the background, the way a printed
-     emblem would have a keyline. Faked via 4 tight, zero-blur
-     drop-shadows offset in each direction — stacks with the glow
-     drop-shadows below rather than replacing them. */
   --mark-outline:
     drop-shadow(0.6px 0 0 rgba(40, 32, 16, 0.85))
     drop-shadow(-0.6px 0 0 rgba(40, 32, 16, 0.85))
@@ -115,15 +94,6 @@ html[data-theme="light"] {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* =========================================================
-   Theme transition sweep
-   A short-lived expanding circle (created/animated by script.js
-   via the Web Animations API, in the destination theme's
-   --bg-elevated color) covers the screen, the theme attribute
-   flips underneath it while fully covered, then it fades out to
-   reveal the already-settled new theme. No global !important
-   transition hack needed — the swap itself is instant but hidden.
-   ========================================================= */
 .theme-sweep {
   position: fixed;
   border-radius: 50%;
@@ -133,12 +103,6 @@ html[data-theme="light"] {
   will-change: width, height, opacity;
 }
 
-/* =========================================================
-   Scroll-reveal system
-   Elements start slightly lower + faded, and settle into
-   place as they enter the viewport. Staggered children get
-   a small incremental delay via --reveal-delay.
-   ========================================================= */
 .reveal {
   opacity: 0;
   transform: translateY(16px);
@@ -153,10 +117,6 @@ html[data-theme="light"] {
   .reveal { opacity: 1; transform: none; transition: none; }
 }
 
-/* =========================================================
-   Snap-reveal — text assembles from scattered golden
-   particles as it scrolls into view (reverse-snap effect)
-   ========================================================= */
 .snap-reveal {
   opacity: 0;
   transform: translateY(16px);
@@ -172,26 +132,11 @@ html[data-theme="light"] {
   .snap-reveal { opacity: 1; transform: none; transition: none; color: inherit; }
 }
 
-/* =========================================================
-   Split-reveal — unified typography motion system (v2)
-   Wraps each word (or preserved inline element, like <em> or
-   a colored <span>) in an overflow-hidden mask box. The word
-   rises up from below the mask while simultaneously resolving
-   from a soft blur and a slight tilt into sharp, upright focus
-   — an editorial "focus-pull" feel rather than a flat slide.
-   Staggered word-by-word via inline transition-delay (set in
-   script.js with a non-linear curve, not fixed increments).
-   Still a whole-word transform/filter animation only (no per-
-   character DOM, no opacity flicker, no layout thrash) — safe
-   and smooth on low-power devices. Two trigger modes:
-     - data-trigger="load"   → fires once, shortly after page load
-     - (default)              → fires once, on scroll into view
-   ========================================================= */
 .split-reveal .word-mask {
   display: inline-block;
   overflow: hidden;
   vertical-align: top;
-  padding-bottom: 0.08em; /* keeps descenders (g, y, p) from clipping under the mask */
+  padding-bottom: 0.08em;
   margin-bottom: -0.08em;
 }
 .split-reveal .word-inner {
@@ -216,19 +161,6 @@ html[data-theme="light"] {
   .split-reveal .word-inner { transform: none; filter: none; opacity: 1; transition: none; }
 }
 
-/* =========================================================
-   Split-reveal — motion tiers
-   The base rules above are the "section" tier (major headings).
-   These context rules override transform/filter/transition for
-   other typographic roles — motion should guide attention, not
-   treat every heading identically. .is-visible end-state (0/0/1)
-   is shared by all tiers, only the starting pose + curve differ.
-
-     HERO      → dramatic, cinematic, spring settle
-     SECTION   → controlled rise (base rules, unchanged)
-     LABEL     → restrained, mostly opacity (eyebrows)
-     MINOR H3  → very subtle (product/trust/latest titles)
-   ========================================================= */
 .hero-title.split-reveal .word-inner,
 .hero .split-reveal .word-inner {
   transform: translateY(130%) rotate(7deg);
@@ -258,12 +190,6 @@ h3.split-reveal .word-inner {
     opacity 0.5s var(--ease);
 }
 
-/* Explicit visible-state override for every tier — must win over the
-   hidden-state tier rules above regardless of source order, since
-   ".hero-title.split-reveal .word-inner" and ".split-reveal.is-visible
-   .word-inner" have EQUAL specificity (3 classes each). Without this,
-   whichever rule is written later in the file wins, which previously
-   left hero-title words permanently stuck in their hidden pose. */
 .hero-title.split-reveal.is-visible .word-inner,
 .hero .split-reveal.is-visible .word-inner,
 .eyebrow.split-reveal.is-visible .word-inner,
@@ -279,17 +205,16 @@ h3.split-reveal.is-visible .word-inner {
   h3.split-reveal .word-inner { transform: none; filter: none; opacity: 1; transition: none; }
 }
 
-/* Hero entrance (plays once on load, not scroll-triggered) */
 .hero-enter {
   opacity: 0;
   transform: translateY(18px);
   animation: heroEnter 0.9s var(--ease) forwards;
 }
-.hero-enter:nth-child(1) { animation-delay: 0.05s; }  /* eyebrow — establishes momentum first */
-.hero-enter:nth-child(2) { animation-delay: 0.28s; }  /* headline block — its own word-ripple runs inside this */
-.hero-enter:nth-child(3) { animation-delay: 0.62s; }  /* supporting copy — resolves once headline settles */
-.hero-enter:nth-child(4) { animation-delay: 0.88s; }  /* CTA buttons */
-.hero-enter:nth-child(5) { animation-delay: 1.06s; }  /* stats */
+.hero-enter:nth-child(1) { animation-delay: 0.05s; }
+.hero-enter:nth-child(2) { animation-delay: 0.28s; }
+.hero-enter:nth-child(3) { animation-delay: 0.62s; }
+.hero-enter:nth-child(4) { animation-delay: 0.88s; }
+.hero-enter:nth-child(5) { animation-delay: 1.06s; }
 .hero-enter:nth-child(6) { animation-delay: 1.2s; }
 @keyframes heroEnter {
   to { opacity: 1; transform: translateY(0); }
@@ -298,8 +223,6 @@ h3.split-reveal.is-visible .word-inner {
   .hero-enter { opacity: 1; transform: none; animation: none; }
 }
 
-/* Hero mark — decorative thread/web glyph that draws itself in,
-   then settles into a very slow idle rotation. */
 .hero-mark {
   display: flex;
   justify-content: center;
@@ -350,14 +273,6 @@ img { max-width: 100%; display: block; }
   border-radius: 4px;
 }
 
-/* =========================================================
-   Typographic hierarchy — each level uses a different lever
-   (family, tracking, weight, scale), not just font-size:
-   eyebrow → mono, wide tracking, small, gold (label role)
-   section-title → serif, tight tracking, large (statement role)
-   product h3 → serif, slightly tight, modest (catalog role)
-   body copy → sans, neutral tracking, readable (functional role)
-   ========================================================= */
 .eyebrow {
   font-family: var(--font-mono);
   font-weight: 600;
@@ -380,11 +295,6 @@ img { max-width: 100%; display: block; }
 
 .gold-text { color: var(--gold); }
 
-/* =========================================================
-   Signature element: the "thread" — a thin gold line that
-   draws itself down the page as you scroll, tying every
-   section together (the brand's namesake idea).
-   ========================================================= */
 .thread {
   position: fixed;
   top: 0;
@@ -404,24 +314,11 @@ img { max-width: 100%; display: block; }
   transition: stroke-dasharray 0.1s linear;
 }
 
-/* Guarantees ALL page content (every page's <main id="page-wrap">)
-   stacks above the fixed thread line, site-wide, in one place.
-   Without this, individual sections had to each remember to set
-   their own position:relative + z-index:2 to clear the thread —
-   any page/section that forgot would show the gold line bleeding
-   over product images and cards. This single rule fixes it
-   everywhere, on every current and future page, permanently. */
 #page-wrap {
   position: relative;
   z-index: 2;
 }
 
-/* =========================================================
-   Page-load intro overlay
-   A brief brand-mark reveal that plays once per session on
-   first entry to the site: a thread unfolds, then weaves
-   into the spider mark, then fades to reveal the hero.
-   ========================================================= */
 .page-loader {
   position: fixed;
   inset: 0;
@@ -478,11 +375,6 @@ img { max-width: 100%; display: block; }
   .page-loader { display: none; }
 }
 
-/* =========================================================
-   Ambient background — floating glow orbs + film grain
-   Adds depth and an editorial, premium print-like texture
-   without weighing the page down (pure CSS, no images).
-   ========================================================= */
 .ambient-orb {
   position: fixed;
   border-radius: 50%;
@@ -623,14 +515,6 @@ html[data-theme="light"] .nav.scrolled {
 .nav-links a.active::after { transform: scaleX(1); }
 .nav-links a.active { color: var(--gold); }
 
-/* =========================================================
-   Theme toggle
-   Compact circular icon button, always visible (both mobile
-   and desktop nav), sitting between the nav links and the
-   mobile hamburger. Sun/moon swap is pure CSS via the
-   html[data-theme] attribute selector — script.js only ever
-   flips that attribute + fires the sweep transition.
-   ========================================================= */
 .theme-toggle {
   width: 34px;
   height: 34px;
@@ -706,9 +590,6 @@ html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
   .theme-toggle { margin-left: auto; }
 }
 
-/* =========================================================
-   HERO
-   ========================================================= */
 .hero {
   position: relative;
   z-index: 2;
@@ -718,10 +599,6 @@ html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
   text-align: center;
 }
 
-/* =========================================================
-   Aurora — slow-flowing gold-tone glow, contained to the hero
-   only. Replaces the old page-wide ambient orbs.
-   ========================================================= */
 .aurora {
   position: absolute;
   inset: -10% -8% -20% -8%;
@@ -866,9 +743,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 }
 .stat-divider { width: 1px; height: 30px; background: var(--border); }
 
-/* =========================================================
-   CATEGORIES
-   ========================================================= */
 .categories {
   position: relative;
   z-index: 2;
@@ -1020,9 +894,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .category-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* =========================================================
-   FEATURED PRODUCTS
-   ========================================================= */
 .featured {
   position: relative;
   z-index: 2;
@@ -1167,9 +1038,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 }
 .empty-category p { margin-bottom: 20px; }
 
-/* =========================================================
-   TRUST
-   ========================================================= */
 .trust {
   position: relative;
   z-index: 2;
@@ -1205,9 +1073,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .trust-grid { grid-template-columns: 1fr; gap: 30px; }
 }
 
-/* =========================================================
-   LATEST
-   ========================================================= */
 .latest {
   position: relative;
   z-index: 2;
@@ -1248,9 +1113,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 }
 .latest-item:hover .latest-arrow { transform: translateX(4px); }
 
-/* =========================================================
-   CTA
-   ========================================================= */
 .founder {
   position: relative;
   z-index: 2;
@@ -1317,9 +1179,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   margin-bottom: 28px;
 }
 
-/* =========================================================
-   FOOTER
-   ========================================================= */
 .footer {
   position: relative;
   z-index: 2;
@@ -1398,9 +1257,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .footer-bottom { flex-direction: column; }
 }
 
-/* =========================================================
-   DESKTOP POLISH
-   ========================================================= */
 @media (min-width: 960px) {
   .nav-inner {
     max-width: 1320px;
@@ -1475,9 +1331,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .hero-title { font-size: clamp(3.6rem, 4vw, 4.9rem); }
 }
 
-/* =========================================================
-   HERO — HOME PAGE DESKTOP REDESIGN
-   ========================================================= */
 @media (min-width: 960px) {
   .hero--home {
     max-width: 1180px;
@@ -1517,11 +1370,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .hero--home .hero-stats {
     grid-area: stats;
     justify-content: center;
-    /* Centered within the text column's own width (not the page) —
-       matches .hero-sub/.hero-actions width so it still sits flush
-       under the paragraph and buttons, but the 11+/4/100% cluster
-       now reads as a balanced block instead of hugging the left
-       edge and looking stranded to the side. */
     max-width: 460px;
     gap: 40px;
     padding: 6px 0 2px;
@@ -1580,4 +1428,80 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
     width: min(50%, 560px);
     height: 80%;
   }
+}
+
+/* =========================================================
+   THEME TRANSITION — shockwave ring + icon morph + depth-pulse
+   Layers on top of the existing .theme-sweep circle. Shockwave
+   fires first (a quick gold ring burst that precedes the color
+   fill), the sun/moon icon morphs out/in with a rotate+blur
+   instead of an instant swap, and a brief whole-page blur pulse
+   (camera focus-pull) is timed to the moment the theme actually
+   flips underneath the sweep's cover.
+   ========================================================= */
+.theme-toggle {
+  position: relative;
+}
+
+.theme-shockwave {
+  position: fixed;
+  border-radius: 50%;
+  z-index: 100000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(232, 199, 102, 0.65);
+  box-shadow: 0 0 18px 2px rgba(232, 199, 102, 0.35);
+  will-change: width, height, opacity;
+}
+
+.theme-toggle svg {
+  transition: transform 0.3s var(--ease), filter 0.3s var(--ease), opacity 0.3s var(--ease);
+}
+
+.theme-toggle.morphing .icon-sun,
+.theme-toggle.morphing .icon-moon,
+.theme-toggle.morph-in .icon-sun,
+.theme-toggle.morph-in .icon-moon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+}
+
+.theme-toggle.morphing .icon-sun,
+.theme-toggle.morphing .icon-moon {
+  animation: themeIconMorphOut 0.32s cubic-bezier(0.55, 0, 0.35, 1) forwards;
+}
+@keyframes themeIconMorphOut {
+  0%   { transform: rotate(0deg) scale(1); filter: blur(0); opacity: 1; }
+  100% { transform: rotate(85deg) scale(0.3); filter: blur(4px); opacity: 0; }
+}
+
+.theme-toggle.morph-in .icon-sun,
+.theme-toggle.morph-in .icon-moon {
+  animation: themeIconMorphIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+@keyframes themeIconMorphIn {
+  0%   { transform: rotate(-85deg) scale(0.3); filter: blur(4px); opacity: 0; }
+  100% { transform: rotate(0deg) scale(1); filter: blur(0); opacity: 1; }
+}
+
+.sf-theme-focus-pulse {
+  animation: sfThemeFocusPulse 0.5s ease;
+}
+@keyframes sfThemeFocusPulse {
+  0%   { filter: blur(0); }
+  40%  { filter: blur(6px); }
+  100% { filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-shockwave { display: none; }
+  .theme-toggle.morphing .icon-sun,
+  .theme-toggle.morphing .icon-moon,
+  .theme-toggle.morph-in .icon-sun,
+  .theme-toggle.morph-in .icon-moon {
+    animation: none;
+  }
+  .sf-theme-focus-pulse { animation: none; }
 }
