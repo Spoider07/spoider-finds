@@ -846,6 +846,18 @@
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
 
+      // Reduced-motion users get every card fully visible and static —
+      // no scroll-driven scale/tilt/fade at all. Matches the CSS
+      // fallback for #featured .product-card in style.css.
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reducedMotion) {
+        cards.forEach(function (card) {
+          card.style.opacity = '1';
+          card.style.transform = 'none';
+        });
+        return;
+      }
+
       var MIN_SCALE = 0.82;
       var MAX_SCALE = 1;
       var active = new Set();
@@ -854,28 +866,35 @@
       var isDesktopTilt = window.matchMedia('(min-width: 960px)').matches;
       var MAX_TILT = 6; // degrees — kept small, this is a premium detail, not a gimmick
 
-      cards.forEach(function (card) {
+      cards.forEach(function (card, idx) {
         card.style.transformOrigin = '50% 65%';
-        card.style.willChange = 'transform';
+        card.style.willChange = 'opacity, transform';
         card.style.transitionProperty = 'opacity';
         card.dataset.scale = MAX_SCALE;
+        card.dataset.reveal = '0';
         card.dataset.hover = '0';
         card.dataset.tiltX = '0';
         card.dataset.tiltY = '0';
+        if (!card.dataset.index) card.dataset.index = idx;
 
-        // Every effect (scroll scale, hover lift, cursor tilt) writes to
-        // this one function instead of touching card.style.transform
+        // Every effect (scroll scale+fade, hover lift, cursor tilt) writes
+        // to this one function instead of touching card.style.transform
         // directly — otherwise whichever effect ran last wins and the
         // others silently stop working (that was the earlier bug: CSS
         // :hover's translateY was being wiped every scroll frame by the
-        // scale-only inline style).
+        // scale-only inline style). Opacity is driven the same way, via
+        // dataset.reveal, so the fade-in and the scale/tilt always agree
+        // on the same underlying scroll progress.
         function paint() {
           var scale = parseFloat(card.dataset.scale);
+          var reveal = parseFloat(card.dataset.reveal || '1');
           var lift = card.dataset.hover === '1' ? -6 : 0;
+          var riseOffset = (1 - reveal) * 22; // extra downward offset while still revealing
           var tiltX = parseFloat(card.dataset.tiltX);
           var tiltY = parseFloat(card.dataset.tiltY);
+          card.style.opacity = reveal.toFixed(3);
           card.style.transform =
-            'perspective(900px) scale(' + scale.toFixed(3) + ') translateY(' + lift + 'px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg)';
+            'perspective(900px) scale(' + scale.toFixed(3) + ') translateY(' + (lift + riseOffset).toFixed(1) + 'px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg)';
         }
         card._paint = paint;
 
@@ -928,9 +947,17 @@
         var start = vh;
         var end = vh * 0.62;
         var raw = (start - rect.top) / (start - end);
-        var p = smoothstep(raw);
+
+        // Small index-based stagger so cards settle in one after another
+        // rather than every card in the grid snapping into place on the
+        // same frame — capped via modulo so it doesn't keep growing for
+        // large result sets (only ever offsets by up to 3 steps).
+        var stagger = (parseInt(card.dataset.index || '0', 10) % 4) * 0.05;
+        var p = smoothstep((raw - stagger) / (1 - stagger));
+
         var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
         card.dataset.scale = scale;
+        card.dataset.reveal = p;
         card._paint();
       }
 
@@ -1149,10 +1176,16 @@
           return;
         }
 
-        grid.innerHTML = data.map(function (p) {
+        grid.innerHTML = data.map(function (p, i) {
           var tag = CATEGORY_LABELS[p.category] || p.category;
-          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
-            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+          var indexLabel = 'No. ' + String(i + 1).padStart(2, '0');
+          return '<a href="' + p.affiliate_link + '" class="product-card" data-index="' + i + '" target="_blank" rel="sponsored noopener nofollow">' +
+            '<div class="product-glow" aria-hidden="true"></div>' +
+            '<div class="product-image">' +
+              '<span class="product-index">' + indexLabel + '</span>' +
+              '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
+              '<img src="assets/images/spoider-logo-vector.svg" class="product-watermark" alt="" aria-hidden="true">' +
+            '</div>' +
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
           '</a>';
         }).join('');
