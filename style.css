@@ -921,6 +921,25 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   columns: 3 260px;
   column-gap: 22px;
 }
+
+/* Only the JS-driven Featured section (#featured, see
+   initFeaturedScale in index.html) actually reveals these cards on
+   scroll — so the default "hidden until revealed" state is scoped to
+   #featured specifically, not to .product-card globally. Category
+   pages that render their own product grids with their own loader
+   scripts (and don't run that same reveal logic) are never at risk
+   of ending up with permanently invisible cards. */
+#featured .product-card {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  #featured .product-card {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .product-card {
   display: block;
   width: 100%;
@@ -931,17 +950,83 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   border-radius: var(--radius-lg);
   overflow: hidden;
   position: relative;
+  isolation: isolate;
   z-index: 2;
-  transition: border-color 0.3s var(--ease);
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease), transform 0.4s var(--ease);
 }
+
+/* Ambient gold bloom behind the card on hover — same visual language
+   as .category-glow, reused here so the whole site reads as one
+   consistent "premium editorial" system rather than a grab-bag of
+   different card styles. Renders only where the markup includes a
+   .product-glow div (currently: the Featured section's loader). */
+.product-glow {
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 30%, var(--gold-dim), transparent 68%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  pointer-events: none;
+}
+.product-card:hover .product-glow { opacity: 1; }
+
+/* Thin gold seam that sweeps in across the top edge on hover, instead
+   of a static border lighting up all at once — reads as a small,
+   deliberate "hand-finished" flourish. */
+.product-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), var(--gold) 60%, transparent);
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform 0.5s var(--ease), opacity 0.5s var(--ease);
+  z-index: 3;
+  pointer-events: none;
+}
+.product-card:hover::before {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+/* Diagonal light sweep across the whole card, once per hover — same
+   trick as .btn::before, scaled up. A flourish, not a loop. */
+.product-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.06) 50%, transparent 70%);
+  background-size: 250% 250%;
+  background-position: -100% -100%;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+  pointer-events: none;
+}
+.product-card:hover::after {
+  opacity: 1;
+  animation: productCardSweep 1.1s var(--ease);
+}
+@keyframes productCardSweep {
+  from { background-position: -100% -100%; }
+  to   { background-position: 200% 200%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card::after { animation: none !important; opacity: 0 !important; }
+}
+
 .product-card:hover {
   border-color: var(--gold-dim);
-  box-shadow: 0 20px 40px -20px var(--shadow-soft), 0 0 0 1px var(--gold-dim);
+  box-shadow: 0 28px 56px -24px var(--shadow-soft), 0 0 0 1px var(--gold-dim), 0 0 40px -18px rgba(201, 168, 118, 0.35);
+  transform: translateY(-3px);
 }
 .product-card:active {
   border-color: var(--gold);
   box-shadow: 0 0 32px -4px rgba(201, 168, 118, 0.55), 0 0 0 1px var(--gold);
-  transition: box-shadow 0.15s var(--ease), border-color 0.15s var(--ease);
+  transition: box-shadow 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
 }
 
 .product-image {
@@ -976,9 +1061,13 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   width: 100%;
   height: auto;
   display: block;
-  transition: transform 0.5s var(--ease);
+  filter: saturate(1) brightness(1);
+  transition: transform 0.6s var(--ease), filter 0.6s var(--ease);
 }
-.product-card:hover .product-image img { transform: scale(1.05); }
+.product-card:hover .product-image img {
+  transform: scale(1.07);
+  filter: saturate(1.08) brightness(1.03);
+}
 .product-image::after {
   content: "";
   position: absolute;
@@ -994,35 +1083,94 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   opacity: 0.55;
 }
 
-.product-body { padding: 22px; }
-.product-tag {
+/* Serial-number chip — "No. 01" — echoes the 01/02/03 mono numbering
+   already used in the Trust section, so the grid reads as hand-
+   numbered editorial picks rather than an anonymous product list.
+   Renders only where the markup includes it (currently: Featured). */
+.product-index {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 5;
   font-family: var(--font-mono);
   font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-bright);
+  background: rgba(10, 10, 11, 0.55);
+  border: 1px solid rgba(201, 168, 118, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+html[data-theme="light"] .product-index {
+  background: rgba(251, 250, 247, 0.7);
+}
+
+/* Faint brand watermark tucked in the image corner — quiet "curated
+   by us" branding that never competes with the product photo. */
+.product-watermark {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  opacity: 0.32;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+}
+html[data-theme="light"] .product-watermark { opacity: 0.24; }
+
+.product-body { padding: 22px; position: relative; z-index: 2; }
+.product-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
   color: var(--gold);
   letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201, 168, 118, 0.25);
+  padding: 3px 9px;
+  border-radius: 100px;
 }
 .product-body h3 {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 1.1rem;
   letter-spacing: -0.01em;
-  margin: 10px 0 8px;
+  margin: 12px 0 8px;
   transition: color 0.3s var(--ease);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .product-card:hover .product-body h3 { color: var(--gold-bright); }
 .product-body p {
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .product-link {
+  display: inline-block;
   font-size: 0.85rem;
   color: var(--text-primary);
   border-bottom: 1px solid var(--gold);
   padding-bottom: 2px;
-  transition: color 0.2s var(--ease);
+  transition: color 0.25s var(--ease), transform 0.25s var(--ease);
 }
-.product-link:hover { color: var(--gold); }
+.product-card:hover .product-link {
+  color: var(--gold);
+  transform: translateX(3px);
+}
 
 @media (max-width: 900px) {
   .product-grid { columns: 2 200px; }
