@@ -905,20 +905,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   box-shadow: 0 0 32px -4px rgba(201, 168, 118, 0.55), 0 0 0 1px var(--gold);
   transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), border-color 0.15s var(--ease);
 }
-/* =========================================================
-   Thread-catch line — a thin gold gradient bar that grows in
-   across the top edge of each category card, driven by
-   --thread-catch (0 → 1), which script.js sets every scroll
-   frame while the hero-to-categories transition is playing
-   (see initHeroWebToGridThread). Reads as the overhead spider
-   web's threads "landing" into the grid, one card at a time,
-   right as the hero canvas fades out above — motion continuity
-   between the two sections instead of two disconnected reveals.
-   No CSS transition on purpose: the value is already being
-   driven smoothly every animation frame by JS, same pattern as
-   the .thread SVG draw and the featured-card scroll-scale — a
-   CSS transition here would just fight and lag behind scroll.
-   ========================================================= */
 .category-card::after {
   content: "";
   position: absolute;
@@ -933,13 +919,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   opacity: var(--thread-catch, 0);
   pointer-events: none;
 }
-/* Desktop-only: when one category card is hovered, its immediate
-   neighbours in the row pick up a faint gold border tint too — reads
-   as a thread of attention passing along the row instead of a single
-   isolated card lighting up, echoing the "four threads" idea. Pure
-   CSS (:has), no JS needed; falls back to no-op on unsupported
-   browsers since the base :hover rule above already covers the
-   hovered card itself. */
 @media (min-width: 960px) {
   .category-grid:has(.category-card:nth-child(1):hover) .category-card:nth-child(2),
   .category-grid:has(.category-card:nth-child(2):hover) .category-card:nth-child(1),
@@ -1018,13 +997,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   .category-card h3, .category-card p { opacity: 1; transform: none; transition: none; }
 }
 
-/* "Four threads. One taste." — cinematic blur-to-sharp focus.
-   Starts slightly soft-focus, faded, and a touch larger, then
-   settles into a still, sharp, in-focus state. Whole-element
-   animation only (opacity/filter/transform), no per-character
-   JS — safe and smooth on Faraz's phone.
-   (Retained for other pages that still use it — index.html's
-   category title now uses .split-reveal instead.) */
 .crazy-title {
   filter: blur(10px);
   opacity: 0;
@@ -1279,9 +1251,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 /* =========================================================
    CTA
    ========================================================= */
-/* =========================================================
-   Founder section (About page)
-   ========================================================= */
 .founder {
   position: relative;
   z-index: 2;
@@ -1431,36 +1400,11 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 
 /* =========================================================
    DESKTOP POLISH
-   Everything above this point was tuned mobile-first, which is
-   why wide screens felt like a stretched-out mobile column with
-   empty black margins. These overrides only kick in above 1024px
-   so mobile stays byte-for-byte the same. Three things happen:
-   1) Containers widen a bit + get real side padding so content
-      doesn't float in a narrow strip with dead space either side.
-   2) Type and card padding scale up so desktop reads as
-      "designed for desktop", not "mobile zoomed in".
-   3) The product grid moves from CSS columns (which order cards
-      top-to-bottom-then-next-column — confusing on wide screens)
-      to a proper CSS grid with natural left-to-right order.
-
-   NOTE: untouched by the light-mode work — this section is pure
-   layout/breakpoint logic and doesn't reference any color token,
-   so it's unaffected either way while desktop layout is still
-   being iterated on separately.
    ========================================================= */
 @media (min-width: 960px) {
   .nav-inner {
     max-width: 1320px;
     padding: 20px 40px;
-    /* Desktop-only fix: with justify-content:space-between and only
-       3 flex children (logo, nav-links, theme-toggle — nav-toggle is
-       display:none up here), space-between spreads them evenly across
-       the FULL width, which drags nav-links toward the middle of the
-       bar instead of hugging the right side next to the logo. Switch
-       to flex-start and push the link group to the right with margin-
-       left:auto instead, so it reads as a normal "logo left / links +
-       toggle grouped right" navbar. Mobile (<960px, where nav-links is
-       display:none anyway) is untouched. */
     justify-content: flex-start;
   }
   .nav-links {
@@ -1533,10 +1477,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 
 /* =========================================================
    HERO — HOME PAGE DESKTOP REDESIGN
-   Untouched by the light-mode work. Pure layout (grid areas,
-   sizes, positions) — no hardcoded colors live here, so it
-   inherits the theme automatically without needing edits, and
-   nothing below is modified while this is still WIP separately.
    ========================================================= */
 @media (min-width: 960px) {
   .hero--home {
@@ -1576,14 +1516,25 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 
   .hero--home .hero-stats {
     grid-area: stats;
-    justify-content: flex-start;
-    /* Desktop-only fix: match the width of .hero-sub/.hero-actions
-       above it. Without a max-width, the flex row can stretch past
-       the text column's natural width (since grid areas don't clip
-       their content), making the 11+ / 4 / 100% cluster drift right
-       and look disconnected/"to the side" instead of sitting flush
-       under the paragraph and buttons like the rest of the column. */
+    justify-content: center;
+    /* Centered within the text column's own width (not the page) —
+       matches .hero-sub/.hero-actions width so it still sits flush
+       under the paragraph and buttons, but the 11+/4/100% cluster
+       now reads as a balanced block instead of hugging the left
+       edge and looking stranded to the side. */
     max-width: 460px;
+    gap: 40px;
+    padding: 6px 0 2px;
+  }
+  .hero--home .stat-num {
+    font-size: 2.1rem;
+  }
+  .hero--home .stat-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+  }
+  .hero--home .stat-divider {
+    height: 36px;
   }
 
   .hero--home .hero-mark {
@@ -1592,18 +1543,11 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
     justify-self: center;
   }
 
-  /* India pill becomes a full-width closing row under both
-     columns — reads as an intentional second CTA that wraps
-     up the hero, not a leftover mobile element trailing behind
-     the stats. */
   .hero--home .india-pill {
     grid-area: pill;
     margin: 56px auto 0;
   }
 
-  /* The mark grows from a small corner logo into a real anchor
-     visual — the right column needs enough visual weight to
-     balance the text column, the way Apple's hero art does. */
   .hero--home .hero-mark-inner {
     width: 208px;
     height: 208px;
@@ -1617,9 +1561,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
     height: 248px;
   }
 
-  /* A slow, thin rotating ring around the mark — restrained on
-     purpose. One extra layer of premium framing, not a second
-     effect competing with the existing halo/glint system. */
   .hero--home .hero-mark-inner::after {
     content: '';
     position: absolute;
@@ -1633,9 +1574,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
     to { transform: rotate(360deg); }
   }
 
-  /* The dark radial glow that keeps hero copy legible over the
-     web canvas shifts to sit behind the text column instead of
-     pooling in the old centered layout's middle. */
   .hero--home .hero-text-glow {
     left: 32%;
     top: 44%;
