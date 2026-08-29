@@ -2,7 +2,8 @@
 // Spoider Finds — main script
 // Handles: mobile nav toggle, scroll-driven "thread" line,
 // footer utilities, reveal/count-up/snap animations, the
-// unified split-reveal typography system, and the user-controlled
+// unified split-reveal typography system, the hero-web-to-
+// category-grid scroll transition, and the user-controlled
 // light/dark theme toggle (sweep transition + persistence).
 //
 // Refactored so all per-page setup lives in initPage(), which
@@ -413,6 +414,97 @@
     }
   }
 
+  // ============================================================
+  // Hero web → category grid scroll transition
+  //
+  // The hero's spider-web canvas (built in index.html's inline
+  // script) previously just switched on/off via its own
+  // IntersectionObserver, with no connection to what happened
+  // next on the page. This ties the two together: as the user
+  // scrolls from the hero into the Categories section, the web
+  // canvas fades and gently contracts, while each category card
+  // "catches" a thin gold thread line across its top edge, one
+  // card after another (a small stagger per card) — reading as
+  // the overhead web's threads landing into the grid below,
+  // rather than two disconnected sections.
+  //
+  // Driven by scroll position (smoothstepped, same pattern as
+  // the featured-card scroll-scale effect in index.html's inline
+  // script and the .thread SVG draw below) rather than a CSS
+  // transition, since the value needs to track scroll 1:1 every
+  // frame. No-ops safely on any page that doesn't have both a
+  // .web-canvas and a .category-grid (only index.html and
+  // india.html currently have the web canvas).
+  // ============================================================
+  function initHeroWebToGridThread() {
+    if (prefersReducedMotion) return;
+
+    const heroSection = document.querySelector(".hero");
+    const canvas = document.querySelector(".web-canvas");
+    const grid = document.querySelector(".category-grid");
+    if (!heroSection || !canvas || !grid) return;
+
+    const cards = Array.prototype.slice.call(grid.querySelectorAll(".category-card"));
+    if (!cards.length) return;
+
+    canvas.style.willChange = "opacity, transform";
+
+    function smoothstep(t) {
+      t = Math.max(0, Math.min(1, t));
+      return t * t * (3 - 2 * t);
+    }
+
+    let ticking = false;
+
+    function update() {
+      ticking = false;
+      const gridRect = grid.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      // Progress window: starts once the grid's top edge climbs to
+      // 85% of viewport height (user is nearing the end of the
+      // hero), finishes once it reaches 40% (grid substantially in
+      // view). Mirrors the featured-card scale effect's approach.
+      const start = vh * 0.85;
+      const end = vh * 0.4;
+      const raw = (start - gridRect.top) / (start - end);
+      const progress = smoothstep(raw);
+
+      // Web canvas fades and gathers inward slightly, as if its
+      // threads are retreating rather than simply vanishing.
+      canvas.style.opacity = (1 - progress).toFixed(3);
+      canvas.style.transform = "scale(" + (1 - progress * 0.12).toFixed(3) + ")";
+
+      // Each card catches its thread a beat after the previous one,
+      // instead of all four lighting up at once.
+      cards.forEach((card, i) => {
+        const staggerOffset = i * 0.12;
+        const cardProgress = smoothstep((progress - staggerOffset) / (1 - staggerOffset));
+        card.style.setProperty("--thread-catch", cardProgress.toFixed(3));
+      });
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    }
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    pageCleanupFns.push(() => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      canvas.style.opacity = "";
+      canvas.style.transform = "";
+      canvas.style.willChange = "";
+      cards.forEach((card) => card.style.removeProperty("--thread-catch"));
+    });
+  }
+
   function initPage() {
     // clear listeners bound by the previous page (avoid pile-up across transitions)
     pageCleanupFns.forEach((fn) => fn());
@@ -592,6 +684,9 @@
 
     // ---- Split-reveal (unified word-mask typography system) ----
     initSplitReveal();
+
+    // ---- Hero web canvas → category grid scroll transition ----
+    initHeroWebToGridThread();
 
     // ---- Scroll-reveal for sections and cards ----
     const revealEls = document.querySelectorAll(".reveal:not(.crazy-title)");
