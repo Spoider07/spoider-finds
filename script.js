@@ -23,6 +23,15 @@
   let globalBound = false;
   let pageCleanupFns = [];
 
+  // Bumped every time initCuratedCountStat() runs (i.e. every real
+  // page load and every SPA transition back to a page with the
+  // stat). The in-flight Supabase fetch captures its own token and
+  // checks it before touching the DOM — if the user has already
+  // navigated away by the time the fetch resolves, the token won't
+  // match anymore and the stale result is safely dropped instead of
+  // being written into a #page-wrap that's since been replaced.
+  let curatedCountToken = 0;
+
   // ============================================================
   // Theme toggle (user-controlled, persisted via localStorage)
   //
@@ -584,6 +593,106 @@
     });
   }
 
+  // ============================================================
+  // Curated Finds stat: live count from Supabase.
+  //
+  // Handled separately from the generic data-count-to stat
+  // animation below because its target isn't known synchronously
+  // — it has to be fetched from Supabase first. The element is
+  // excluded from the generic loop entirely (see initPage()) so
+  // the two never race for control of the same DOM node.
+  //
+  // Counts every active product across BOTH regions (US + India
+  // combined) — no .eq('region', ...) filter. If you ever want a
+  // region-specific version on india.html, give that element a
+  // different id (e.g. stat-india-count) and add a filtered
+  // variant rather than reusing this one.
+  //
+  // curatedCountToken guards against a stale fetch landing after
+  // the user has already navigated away (SPA transition swapped
+  // #page-wrap, or navigated back to this same page again before
+  // the first fetch resolved) — the token is captured locally and
+  // checked before every DOM write and on every animation frame.
+  // ============================================================
+  function initCuratedCountStat() {
+    const el = document.getElementById("stat-curated-count");
+    if (!el) return;
+
+    curatedCountToken += 1;
+    const myToken = curatedCountToken;
+
+    const SUPABASE_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ";
+    const suffix = el.getAttribute("data-suffix") || "+";
+    const fallbackTarget = parseInt(el.getAttribute("data-count-to"), 10) || 0;
+
+    function animateTo(target) {
+      if (myToken !== curatedCountToken) return; // a newer page/nav already took over
+
+      if (prefersReducedMotion) {
+        el.textContent = target + suffix;
+        return;
+      }
+
+      el.textContent = "0" + suffix;
+      const duration = 2000;
+      const startDelay = 500;
+      const startTime = performance.now() + startDelay;
+
+      const tick = (now) => {
+        if (myToken !== curatedCountToken) return; // bail — a newer page/nav has taken over
+        if (now < startTime) {
+          requestAnimationFrame(tick);
+          return;
+        }
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target) + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    function ensureSupabaseLib(callback) {
+      if (window.supabase && typeof window.supabase.createClient === "function") {
+        callback();
+        return;
+      }
+      const existing = document.querySelector("script[data-supabase-lib]");
+      if (existing) {
+        existing.addEventListener("load", callback, { once: true });
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+      s.setAttribute("data-supabase-lib", "true");
+      s.onload = callback;
+      document.head.appendChild(s);
+    }
+
+    ensureSupabaseLib(async () => {
+      if (myToken !== curatedCountToken) return; // page moved on while the lib was loading
+
+      try {
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const res = await sb
+          .from("products")
+          .select("*", { count: "exact", head: true })
+          .eq("active", true);
+
+        if (myToken !== curatedCountToken) return; // page moved on while this was in flight
+        if (res.error) throw res.error;
+
+        const count = typeof res.count === "number" ? res.count : fallbackTarget;
+        el.setAttribute("data-count-to", count);
+        animateTo(count);
+      } catch (err) {
+        console.error("Curated count fetch failed:", err);
+        animateTo(fallbackTarget); // graceful fallback — still animates, just with the last-known static number
+      }
+    });
+  }
+
   function initPage() {
     // clear listeners bound by the previous page (avoid pile-up across transitions)
     pageCleanupFns.forEach((fn) => fn());
@@ -688,7 +797,10 @@
     }
 
     // ---- Hero stat count-up ----
-    const statNums = document.querySelectorAll(".stat-num[data-count-to]");
+    // stat-curated-count is excluded here — it's handled by
+    // initCuratedCountStat() below, which fetches its target live
+    // from Supabase instead of reading a static data-count-to.
+    const statNums = document.querySelectorAll(".stat-num[data-count-to]:not(#stat-curated-count)");
     if (statNums.length && !prefersReducedMotion) {
       statNums.forEach((el) => {
         const target = parseInt(el.getAttribute("data-count-to"), 10);
@@ -715,6 +827,9 @@
         el.textContent = el.getAttribute("data-count-to") + (el.getAttribute("data-suffix") || "");
       });
     }
+
+    // ---- Curated Finds stat: live count from Supabase ----
+    initCuratedCountStat();
 
     // ---- Snap-reveal text (golden particles converge into place) ----
     const snapEls = document.querySelectorAll(".snap-reveal");
