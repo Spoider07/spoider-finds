@@ -1178,13 +1178,10 @@
 
         grid.innerHTML = data.map(function (p, i) {
           var tag = CATEGORY_LABELS[p.category] || p.category;
-          var indexLabel = 'No. ' + String(i + 1).padStart(2, '0');
           return '<a href="' + p.affiliate_link + '" class="product-card" data-index="' + i + '" target="_blank" rel="sponsored noopener nofollow">' +
             '<div class="product-glow" aria-hidden="true"></div>' +
             '<div class="product-image">' +
-              '<span class="product-index">' + indexLabel + '</span>' +
               '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
-              '<img src="assets/images/spoider-logo-vector.svg" class="product-watermark" alt="" aria-hidden="true">' +
             '</div>' +
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
           '</a>';
