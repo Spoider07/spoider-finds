@@ -1083,45 +1083,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   opacity: 0.55;
 }
 
-/* Serial-number chip — "No. 01" — echoes the 01/02/03 mono numbering
-   already used in the Trust section, so the grid reads as hand-
-   numbered editorial picks rather than an anonymous product list.
-   Renders only where the markup includes it (currently: Featured). */
-.product-index {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 5;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  color: var(--gold-bright);
-  background: rgba(10, 10, 11, 0.55);
-  border: 1px solid rgba(201, 168, 118, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  padding: 3px 8px;
-  border-radius: 100px;
-}
-html[data-theme="light"] .product-index {
-  background: rgba(251, 250, 247, 0.7);
-}
-
-/* Faint brand watermark tucked in the image corner — quiet "curated
-   by us" branding that never competes with the product photo. */
-.product-watermark {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  z-index: 5;
-  width: 22px;
-  height: 22px;
-  opacity: 0.32;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-  pointer-events: none;
-}
-html[data-theme="light"] .product-watermark { opacity: 0.24; }
-
 .product-body { padding: 22px; position: relative; z-index: 2; }
 .product-tag {
   display: inline-block;
