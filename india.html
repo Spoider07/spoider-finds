@@ -791,7 +791,7 @@
         var res = await sb
           .from('products')
           .select('*')
-          .eq('region', 'india')
+          .eq('region', 'in')
           .eq('active', true)
           .order('created_at', { ascending: false })
           .limit(8);
