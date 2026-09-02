@@ -637,10 +637,21 @@
     </script>
 
     <script>
-    /* Reusable scroll-scale for Featured cards — re-runnable after Supabase injects cards */
+    /* Reusable scroll-scale + fade for Featured cards — re-runnable after Supabase injects cards.
+       Sets BOTH transform and opacity (older version only set transform, leaving cards
+       stuck at opacity:0 if the CSS defaults .product-card to invisible until revealed). */
     window.initFeaturedScale = function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
+
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reducedMotion) {
+        cards.forEach(function (card) {
+          card.style.opacity = '1';
+          card.style.transform = 'none';
+        });
+        return;
+      }
 
       var MIN_SCALE = 0.82;
       var MAX_SCALE = 1;
@@ -650,8 +661,7 @@
 
       cards.forEach(function (card) {
         card.style.transformOrigin = '50% 65%';
-        card.style.willChange = 'transform';
-        card.style.transitionProperty = 'opacity';
+        card.style.willChange = 'opacity, transform';
       });
 
       function smoothstep(t) {
@@ -668,6 +678,7 @@
         var p = smoothstep(raw);
         var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
         card.style.transform = 'scale(' + scale.toFixed(3) + ')';
+        card.style.opacity = p.toFixed(3);
       }
 
       function onFrame() {
@@ -698,7 +709,10 @@
 
         cards.forEach(function (card) { io.observe(card); });
       } else {
-        cards.forEach(function (card) { active.add(card); });
+        cards.forEach(function (card) {
+          card.style.opacity = '1';
+          active.add(card);
+        });
       }
 
       window.addEventListener('scroll', requestTick, { passive: true });
