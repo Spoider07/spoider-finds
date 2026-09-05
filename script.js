@@ -3,17 +3,19 @@
 // Handles: mobile nav toggle, scroll-driven "thread" line,
 // footer utilities, reveal/count-up/snap animations, the
 // unified split-reveal typography system, the hero-web-to-
-// category-grid scroll transition, and the user-controlled
-// light/dark theme toggle (sweep transition + persistence).
+// category-grid scroll transition, the user-controlled
+// light/dark theme toggle (sweep transition + persistence),
+// and the Spoider Score tap-to-reveal panel.
 //
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
 // (see transitions.js). One-time, page-independent behaviors
 // (cursor trail, first-load intro overlay, global tap-spark,
-// theme toggle binding) live in bindGlobalOnce() and only ever
-// run once per real browser session — the toggle button lives
-// in the persistent <header class="nav">, outside #page-wrap,
-// so it survives every AJAX swap untouched.
+// theme toggle binding, Spoider Score panel toggling) live in
+// bindGlobalOnce() and only ever run once per real browser
+// session, bound via event delegation on document — so they
+// survive every AJAX swap without rebinding to newly injected
+// product cards.
 // ============================================================
 
 (function () {
@@ -233,11 +235,65 @@
     });
   }
 
+  // ============================================================
+  // Spoider Score panel: tap-to-reveal, delegated on document.
+  //
+  // Deliberately NOT hover-driven — most traffic is mobile
+  // (Instagram/Pinterest referrals), so a hover-only reveal would
+  // never be seen by most visitors. Tap works identically on
+  // desktop and mobile, no separate code paths.
+  //
+  // .product-card is itself an <a> — tapping the trigger or close
+  // button must never fire the wrapping link's navigation, so both
+  // call preventDefault + stopPropagation. Tapping anywhere else on
+  // the card (including inside an already-open panel) still
+  // navigates to the affiliate link, which is intended: once the
+  // score has answered "why this", tapping the product buys it.
+  //
+  // Bound once on document via delegation (same pattern as the
+  // tap-spark handler below), so newly injected cards — from any
+  // page's Supabase loader, including after an AJAX transition —
+  // work immediately with no rebinding.
+  // ============================================================
+  function bindSpoiderScorePanels() {
+    document.addEventListener("click", (e) => {
+      const trigger = e.target.closest(".spoider-score-trigger");
+      const closeBtn = e.target.closest(".spoider-panel-close");
+
+      if (trigger) {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = trigger.closest(".product-card");
+        if (!card) return;
+        document.querySelectorAll(".product-card.is-active").forEach((c) => {
+          if (c !== card) c.classList.remove("is-active");
+        });
+        card.classList.toggle("is-active");
+        return;
+      }
+
+      if (closeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = closeBtn.closest(".product-card");
+        if (card) card.classList.remove("is-active");
+        return;
+      }
+
+      // Tapping fully outside any product card closes whatever panel
+      // is currently open (mirrors "tap outside to dismiss").
+      if (!e.target.closest(".product-card")) {
+        document.querySelectorAll(".product-card.is-active").forEach((c) => c.classList.remove("is-active"));
+      }
+    });
+  }
+
   function bindGlobalOnce() {
     if (globalBound) return;
     globalBound = true;
 
     bindThemeToggle();
+    bindSpoiderScorePanels();
 
     // ---- Cursor-trail particles (fine-pointer / desktop only) ----
     if (supportsHoverFine && !prefersReducedMotion) {
