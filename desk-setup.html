@@ -157,6 +157,43 @@
         document.head.appendChild(s);
       }
 
+      // ---- Spoider Score block builder — shared shape used on every
+      // product-listing page. Returns '' (no badge, no trigger, no
+      // panel) when the product has no spoider_score yet, so older
+      // products without a score render exactly as before. ----
+      function scoreBarRow(label, val) {
+        var v = Number(val) || 0;
+        var pct = Math.max(0, Math.min(10, v)) * 10;
+        return '<div class="spoider-bar-row" style="--fill:' + pct + '%">' +
+          '<span class="spoider-bar-label">' + label + '</span>' +
+          '<span class="spoider-bar-track"><span class="spoider-bar-fill"></span></span>' +
+          '<span class="spoider-bar-val">' + v.toFixed(1) + '</span>' +
+        '</div>';
+      }
+
+      function scoreBadgeHTML(p) {
+        if (p.spoider_score === null || p.spoider_score === undefined) return '';
+        return '<span class="spoider-badge">SPOIDER <b>' + Number(p.spoider_score).toFixed(1) + '</b></span>';
+      }
+
+      function scoreTriggerAndPanelHTML(p) {
+        if (p.spoider_score === null || p.spoider_score === undefined) return '';
+        var note = p.editor_note ? String(p.editor_note).replace(/</g, '&lt;') : '';
+        return '' +
+          '<button type="button" class="spoider-score-trigger" aria-label="Why we chose this">Why this?</button>' +
+          '<div class="spoider-panel">' +
+            '<button type="button" class="spoider-panel-close" aria-label="Close">×</button>' +
+            '<div class="spoider-panel-head"><span class="spoider-eyebrow">SPOIDER SCORE</span><span class="spoider-num">' + Number(p.spoider_score).toFixed(1) + '</span></div>' +
+            (note ? '<p class="spoider-note">' + note + '</p>' : '') +
+            '<div class="spoider-bars">' +
+              scoreBarRow('Design', p.score_design) +
+              scoreBarRow('Value', p.score_value) +
+              scoreBarRow('Usefulness', p.score_usefulness) +
+              scoreBarRow('Aesthetic', p.score_aesthetic) +
+            '</div>' +
+          '</div>';
+      }
+
       async function loadProducts() {
         var grid = document.getElementById('productGrid');
         if (!grid) return;
@@ -182,10 +219,26 @@
 
         grid.innerHTML = data.map(function (p) {
           return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
-            '<div class="product-image"><img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy"></div>' +
+            '<div class="product-glow" aria-hidden="true"></div>' +
+            '<div class="product-image">' +
+              '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
+              scoreBadgeHTML(p) +
+            '</div>' +
             '<div class="product-body"><span class="product-tag">Desk Setup</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+            scoreTriggerAndPanelHTML(p) +
           '</a>';
         }).join('');
+
+        grid.querySelectorAll('.product-image').forEach(function (wrapper) {
+          var img = wrapper.querySelector('img');
+          if (!img) return;
+          if (img.complete && img.naturalWidth > 0) {
+            wrapper.classList.add('img-loaded');
+          } else {
+            img.addEventListener('load', function () { wrapper.classList.add('img-loaded'); });
+            img.addEventListener('error', function () { wrapper.classList.add('img-loaded'); });
+          }
+        });
       }
 
       var grid0 = document.getElementById('productGrid');
