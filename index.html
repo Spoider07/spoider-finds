@@ -136,10 +136,6 @@
       vertical-align: middle;
       margin-right: 2px;
     }
-    /* Light mode: the gold logo mark has very little contrast sitting
-       directly on ivory nav/footer — a thin dark keyline (via stacked
-       zero-blur drop-shadows, same trick as the hero mark) gives it a
-       real edge instead of it blending flat into the background. */
     html[data-theme="light"] .logo-img,
     html[data-theme="light"] .footer-logo-img {
       filter:
@@ -157,7 +153,6 @@
       grid-column: 1 / -1;
     }
 
-    /* ===== Hero mark: static spider logo, layered premium glow ===== */
     .hero-mark-inner {
       position: relative;
       width: 68px;
@@ -264,11 +259,6 @@
     @media (prefers-reduced-motion: reduce) {
       .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
     }
-    /* "screen" blend mode only ever lightens — perfect for a bright
-       glint against dark mode's near-black hero, but it washes a
-       glint out to nothing against light mode's ivory. "multiply"
-       darkens instead, so the same glint reads as a small warm glint
-       of light on either background. */
     html[data-theme="light"] .hero-mark-glint {
       mix-blend-mode: multiply;
     }
@@ -819,14 +809,6 @@
 
       resize();
 
-      // This whole IIFE re-runs every time the SPA transition swaps this
-      // markup back in (e.g. navigating away and back to a page with this
-      // hero). Without a teardown, every re-run stacked a brand-new set of
-      // window/document listeners + its own RAF loop on top of the previous
-      // instance's — canvases kept animating in the background after their
-      // DOM node was gone, and resize/visibility handlers piled up forever.
-      // transitions.js calls every registered cleanup right before it wipes
-      // #page-wrap's content on the next navigation.
       if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
         window.SpoiderPage.onCleanup(function () {
           stop();
@@ -846,9 +828,6 @@
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
 
-      // Reduced-motion users get every card fully visible and static —
-      // no scroll-driven scale/tilt/fade at all. Matches the CSS
-      // fallback for #featured .product-card in style.css.
       var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reducedMotion) {
         cards.forEach(function (card) {
@@ -864,7 +843,7 @@
       var ticking = false;
       var lastScrollY = -1;
       var isDesktopTilt = window.matchMedia('(min-width: 960px)').matches;
-      var MAX_TILT = 6; // degrees — kept small, this is a premium detail, not a gimmick
+      var MAX_TILT = 6;
 
       cards.forEach(function (card, idx) {
         card.style.transformOrigin = '50% 65%';
@@ -877,19 +856,11 @@
         card.dataset.tiltY = '0';
         if (!card.dataset.index) card.dataset.index = idx;
 
-        // Every effect (scroll scale+fade, hover lift, cursor tilt) writes
-        // to this one function instead of touching card.style.transform
-        // directly — otherwise whichever effect ran last wins and the
-        // others silently stop working (that was the earlier bug: CSS
-        // :hover's translateY was being wiped every scroll frame by the
-        // scale-only inline style). Opacity is driven the same way, via
-        // dataset.reveal, so the fade-in and the scale/tilt always agree
-        // on the same underlying scroll progress.
         function paint() {
           var scale = parseFloat(card.dataset.scale);
           var reveal = parseFloat(card.dataset.reveal || '1');
           var lift = card.dataset.hover === '1' ? -6 : 0;
-          var riseOffset = (1 - reveal) * 22; // extra downward offset while still revealing
+          var riseOffset = (1 - reveal) * 22;
           var tiltX = parseFloat(card.dataset.tiltX);
           var tiltY = parseFloat(card.dataset.tiltY);
           card.style.opacity = reveal.toFixed(3);
@@ -948,10 +919,6 @@
         var end = vh * 0.62;
         var raw = (start - rect.top) / (start - end);
 
-        // Small index-based stagger so cards settle in one after another
-        // rather than every card in the grid snapping into place on the
-        // same frame — capped via modulo so it doesn't keep growing for
-        // large result sets (only ever offsets by up to 3 steps).
         var stagger = (parseInt(card.dataset.index || '0', 10) % 4) * 0.05;
         var p = smoothstep((raw - stagger) / (1 - stagger));
 
@@ -997,11 +964,6 @@
       window.addEventListener('resize', requestTick);
       requestTick();
 
-      // initFeaturedScale runs twice per page load (once too early with zero
-      // cards -> bails above, once for real once Supabase's products land),
-      // and this whole script re-fires on every SPA swap back to a page with
-      // #featured. Register the teardown only once we've actually attached
-      // listeners, and only once per page instance.
       if (!sfFeaturedCleanupRegistered && window.SpoiderPage && window.SpoiderPage.onCleanup) {
         sfFeaturedCleanupRegistered = true;
         window.SpoiderPage.onCleanup(function () {
@@ -1021,12 +983,6 @@
       var hero = document.querySelector('.hero');
       if (!mark || !hero) return;
 
-      /* Scroll fade + desktop mouse-parallax, unified into one
-         transform writer so the two effects combine instead of
-         overwriting each other. Scroll drives translateY/scale/
-         opacity (fades the mark as you leave the hero); mouse
-         movement adds a small translate offset on top, desktop
-         only, easing back to 0 on mouseleave. */
       var isDesktopParallax = window.matchMedia('(min-width: 960px)').matches;
       var targetPX = 0, targetPY = 0, currentPX = 0, currentPY = 0;
       var ticking = false;
@@ -1097,10 +1053,6 @@
       }
       mark.addEventListener('click', burst);
 
-      // Same fix as the other two hero scripts: this IIFE re-runs on every
-      // SPA swap back to a page with this hero mark, so its window-level
-      // scroll listener and pending RAF/timer need to be torn down before
-      // the next swap, or they keep stacking.
       if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
         window.SpoiderPage.onCleanup(function () {
           window.removeEventListener('scroll', onScroll);
@@ -1153,6 +1105,43 @@
         });
       }
 
+      // ---- Spoider Score block builder — same shape used on every
+      // product-listing page (index.html Featured, and each category
+      // page's own loader). Returns '' when the product has no
+      // spoider_score yet, so older products render exactly as before. ----
+      function scoreBarRow(label, val) {
+        var v = Number(val) || 0;
+        var pct = Math.max(0, Math.min(10, v)) * 10;
+        return '<div class="spoider-bar-row" style="--fill:' + pct + '%">' +
+          '<span class="spoider-bar-label">' + label + '</span>' +
+          '<span class="spoider-bar-track"><span class="spoider-bar-fill"></span></span>' +
+          '<span class="spoider-bar-val">' + v.toFixed(1) + '</span>' +
+        '</div>';
+      }
+
+      function scoreBadgeHTML(p) {
+        if (p.spoider_score === null || p.spoider_score === undefined) return '';
+        return '<span class="spoider-badge">SPOIDER <b>' + Number(p.spoider_score).toFixed(1) + '</b></span>';
+      }
+
+      function scoreTriggerAndPanelHTML(p) {
+        if (p.spoider_score === null || p.spoider_score === undefined) return '';
+        var note = p.editor_note ? String(p.editor_note).replace(/</g, '&lt;') : '';
+        return '' +
+          '<button type="button" class="spoider-score-trigger" aria-label="Why we chose this">Why this?</button>' +
+          '<div class="spoider-panel">' +
+            '<button type="button" class="spoider-panel-close" aria-label="Close">×</button>' +
+            '<div class="spoider-panel-head"><span class="spoider-eyebrow">SPOIDER SCORE</span><span class="spoider-num">' + Number(p.spoider_score).toFixed(1) + '</span></div>' +
+            (note ? '<p class="spoider-note">' + note + '</p>' : '') +
+            '<div class="spoider-bars">' +
+              scoreBarRow('Design', p.score_design) +
+              scoreBarRow('Value', p.score_value) +
+              scoreBarRow('Usefulness', p.score_usefulness) +
+              scoreBarRow('Aesthetic', p.score_aesthetic) +
+            '</div>' +
+          '</div>';
+      }
+
       async function loadFeatured() {
         var grid = document.getElementById('featuredGrid');
         if (!grid) return;
@@ -1182,8 +1171,10 @@
             '<div class="product-glow" aria-hidden="true"></div>' +
             '<div class="product-image">' +
               '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
+              scoreBadgeHTML(p) +
             '</div>' +
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+            scoreTriggerAndPanelHTML(p) +
           '</a>';
         }).join('');
 
