@@ -18,6 +18,7 @@
     }
     h1 { font-size: 1.4rem; color: #e8c766; margin-bottom: 1rem; }
     h2 { font-size: 1.1rem; color: #e8c766; margin: 2rem 0 0.8rem; }
+    h3.subhead { font-size: 0.85rem; color: #cbc4b6; margin: 1.2rem 0 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
     .card {
       background: #16161a;
       border: 1px solid rgba(201,168,118,0.25);
@@ -61,11 +62,36 @@
     .product-info { flex: 1; min-width: 0; }
     .product-info strong { display: block; font-size: 0.9rem; }
     .product-info span { font-size: 0.75rem; color: #999; }
+    .product-info .score-chip {
+      display: inline-block;
+      margin-top: 2px;
+      font-size: 0.7rem;
+      color: #e8c766;
+      border: 1px solid rgba(201,168,118,0.35);
+      border-radius: 999px;
+      padding: 1px 7px;
+    }
     .row-actions { display: flex; gap: 0.4rem; }
     .row-actions button { width: auto; margin: 0; padding: 0.4rem 0.7rem; font-size: 0.8rem; }
     #status { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
     .hidden { display: none !important; }
     .badge-inactive { color: #ff8080; font-size: 0.7rem; }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 0.8rem;
+    }
+    .score-avg-preview {
+      margin-top: 0.8rem;
+      font-size: 0.85rem;
+      color: #e8c766;
+      background: rgba(201,168,118,0.08);
+      border: 1px solid rgba(201,168,118,0.25);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+    }
+    .score-avg-preview b { font-size: 1.1rem; }
   </style>
 </head>
 <body>
@@ -114,6 +140,32 @@
       <label style="display:flex; align-items:center; gap:0.5rem; margin-top:0.8rem;">
         <input type="checkbox" id="pActive" checked style="width:auto;"> Active (visible on site)
       </label>
+
+      <h3 class="subhead">Spoider Score</h3>
+      <p style="font-size:0.78rem; color:#8a8579; margin:-0.2rem 0 0.6rem;">Leave all four blank to skip the score badge on this product entirely.</p>
+      <div class="score-grid">
+        <div>
+          <label>Design (0–10)</label>
+          <input type="number" id="sDesign" min="0" max="10" step="0.1" placeholder="e.g. 9.0">
+        </div>
+        <div>
+          <label>Value (0–10)</label>
+          <input type="number" id="sValue" min="0" max="10" step="0.1" placeholder="e.g. 8.0">
+        </div>
+        <div>
+          <label>Usefulness (0–10)</label>
+          <input type="number" id="sUsefulness" min="0" max="10" step="0.1" placeholder="e.g. 8.8">
+        </div>
+        <div>
+          <label>Aesthetic (0–10)</label>
+          <input type="number" id="sAesthetic" min="0" max="10" step="0.1" placeholder="e.g. 9.6">
+        </div>
+      </div>
+      <div class="score-avg-preview">Spoider Score: <b id="scoreAvgPreview">—</b></div>
+
+      <label>Editor Note ("Why we chose this")</label>
+      <textarea id="pEditorNote" placeholder="1-2 sentences on the specific reason this made the cut."></textarea>
+
       <button onclick="saveProduct()">Save Product</button>
       <button class="secondary" id="cancelEditBtn" onclick="resetForm()" style="display:none;">Cancel Edit</button>
       <p id="status"></p>
@@ -172,6 +224,34 @@
       showLogin();
     }
 
+    // ---- Spoider Score: live average preview as the four fields are edited ----
+    function currentScoreInputs() {
+      return {
+        design: document.getElementById('sDesign').value,
+        value: document.getElementById('sValue').value,
+        usefulness: document.getElementById('sUsefulness').value,
+        aesthetic: document.getElementById('sAesthetic').value
+      };
+    }
+
+    function updateScoreAvgPreview() {
+      const s = currentScoreInputs();
+      const vals = [s.design, s.value, s.usefulness, s.aesthetic];
+      const filled = vals.filter(function (v) { return v !== '' && v !== null; });
+      const previewEl = document.getElementById('scoreAvgPreview');
+      if (filled.length === 0) {
+        previewEl.textContent = '— (no score, badge will be hidden)';
+        return;
+      }
+      const nums = filled.map(Number);
+      const avg = nums.reduce(function (a, b) { return a + b; }, 0) / nums.length;
+      previewEl.textContent = avg.toFixed(1) + (filled.length < 4 ? ' (only ' + filled.length + '/4 filled)' : '');
+    }
+
+    ['sDesign', 'sValue', 'sUsefulness', 'sAesthetic'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', updateScoreAvgPreview);
+    });
+
     function resetForm() {
       document.getElementById('editId').value = '';
       document.getElementById('pTitle').value = '';
@@ -183,6 +263,12 @@
       document.getElementById('pImageUrl').value = '';
       document.getElementById('pActive').checked = true;
       document.getElementById('imagePreview').classList.add('hidden');
+      document.getElementById('sDesign').value = '';
+      document.getElementById('sValue').value = '';
+      document.getElementById('sUsefulness').value = '';
+      document.getElementById('sAesthetic').value = '';
+      document.getElementById('pEditorNote').value = '';
+      updateScoreAvgPreview();
       document.getElementById('formTitle').textContent = 'Add Product';
       document.getElementById('cancelEditBtn').style.display = 'none';
       document.getElementById('status').textContent = '';
@@ -221,7 +307,27 @@
         image_url = urlData.publicUrl;
       }
 
-      const payload = { title, description, affiliate_link, category, region, active, image_url };
+      // Spoider Score: only saved if ALL four sub-scores are filled.
+      // A partial score (e.g. 2 of 4 fields) is treated the same as no
+      // score at all, rather than silently averaging an incomplete set —
+      // otherwise a half-filled form could publish a misleading number.
+      const s = currentScoreInputs();
+      const rawVals = [s.design, s.value, s.usefulness, s.aesthetic];
+      const allFilled = rawVals.every(function (v) { return v !== '' && v !== null; });
+      let score_design = null, score_value = null, score_usefulness = null, score_aesthetic = null, spoider_score = null;
+      if (allFilled) {
+        score_design = Number(s.design);
+        score_value = Number(s.value);
+        score_usefulness = Number(s.usefulness);
+        score_aesthetic = Number(s.aesthetic);
+        spoider_score = Math.round(((score_design + score_value + score_usefulness + score_aesthetic) / 4) * 10) / 10;
+      }
+      const editor_note = document.getElementById('pEditorNote').value.trim() || null;
+
+      const payload = {
+        title, description, affiliate_link, category, region, active, image_url,
+        score_design, score_value, score_usefulness, score_aesthetic, spoider_score, editor_note
+      };
 
       let result;
       if (editId) {
@@ -256,11 +362,15 @@
       data.forEach(p => {
         const row = document.createElement('div');
         row.className = 'product-row';
+        const scoreChip = (p.spoider_score !== null && p.spoider_score !== undefined)
+          ? '<span class="score-chip">★ ' + Number(p.spoider_score).toFixed(1) + '</span>'
+          : '';
         row.innerHTML = `
           <img src="${p.image_url || ''}" onerror="this.style.display='none'">
           <div class="product-info">
             <strong>${p.title} ${!p.active ? '<span class=\"badge-inactive\">(hidden)</span>' : ''}</strong>
-            <span>${p.category} · ${p.region}</span>
+            <span>${p.category} · ${p.region}</span><br>
+            ${scoreChip}
           </div>
           <div class="row-actions">
             <button class="secondary" onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Edit</button>
@@ -280,6 +390,12 @@
       document.getElementById('pRegion').value = p.region || 'india';
       document.getElementById('pImageUrl').value = p.image_url || '';
       document.getElementById('pActive').checked = p.active;
+      document.getElementById('sDesign').value = (p.score_design !== null && p.score_design !== undefined) ? p.score_design : '';
+      document.getElementById('sValue').value = (p.score_value !== null && p.score_value !== undefined) ? p.score_value : '';
+      document.getElementById('sUsefulness').value = (p.score_usefulness !== null && p.score_usefulness !== undefined) ? p.score_usefulness : '';
+      document.getElementById('sAesthetic').value = (p.score_aesthetic !== null && p.score_aesthetic !== undefined) ? p.score_aesthetic : '';
+      document.getElementById('pEditorNote').value = p.editor_note || '';
+      updateScoreAvgPreview();
       const preview = document.getElementById('imagePreview');
       if (p.image_url) {
         preview.src = p.image_url;
