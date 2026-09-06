@@ -1106,9 +1106,16 @@
       }
 
       // ---- Spoider Score block builder — same shape used on every
-      // product-listing page (index.html Featured, and each category
-      // page's own loader). Returns '' when the product has no
-      // spoider_score yet, so older products render exactly as before. ----
+      // product-listing page (index.html Featured, india.html Featured,
+      // and each India category page's own loader). Returns '' when the
+      // product has no spoider_score yet, so older products render
+      // exactly as before.
+      //
+      // Badge = always-visible small pill on the product image.
+      // Panel = the full breakdown, hidden by default (max-height: 0 in
+      // CSS) and revealed by script.js's hover/hold handler, which just
+      // toggles .is-active on the parent .product-card. No trigger
+      // button, no close button — the reveal IS the interaction. ----
       function scoreBarRow(label, val) {
         var v = Number(val) || 0;
         var pct = Math.max(0, Math.min(10, v)) * 10;
@@ -1124,13 +1131,11 @@
         return '<span class="spoider-badge">SPOIDER <b>' + Number(p.spoider_score).toFixed(1) + '</b></span>';
       }
 
-      function scoreTriggerAndPanelHTML(p) {
+      function scorePanelHTML(p) {
         if (p.spoider_score === null || p.spoider_score === undefined) return '';
         var note = p.editor_note ? String(p.editor_note).replace(/</g, '&lt;') : '';
         return '' +
-          '<button type="button" class="spoider-score-trigger" aria-label="Why we chose this">Why this?</button>' +
           '<div class="spoider-panel">' +
-            '<button type="button" class="spoider-panel-close" aria-label="Close">×</button>' +
             '<div class="spoider-panel-head"><span class="spoider-eyebrow">SPOIDER SCORE</span><span class="spoider-num">' + Number(p.spoider_score).toFixed(1) + '</span></div>' +
             (note ? '<p class="spoider-note">' + note + '</p>' : '') +
             '<div class="spoider-bars">' +
@@ -1174,7 +1179,7 @@
               scoreBadgeHTML(p) +
             '</div>' +
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
-            scoreTriggerAndPanelHTML(p) +
+            scorePanelHTML(p) +
           '</a>';
         }).join('');
 
