@@ -5,7 +5,7 @@
 // unified split-reveal typography system, the hero-web-to-
 // category-grid scroll transition, the user-controlled
 // light/dark theme toggle (sweep transition + persistence),
-// and the Spoider Score tap-to-reveal panel.
+// and the Spoider Score hold/hover-to-reveal panel.
 //
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
@@ -236,19 +236,25 @@
   }
 
   // ============================================================
-  // Spoider Score panel: tap-to-reveal, delegated on document.
+  // Spoider Score panel: hold-to-reveal (mobile) / hover-to-reveal
+  // (desktop), delegated on document.
   //
-  // Deliberately NOT hover-driven — most traffic is mobile
-  // (Instagram/Pinterest referrals), so a hover-only reveal would
-  // never be seen by most visitors. Tap works identically on
-  // desktop and mobile, no separate code paths.
+  // Desktop (mouse pointers): the panel opens on pointerover of a
+  // .product-card and closes on pointerout — using pointerover/
+  // pointerout rather than pointerenter/pointerleave because only
+  // the "over/out" pair bubbles, which is what lets a single
+  // document-level listener catch every card (including ones
+  // injected later by a Supabase loader) without per-card binding.
+  // relatedTarget is checked so moving between two elements INSIDE
+  // the same card doesn't fire a spurious close/reopen.
   //
-  // .product-card is itself an <a> — tapping the trigger or close
-  // button must never fire the wrapping link's navigation, so both
-  // call preventDefault + stopPropagation. Tapping anywhere else on
-  // the card (including inside an already-open panel) still
-  // navigates to the affiliate link, which is intended: once the
-  // score has answered "why this", tapping the product buys it.
+  // Mobile / touch: a genuine hold (>~260ms, without more than a
+  // few px of finger movement — movement means the user is
+  // scrolling, not holding) reveals the panel. Releasing after a
+  // successful hold closes the panel again after a short linger and
+  // swallows the click that would otherwise follow, so the card's
+  // affiliate link isn't triggered by the hold itself. A normal
+  // quick tap is left completely alone and navigates as before.
   //
   // Bound once on document via delegation (same pattern as the
   // tap-spark handler below), so newly injected cards — from any
@@ -256,36 +262,118 @@
   // work immediately with no rebinding.
   // ============================================================
   function bindSpoiderScorePanels() {
-    document.addEventListener("click", (e) => {
-      const trigger = e.target.closest(".spoider-score-trigger");
-      const closeBtn = e.target.closest(".spoider-panel-close");
+    const HOLD_MS = 260;
+    const MOVE_CANCEL_PX = 10;
 
-      if (trigger) {
-        e.preventDefault();
-        e.stopPropagation();
-        const card = trigger.closest(".product-card");
-        if (!card) return;
-        document.querySelectorAll(".product-card.is-active").forEach((c) => {
-          if (c !== card) c.classList.remove("is-active");
-        });
-        card.classList.toggle("is-active");
-        return;
-      }
+    let holdTimer = null;
+    let holdCard = null;
+    let startX = 0;
+    let startY = 0;
+    let suppressNextClick = false;
 
-      if (closeBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        const card = closeBtn.closest(".product-card");
-        if (card) card.classList.remove("is-active");
-        return;
-      }
+    function activate(card) {
+      document.querySelectorAll(".product-card.is-active").forEach((c) => {
+        if (c !== card) c.classList.remove("is-active");
+      });
+      card.classList.add("is-active");
+    }
 
-      // Tapping fully outside any product card closes whatever panel
-      // is currently open (mirrors "tap outside to dismiss").
-      if (!e.target.closest(".product-card")) {
-        document.querySelectorAll(".product-card.is-active").forEach((c) => c.classList.remove("is-active"));
-      }
+    function deactivate(card) {
+      card.classList.remove("is-active");
+    }
+
+    function clearHold() {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+      holdCard = null;
+    }
+
+    // ---- Desktop hover ----
+    document.addEventListener("pointerover", (e) => {
+      if (e.pointerType !== "mouse") return;
+      const card = e.target.closest(".product-card");
+      if (!card || !card.querySelector(".spoider-panel")) return;
+      if (card.contains(e.relatedTarget)) return; // moving within the same card, not a real entry
+      activate(card);
     });
+
+    document.addEventListener("pointerout", (e) => {
+      if (e.pointerType !== "mouse") return;
+      const card = e.target.closest(".product-card");
+      if (!card || !card.querySelector(".spoider-panel")) return;
+      if (card.contains(e.relatedTarget)) return; // moving within the same card, not a real exit
+      deactivate(card);
+    });
+
+    // ---- Mobile / touch hold ----
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (e.pointerType === "mouse") return;
+        const card = e.target.closest(".product-card");
+        if (!card || !card.querySelector(".spoider-panel")) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        holdCard = card;
+        holdTimer = setTimeout(() => {
+          if (!holdCard) return;
+          activate(holdCard);
+          if (navigator.vibrate) navigator.vibrate(6);
+        }, HOLD_MS);
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      "pointermove",
+      (e) => {
+        if (!holdCard) return;
+        if (Math.hypot(e.clientX - startX, e.clientY - startY) > MOVE_CANCEL_PX) clearHold();
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      "pointerup",
+      (e) => {
+        if (!holdCard) return;
+        const card = holdCard;
+        const wasRevealed = card.classList.contains("is-active");
+        clearHold();
+        if (wasRevealed) {
+          suppressNextClick = true;
+          setTimeout(() => deactivate(card), 240);
+        }
+      },
+      { passive: true }
+    );
+
+    document.addEventListener("pointercancel", clearHold, { passive: true });
+
+    // Swallow the tap-navigation click that follows a completed hold
+    document.addEventListener(
+      "click",
+      (e) => {
+        if (suppressNextClick) {
+          suppressNextClick = false;
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      true
+    );
+
+    // Tapping fully outside any card (touch) closes a lingering open panel
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (e.pointerType === "mouse") return;
+        if (!e.target.closest(".product-card")) {
+          document.querySelectorAll(".product-card.is-active").forEach(deactivate);
+        }
+      },
+      { passive: true }
+    );
   }
 
   function bindGlobalOnce() {
