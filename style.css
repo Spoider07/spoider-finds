@@ -1616,24 +1616,15 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 }
 
 /* =========================================================
-   SPOIDER SCORE — editorial score badge + tap-to-reveal panel
-   Own scoring system, never the Amazon star rating. Badge sits
-   in the top-right corner of the product image (always visible,
-   the "teaser"); the trigger button opens a bottom-slide panel
-   with the score breakdown and the editor's note.
-
-   Interaction is TAP-based only, on both desktop and mobile —
-   deliberately not hover-driven, since most traffic here comes
-   from Instagram/Pinterest referrals (mobile). The .is-active
-   class is toggled via delegated click handling in script.js so
-   it survives every AJAX page swap without rebinding, same
-   pattern as the tap-spark micro-interaction above.
-
-   .product-card is an <a> tag — the trigger/close buttons call
-   preventDefault + stopPropagation in JS so opening the panel
-   never fires the Amazon navigation. Tapping the card anywhere
-   else (including inside the open panel body) still navigates,
-   which is intended.
+   SPOIDER SCORE — persistent badge + hold/hover reveal panel
+   Badge is always visible (top-right of product image). Panel
+   is hidden by default (max-height: 0) and revealed by toggling
+   .is-active on the parent .product-card — desktop: hover
+   (mouse pointerover/pointerout), mobile: ~260ms hold
+   (touch pointerdown+timer). Both handled via delegated pointer
+   events in script.js, so newly injected Supabase cards work
+   immediately with no rebinding. No trigger/close buttons —
+   the reveal itself IS the interaction.
    ========================================================= */
 .spoider-badge {
   position: absolute;
@@ -1656,7 +1647,7 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   pointer-events: none;
 }
 .spoider-badge b {
-  color: var(--text-primary);
+  color: #fff5e0;
   font-weight: 700;
   font-size: 0.74rem;
 }
@@ -1664,140 +1655,110 @@ html[data-theme="light"] .spoider-badge {
   background: rgba(23, 23, 23, 0.82);
 }
 
-.spoider-score-trigger {
-  position: absolute;
-  bottom: 14px;
-  right: 16px;
-  z-index: 5;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color 0.25s var(--ease), color 0.25s var(--ease);
-}
-.spoider-score-trigger:hover,
-.spoider-score-trigger:focus-visible {
-  border-color: var(--gold);
-  color: var(--gold-bright);
-}
-.product-card.is-active .spoider-score-trigger {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .spoider-panel {
   position: absolute;
-  inset: 0;
+  left: 0; right: 0; bottom: 0;
   z-index: 6;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 22px 22px 24px;
-  background: linear-gradient(180deg, rgba(10, 10, 11, 0.1) 0%, rgba(10, 10, 11, 0.96) 40%, var(--bg) 72%);
-  transform: translateY(100%);
-  transition: transform 0.5s var(--ease-spring);
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 20px;
+  background: linear-gradient(180deg, rgba(10,10,11,0) 0%, rgba(10,10,11,0.94) 24%, rgba(10,10,11,0.985) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid transparent;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    max-height 0.5s var(--ease-spring),
+    opacity 0.3s var(--ease),
+    transform 0.42s var(--ease-spring),
+    border-color 0.3s var(--ease),
+    padding 0.4s var(--ease);
   pointer-events: none;
 }
+html[data-theme="light"] .spoider-panel {
+  background: linear-gradient(180deg, rgba(247,245,240,0) 0%, rgba(247,245,240,0.94) 24%, rgba(247,245,240,0.985) 100%);
+}
 .product-card.is-active .spoider-panel {
+  max-height: 240px;
+  opacity: 1;
   transform: translateY(0);
+  border-top-color: var(--gold-dim);
+  padding: 16px 20px 18px;
   pointer-events: auto;
 }
-
-.spoider-panel-close {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  z-index: 7;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.15rem;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.3s var(--ease) 0.15s, color 0.2s var(--ease);
-}
-.spoider-panel-close:hover { color: var(--gold-bright); }
-.product-card.is-active .spoider-panel-close { opacity: 1; }
 
 .spoider-panel-head {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 .spoider-eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   letter-spacing: 0.08em;
-  color: var(--gold);
+  color: var(--text-muted);
 }
 .spoider-num {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1.85rem;
+  font-size: 1.5rem;
   color: var(--gold-bright);
   line-height: 1;
 }
 .spoider-note {
   font-size: 0.78rem;
-  color: var(--text-secondary);
   line-height: 1.5;
-  margin: 6px 0 14px;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
 }
-
 .spoider-bars {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 .spoider-bar-row {
   display: grid;
-  grid-template-columns: 78px 1fr 30px;
+  grid-template-columns: 76px 1fr 30px;
   align-items: center;
   gap: 10px;
 }
 .spoider-bar-label {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
   letter-spacing: 0.03em;
 }
 .spoider-bar-track {
+  position: relative;
   height: 4px;
-  background: rgba(255, 255, 255, 0.08);
   border-radius: 99px;
+  background: rgba(255,255,255,0.08);
   overflow: hidden;
 }
 html[data-theme="light"] .spoider-bar-track {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0,0,0,0.08);
 }
 .spoider-bar-fill {
-  height: 100%;
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
   width: 0%;
   background: linear-gradient(90deg, var(--gold), var(--gold-bright));
   border-radius: 99px;
-  transition: width 0.8s var(--ease-spring);
-  transition-delay: 0.12s;
+  transition: width 0.7s var(--ease-spring);
+  transition-delay: 0.1s;
 }
 .product-card.is-active .spoider-bar-fill {
   width: var(--fill);
 }
 .spoider-bar-val {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
   text-align: right;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spoider-panel,
-  .spoider-bar-fill,
-  .spoider-panel-close {
-    transition: none;
-  }
+  .spoider-panel, .spoider-bar-fill { transition: none; }
 }
