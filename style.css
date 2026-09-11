@@ -314,6 +314,32 @@ img { max-width: 100%; display: block; }
   transition: stroke-dasharray 0.1s linear;
 }
 
+/* Flank threads — same visual language as the center .thread, but
+   sit out near the left/right edges. Hidden by default; only
+   switched on above the ultra-wide breakpoint (see bottom of file)
+   where the main containers stop growing and would otherwise leave
+   flat, undecorated margins on very large/high-res screens. Kept as
+   a separate class (not reusing .thread) so they don't inherit the
+   center line's left:50% positioning. */
+.thread-flank {
+  display: none;
+  position: fixed;
+  top: 0;
+  width: 2px;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.16;
+}
+.thread-flank path {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1;
+  stroke-dasharray: 4 3000;
+}
+.thread-flank--left { left: 8%; }
+.thread-flank--right { left: 92%; }
+
 #page-wrap {
   position: relative;
   z-index: 2;
@@ -1540,225 +1566,30 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
 }
 
 /* =========================================================
-   THEME TRANSITION — shockwave ring + icon morph + depth-pulse
-   Layers on top of the existing .theme-sweep circle. Shockwave
-   fires first (a quick gold ring burst that precedes the color
-   fill), the sun/moon icon morphs out/in with a rotate+blur
-   instead of an instant swap, and a brief whole-page blur pulse
-   (camera focus-pull) is timed to the moment the theme actually
-   flips underneath the sweep's cover.
+   ULTRA-WIDE / HIGH-RES FIX
+   Above 1440px the main containers were locked to a fixed
+   max-width with nothing designed to fill the remaining side
+   margins — on large monitors / high-DPI laptops (1600px,
+   1920px, ultrawide, etc.) this read as "cropped", with flat
+   empty background on both sides.
+
+   Fix has two parts:
+   1) Containers get a bit more room (1650px) once there's
+      genuinely enough space for it — text elements inside
+      (hero-sub, product-body, etc.) already have their own
+      smaller max-widths, so this doesn't hurt readability.
+   2) Two faint "flank threads" (same visual language as the
+      center .thread line) switch on near the left/right edges,
+      so the flanks read as an intentional part of the design
+      instead of dead space.
    ========================================================= */
-.theme-toggle {
-  position: relative;
-}
-
-.theme-shockwave {
-  position: fixed;
-  border-radius: 50%;
-  z-index: 100000;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  border: 1.5px solid rgba(232, 199, 102, 0.65);
-  box-shadow: 0 0 18px 2px rgba(232, 199, 102, 0.35);
-  will-change: width, height, opacity;
-}
-
-.theme-toggle svg {
-  transition: transform 0.3s var(--ease), filter 0.3s var(--ease), opacity 0.3s var(--ease);
-}
-
-.theme-toggle.morphing .icon-sun,
-.theme-toggle.morphing .icon-moon,
-.theme-toggle.morph-in .icon-sun,
-.theme-toggle.morph-in .icon-moon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  margin: -8px 0 0 -8px;
-}
-
-.theme-toggle.morphing .icon-sun,
-.theme-toggle.morphing .icon-moon {
-  animation: themeIconMorphOut 0.32s cubic-bezier(0.55, 0, 0.35, 1) forwards;
-}
-@keyframes themeIconMorphOut {
-  0%   { transform: rotate(0deg) scale(1); filter: blur(0); opacity: 1; }
-  100% { transform: rotate(85deg) scale(0.3); filter: blur(4px); opacity: 0; }
-}
-
-.theme-toggle.morph-in .icon-sun,
-.theme-toggle.morph-in .icon-moon {
-  animation: themeIconMorphIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-}
-@keyframes themeIconMorphIn {
-  0%   { transform: rotate(-85deg) scale(0.3); filter: blur(4px); opacity: 0; }
-  100% { transform: rotate(0deg) scale(1); filter: blur(0); opacity: 1; }
-}
-
-.sf-theme-focus-pulse {
-  animation: sfThemeFocusPulse 0.5s ease;
-}
-@keyframes sfThemeFocusPulse {
-  0%   { filter: blur(0); }
-  40%  { filter: blur(6px); }
-  100% { filter: blur(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .theme-shockwave { display: none; }
-  .theme-toggle.morphing .icon-sun,
-  .theme-toggle.morphing .icon-moon,
-  .theme-toggle.morph-in .icon-sun,
-  .theme-toggle.morph-in .icon-moon {
-    animation: none;
+@media (min-width: 1800px) {
+  .nav-inner,
+  .categories,
+  .featured,
+  .footer-inner {
+    max-width: 1650px;
   }
-  .sf-theme-focus-pulse { animation: none; }
-}
 
-/* =========================================================
-   SPOIDER SCORE — persistent badge + hold/hover reveal panel
-   Badge is always visible (top-right of product image). Panel
-   is hidden by default (max-height: 0) and revealed by toggling
-   .is-active on the parent .product-card — desktop: hover
-   (mouse pointerover/pointerout), mobile: ~260ms hold
-   (touch pointerdown+timer). Both handled via delegated pointer
-   events in script.js, so newly injected Supabase cards work
-   immediately with no rebinding. No trigger/close buttons —
-   the reveal itself IS the interaction.
-   ========================================================= */
-.spoider-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  background: rgba(10, 10, 11, 0.82);
-  border: 1px solid var(--gold-dim);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
-  color: var(--gold-bright);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  pointer-events: none;
-}
-.spoider-badge b {
-  color: #fff5e0;
-  font-weight: 700;
-  font-size: 0.74rem;
-}
-html[data-theme="light"] .spoider-badge {
-  background: rgba(23, 23, 23, 0.82);
-}
-
-.spoider-panel {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  z-index: 6;
-  max-height: 0;
-  overflow: hidden;
-  padding: 0 20px;
-  background: linear-gradient(180deg, rgba(10,10,11,0) 0%, rgba(10,10,11,0.94) 24%, rgba(10,10,11,0.985) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid transparent;
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    max-height 0.5s var(--ease-spring),
-    opacity 0.3s var(--ease),
-    transform 0.42s var(--ease-spring),
-    border-color 0.3s var(--ease),
-    padding 0.4s var(--ease);
-  pointer-events: none;
-}
-html[data-theme="light"] .spoider-panel {
-  background: linear-gradient(180deg, rgba(247,245,240,0) 0%, rgba(247,245,240,0.94) 24%, rgba(247,245,240,0.985) 100%);
-}
-.product-card.is-active .spoider-panel {
-  max-height: 240px;
-  opacity: 1;
-  transform: translateY(0);
-  border-top-color: var(--gold-dim);
-  padding: 16px 20px 18px;
-  pointer-events: auto;
-}
-
-.spoider-panel-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-.spoider-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-.spoider-num {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.5rem;
-  color: var(--gold-bright);
-  line-height: 1;
-}
-.spoider-note {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  margin: 0 0 12px;
-}
-.spoider-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.spoider-bar-row {
-  display: grid;
-  grid-template-columns: 76px 1fr 30px;
-  align-items: center;
-  gap: 10px;
-}
-.spoider-bar-label {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--text-muted);
-  letter-spacing: 0.03em;
-}
-.spoider-bar-track {
-  position: relative;
-  height: 4px;
-  border-radius: 99px;
-  background: rgba(255,255,255,0.08);
-  overflow: hidden;
-}
-html[data-theme="light"] .spoider-bar-track {
-  background: rgba(0,0,0,0.08);
-}
-.spoider-bar-fill {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 0%;
-  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
-  border-radius: 99px;
-  transition: width 0.7s var(--ease-spring);
-  transition-delay: 0.1s;
-}
-.product-card.is-active .spoider-bar-fill {
-  width: var(--fill);
-}
-.spoider-bar-val {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  color: var(--text-muted);
-  text-align: right;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spoider-panel, .spoider-bar-fill { transition: none; }
+  .thread-flank { display: block; }
 }
