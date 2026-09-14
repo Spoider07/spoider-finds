@@ -1785,3 +1785,168 @@ html[data-theme="light"] .spoider-score-trigger {
 
   .thread-flank { display: block; }
 }
+/* =========================================================
+   SEARCH — magnetic icon + clip-path ink reveal + thread web
+   ========================================================= */
+.search-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  cursor: pointer;
+  margin-left: 14px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.3s var(--ease), border-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+.search-toggle:hover { border-color: var(--gold-dim); }
+.search-toggle svg { display: block; width: 16px; height: 16px; }
+
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 90px 24px 40px;
+  visibility: hidden;
+  clip-path: circle(0% at 50% 50%);
+  overflow-y: auto;
+}
+
+.search-web {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+.search-overlay.is-open .search-web { opacity: 0.55; }
+.search-web line {
+  stroke: var(--gold);
+  stroke-width: 1;
+  opacity: 0;
+  animation: searchLineDraw 0.8s var(--ease) forwards;
+}
+@keyframes searchLineDraw { to { opacity: 0.5; } }
+
+.search-close {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.25s var(--ease), color 0.25s var(--ease), transform 0.25s var(--ease);
+}
+.search-close:hover { border-color: var(--gold); color: var(--gold); transform: rotate(90deg); }
+
+.search-field-wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 640px;
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform 0.5s var(--ease-spring), opacity 0.4s var(--ease);
+}
+.search-overlay.is-open .search-field-wrap { transform: translateY(0); opacity: 1; transition-delay: 0.1s; }
+
+.search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  color: var(--text-primary);
+  padding: 10px 40px 16px 4px;
+  outline: none;
+  transition: border-color 0.3s var(--ease);
+}
+.search-input:focus { border-color: var(--gold); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.search-region-tag {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.search-results {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 640px;
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+}
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: padding-left 0.25s var(--ease);
+}
+.search-result:hover { padding-left: 8px; }
+.search-result-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+.search-result-body { flex: 1; min-width: 0; }
+.search-result-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.search-result-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin-top: 4px;
+  color: var(--text-primary);
+  transition: color 0.25s var(--ease);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-result:hover .search-result-title { color: var(--gold-bright); }
+.search-result-arrow { color: var(--gold); flex-shrink: 0; transition: transform 0.25s var(--ease); }
+.search-result:hover .search-result-arrow { transform: translateX(4px); }
+
+.search-state {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 30px;
+  position: relative;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-overlay, .search-field-wrap, .search-web, .search-close { transition: none; }
+  .search-web line { animation: none; opacity: 0.5; }
+}
