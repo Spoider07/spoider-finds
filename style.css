@@ -1785,8 +1785,14 @@ html[data-theme="light"] .spoider-score-trigger {
 
   .thread-flank { display: block; }
 }
+
 /* =========================================================
-   SEARCH — magnetic icon + clip-path ink reveal + thread web
+   SEARCH — magnetic icon + clip-path ink reveal + ambient glow
+   (v2 — replaced the old spider-line web backdrop with a soft
+   ambient glow, switched the input to the body font instead of
+   the display serif, and results now show a product image
+   thumbnail with a staggered "burst into place" entrance
+   instead of a flat text-only row)
    ========================================================= */
 .search-toggle {
   width: 34px;
@@ -1821,22 +1827,23 @@ html[data-theme="light"] .spoider-score-trigger {
   overflow-y: auto;
 }
 
-.search-web {
+/* Soft ambient glow behind the field — same visual language as
+   .ambient-orb / .aurora-blob used elsewhere on the site, instead
+   of the old busy line-web pattern. Reads as premium, not clutter. */
+.search-glow {
   position: absolute;
-  inset: 0;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(900px, 140%);
+  height: 60%;
   z-index: 0;
   pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201, 168, 118, 0.16), transparent 70%);
   opacity: 0;
-  transition: opacity 0.6s var(--ease);
+  transition: opacity 0.7s var(--ease);
 }
-.search-overlay.is-open .search-web { opacity: 0.55; }
-.search-web line {
-  stroke: var(--gold);
-  stroke-width: 1;
-  opacity: 0;
-  animation: searchLineDraw 0.8s var(--ease) forwards;
-}
-@keyframes searchLineDraw { to { opacity: 0.5; } }
+.search-overlay.is-open .search-glow { opacity: 1; }
 
 .search-close {
   position: absolute;
@@ -1868,21 +1875,23 @@ html[data-theme="light"] .spoider-score-trigger {
 }
 .search-overlay.is-open .search-field-wrap { transform: translateY(0); opacity: 1; transition-delay: 0.1s; }
 
+/* Default site body font (Inter) — was Fraunces display serif at a
+   much larger size before, which read as heavy/odd for an input. */
 .search-input {
   width: 100%;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 500;
-  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-size: clamp(1.15rem, 2.6vw, 1.5rem);
   color: var(--text-primary);
   padding: 10px 40px 16px 4px;
   outline: none;
   transition: border-color 0.3s var(--ease);
 }
 .search-input:focus { border-color: var(--gold); }
-.search-input::placeholder { color: var(--text-muted); }
+.search-input::placeholder { color: var(--text-muted); font-family: var(--font-body); }
 
 .search-region-tag {
   display: block;
@@ -1903,17 +1912,58 @@ html[data-theme="light"] .spoider-score-trigger {
   display: flex;
   flex-direction: column;
 }
+
 .search-result {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px 4px;
+  padding: 14px 4px;
   border-bottom: 1px solid var(--border);
   text-decoration: none;
   transition: padding-left 0.25s var(--ease);
+  opacity: 0;
+  transform: scale(0.82) translateY(16px) rotate(-2deg);
+  filter: blur(6px);
 }
 .search-result:hover { padding-left: 8px; }
-.search-result-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+.search-result.is-in {
+  animation: searchResultBurst 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes searchResultBurst {
+  0% { opacity: 0; transform: scale(0.82) translateY(16px) rotate(-2deg); filter: blur(6px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); filter: blur(0); }
+}
+
+.search-result-image {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--shimmer-a), var(--shimmer-b));
+  border: 1px solid var(--border);
+}
+.search-result-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(100deg, rgba(255,255,255,0.02) 20%, rgba(201,168,118,0.14) 50%, rgba(255,255,255,0.02) 80%);
+  background-size: 200% 100%;
+  animation: shimmerSlide 1.4s linear infinite;
+}
+.search-result-image.img-loaded::before { opacity: 0; animation-play-state: paused; }
+.search-result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
 .search-result-body { flex: 1; min-width: 0; }
 .search-result-tag {
   font-family: var(--font-mono);
@@ -1925,7 +1975,7 @@ html[data-theme="light"] .spoider-score-trigger {
 .search-result-title {
   display: block;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1rem;
   margin-top: 4px;
   color: var(--text-primary);
   transition: color 0.25s var(--ease);
@@ -1947,6 +1997,6 @@ html[data-theme="light"] .spoider-score-trigger {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .search-overlay, .search-field-wrap, .search-web, .search-close { transition: none; }
-  .search-web line { animation: none; opacity: 0.5; }
+  .search-overlay, .search-field-wrap, .search-glow, .search-close { transition: none; }
+  .search-result { opacity: 1 !important; transform: none !important; filter: none !important; animation: none !important; }
 }
