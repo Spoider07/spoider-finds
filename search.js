@@ -59,12 +59,16 @@
     wrap.innerHTML =
       '<div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Search">' +
         '<div class="search-glow" id="searchGlow" aria-hidden="true"></div>' +
+        '<div class="search-particles" id="searchParticles" aria-hidden="true"></div>' +
         '<button class="search-close" id="searchClose" type="button" aria-label="Close search">' +
           '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>' +
         '</button>' +
         '<div class="search-field-wrap" id="searchFieldWrap">' +
-          '<span class="search-region-tag" id="searchRegionTag"></span>' +
-          '<input type="text" class="search-input" id="searchInput" placeholder="Search for a find…" autocomplete="off" spellcheck="false">' +
+          '<div class="search-bar">' +
+            '<svg class="search-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>' +
+            '<input type="text" class="search-input" id="searchInput" placeholder="Search for a find…" autocomplete="off" spellcheck="false">' +
+            '<span class="search-region-tag" id="searchRegionTag"></span>' +
+          '</div>' +
         '</div>' +
         '<div class="search-results" id="searchResults"></div>' +
       '</div>';
@@ -81,6 +85,26 @@
       if (e.target === overlay) closeSearch();
     });
     input.addEventListener("input", onInput);
+
+    buildParticles();
+  }
+
+  // Sparse, slow-drifting gold particles behind the search bar —
+  // random horizontal position, duration and delay per particle so
+  // they never read as a mechanical loop. Skipped completely under
+  // prefers-reduced-motion (container stays empty).
+  function buildParticles() {
+    var host = document.getElementById("searchParticles");
+    if (!host || prefersReducedMotion) return;
+    var count = window.matchMedia("(max-width:600px)").matches ? 8 : 14;
+    var markup = "";
+    for (var i = 0; i < count; i++) {
+      var left = (Math.random() * 100).toFixed(1);
+      var duration = (9 + Math.random() * 9).toFixed(1);
+      var delay = (Math.random() * 12).toFixed(1);
+      markup += '<span class="search-particle" style="left:' + left + '%;animation-duration:' + duration + 's;animation-delay:' + delay + 's"></span>';
+    }
+    host.innerHTML = markup;
   }
 
   function setClip(pct, ox, oy) {
@@ -91,7 +115,7 @@
     buildOverlay();
     isOpen = true;
     document.body.style.overflow = "hidden";
-    regionTag.textContent = currentRegion() === "india" ? "INDIA EDITION" : "US EDITION";
+    regionTag.textContent = currentRegion() === "india" ? "🇮🇳 IN" : "🇺🇸 US";
     overlay.style.visibility = "visible";
 
     if (prefersReducedMotion) {
