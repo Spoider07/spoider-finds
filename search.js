@@ -24,19 +24,27 @@
   };
 
   // Category chip targets per region — India pages use the
-  // "india-" prefixed filenames already live on the site.
+  // "india-" prefixed filenames already live on the site. Icon
+  // markup mirrors the same glyphs used on the Categories section
+  // for visual consistency.
+  var CATEGORY_ICONS = {
+    "desk-setup": '<svg class="search-suggest-chip-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="24" height="15" rx="1.5"/><path d="M13 26h6M16 22v4"/><path d="M9 12.5h9"/></svg>',
+    "fashion-finds": '<svg class="search-suggest-chip-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 6.5a2 2 0 1 1 2 2c-.7.4-2 1-2 2.3v.7"/><path d="M16 11.5 6 18.8a1.9 1.9 0 0 0 1.1 3.5h17.8a1.9 1.9 0 0 0 1.1-3.5l-10-7.3Z"/><path d="M7 22.3h18"/></svg>',
+    "accessories": '<svg class="search-suggest-chip-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="24" height="16" rx="2"/><path d="M4 14.5h24"/><circle cx="21.5" cy="19.5" r="1.3" fill="currentColor" stroke="none"/></svg>',
+    "amazon-finds": '<svg class="search-suggest-chip-icon" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 16 7l11 5.5-11 5.5-11-5.5Z"/><path d="M5 12.5v9.7L16 27.7l11-5.5v-9.7"/><path d="M16 18v9.7"/></svg>'
+  };
   var CATEGORY_LINKS = {
     us: [
-      { label: "Desk Setup", href: "desk-setup.html" },
-      { label: "Fashion Finds", href: "fashion-finds.html" },
-      { label: "Accessories", href: "accessories.html" },
-      { label: "Amazon Finds", href: "amazon-finds.html" }
+      { slug: "desk-setup", label: "Desk Setup", href: "desk-setup.html" },
+      { slug: "fashion-finds", label: "Fashion Finds", href: "fashion-finds.html" },
+      { slug: "accessories", label: "Accessories", href: "accessories.html" },
+      { slug: "amazon-finds", label: "Amazon Finds", href: "amazon-finds.html" }
     ],
     india: [
-      { label: "Desk Setup", href: "india-desk-setup.html" },
-      { label: "Fashion Finds", href: "india-fashion-finds.html" },
-      { label: "Accessories", href: "india-accessories.html" },
-      { label: "Amazon Finds", href: "india-amazon-finds.html" }
+      { slug: "desk-setup", label: "Desk Setup", href: "india-desk-setup.html" },
+      { slug: "fashion-finds", label: "Fashion Finds", href: "india-fashion-finds.html" },
+      { slug: "accessories", label: "Accessories", href: "india-accessories.html" },
+      { slug: "amazon-finds", label: "Amazon Finds", href: "india-amazon-finds.html" }
     ]
   };
 
@@ -113,13 +121,23 @@
   function buildParticles() {
     var host = document.getElementById("searchParticles");
     if (!host || prefersReducedMotion) return;
-    var count = window.matchMedia("(max-width:600px)").matches ? 8 : 14;
+    var count = window.matchMedia("(max-width:600px)").matches ? 9 : 16;
     var markup = "";
     for (var i = 0; i < count; i++) {
       var left = (Math.random() * 100).toFixed(1);
-      var duration = (9 + Math.random() * 9).toFixed(1);
-      var delay = (Math.random() * 12).toFixed(1);
-      markup += '<span class="search-particle" style="left:' + left + '%;animation-duration:' + duration + 's;animation-delay:' + delay + 's"></span>';
+      var duration = (10 + Math.random() * 10).toFixed(1);
+      var delay = (Math.random() * 14).toFixed(1);
+      var size = (1.6 + Math.random() * 2.4).toFixed(1);
+      var drift = (14 + Math.random() * 28).toFixed(0);
+      var glow = (size * 2.6).toFixed(1);
+      markup +=
+        '<span class="search-particle" style="' +
+        "left:" + left + "%;" +
+        "width:" + size + "px;height:" + size + "px;" +
+        "--drift:" + drift + "px;" +
+        "box-shadow:0 0 " + glow + "px " + (size * 0.5).toFixed(1) + "px rgba(232,199,102,0.5);" +
+        "animation-duration:" + duration + "s;animation-delay:" + delay + "s" +
+        '"></span>';
     }
     host.innerHTML = markup;
   }
@@ -200,7 +218,8 @@
         '<p class="search-suggest-label">Popular categories</p>' +
         '<div class="search-suggest-chips">' +
           links.map(function (c) {
-            return '<a href="' + c.href + '" class="search-suggest-chip">' + c.label + "</a>";
+            var icon = CATEGORY_ICONS[c.slug] || "";
+            return '<a href="' + c.href + '" class="search-suggest-chip">' + icon + "<span>" + c.label + "</span></a>";
           }).join("") +
         "</div>" +
       "</div>";
