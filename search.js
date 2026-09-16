@@ -139,7 +139,12 @@
       setClip(150, ox, oy);
       overlay.classList.add("is-open");
       renderSuggestions();
-      setTimeout(function () { input.focus(); }, 50);
+      // Auto-focus only on fine-pointer (desktop/mouse) devices. On
+      // touch, focusing immediately pops the keyboard mid-render,
+      // shifting the chip layout right as the user taps — the exact
+      // cause of "first tap misses, second tap works". Touch users
+      // get the keyboard only when they deliberately tap the field.
+      if (supportsHoverFine) setTimeout(function () { input.focus(); }, 50);
       return;
     }
 
@@ -151,7 +156,7 @@
     setTimeout(function () {
       overlay.classList.add("is-open");
       renderSuggestions();
-      input.focus();
+      if (supportsHoverFine) input.focus();
     }, 320);
   }
 
@@ -338,6 +343,34 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && isOpen) closeSearch();
     });
+
+    // Category chips and search results navigate away via a plain
+    // <a href>, without ever closing the overlay first — so if the
+    // browser bfcaches this page (or the back button restores it),
+    // the snapshot would otherwise be frozen mid-open (body scroll
+    // locked, overlay expanded), which is what looked "broken" on
+    // return. Force an instant, unanimated close the moment either
+    // is tapped, and again on pagehide as a second safety net.
+    document.addEventListener(
+      "click",
+      function (e) {
+        if (e.target.closest(".search-result, .search-suggest-chip")) {
+          hardResetOverlay();
+        }
+      },
+      true
+    );
+    window.addEventListener("pagehide", hardResetOverlay);
+  }
+
+  function hardResetOverlay() {
+    isOpen = false;
+    document.body.style.overflow = "";
+    if (!overlay) return;
+    overlay.classList.remove("is-open");
+    overlay.style.transition = "none";
+    overlay.style.clipPath = "circle(0% at 50% 50%)";
+    overlay.style.visibility = "hidden";
   }
 
   document.addEventListener("DOMContentLoaded", bindTrigger);
