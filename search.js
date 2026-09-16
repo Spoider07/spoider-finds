@@ -56,16 +56,24 @@
   var searchToken = 0;
   var debounceTimer = null;
   var keynavIndex = -1;
+  var lastQuery = "";
 
   function getNavItems() {
     if (!resultsEl) return [];
     return Array.prototype.slice.call(resultsEl.querySelectorAll(".search-result, .search-suggest-chip"));
   }
 
-  function clearKeynav() {
+  // Gives every result/chip a stable id + option role so the input's
+  // aria-activedescendant can point screen readers at whichever one
+  // is currently highlighted (keyboard or mouse).
+  function prepareNavItems() {
     var items = getNavItems();
-    items.forEach(function (el) { el.classList.remove("is-keynav"); });
+    items.forEach(function (el, i) {
+      el.id = "search-item-" + i;
+      el.setAttribute("role", "option");
+    });
     keynavIndex = -1;
+    if (input) input.removeAttribute("aria-activedescendant");
   }
 
   function setKeynav(items) {
@@ -73,7 +81,12 @@
       el.classList.toggle("is-keynav", i === keynavIndex);
     });
     var active = items[keynavIndex];
-    if (active) active.scrollIntoView({ block: "nearest" });
+    if (active) {
+      active.scrollIntoView({ block: "nearest" });
+      if (input) input.setAttribute("aria-activedescendant", active.id);
+    } else if (input) {
+      input.removeAttribute("aria-activedescendant");
+    }
   }
 
   function moveKeynav(delta) {
@@ -125,11 +138,11 @@
         '<div class="search-field-wrap" id="searchFieldWrap">' +
           '<div class="search-bar">' +
             '<svg class="search-bar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>' +
-            '<input type="text" class="search-input" id="searchInput" placeholder="Search for a find…" autocomplete="off" spellcheck="false">' +
+            '<input type="text" class="search-input" id="searchInput" placeholder="Search for a find…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list" aria-haspopup="listbox">' +
             '<span class="search-region-tag" id="searchRegionTag"></span>' +
           '</div>' +
         '</div>' +
-        '<div class="search-results" id="searchResults"></div>' +
+        '<div class="search-results" id="searchResults" role="listbox" aria-live="polite" aria-label="Search results"></div>' +
       '</div>';
     document.body.appendChild(wrap.firstElementChild);
 
@@ -144,14 +157,15 @@
       if (e.target === overlay) closeSearch();
     });
     input.addEventListener("input", onInput);
-
-    buildParticles();
   }
 
   // Sparse, slow-drifting gold particles behind the search bar —
   // random horizontal position, duration and delay per particle so
-  // they never read as a mechanical loop. Skipped completely under
-  // prefers-reduced-motion (container stays empty).
+  // they never read as a mechanical loop. Built fresh on every open
+  // and torn down on close (see closeSearch / hardResetOverlay) —
+  // otherwise these animations would keep running in the background
+  // for the entire browsing session even after search is closed,
+  // burning CPU/battery for nothing the user can see.
   function buildParticles() {
     var host = document.getElementById("searchParticles");
     if (!host || prefersReducedMotion) return;
@@ -176,6 +190,11 @@
     host.innerHTML = markup;
   }
 
+  function clearParticles() {
+    var host = document.getElementById("searchParticles");
+    if (host) host.innerHTML = "";
+  }
+
   function setClip(pct, ox, oy) {
     overlay.style.clipPath = "circle(" + pct + "% at " + ox + "px " + oy + "px)";
   }
@@ -186,6 +205,8 @@
     document.body.style.overflow = "hidden";
     regionTag.textContent = currentRegion() === "india" ? "🇮🇳 IN" : "🇺🇸 US";
     overlay.style.visibility = "visible";
+    input.setAttribute("aria-expanded", "true");
+    buildParticles();
 
     if (prefersReducedMotion) {
       setClip(150, ox, oy);
@@ -219,7 +240,15 @@
     overlay.classList.remove("is-open");
     document.body.style.overflow = "";
     input.value = "";
+    input.setAttribute("aria-expanded", "false");
+    input.removeAttribute("aria-activedescendant");
     resultsEl.innerHTML = "";
+    clearParticles();
+
+    // Return focus to whatever opened the search, instead of
+    // leaving it stranded on a now-hidden input — standard modal
+    // behavior, and needed for the Tab focus-trap below to make sense.
+    if (toggleBtn) toggleBtn.focus();
 
     if (typeof ox !== "number") {
       var rect = toggleBtn ? toggleBtn.getBoundingClientRect() : null;
@@ -239,28 +268,34 @@
     }, 460);
   }
 
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
   function renderState(msg) {
     keynavIndex = -1;
+    if (input) input.removeAttribute("aria-activedescendant");
     resultsEl.innerHTML = '<p class="search-state">' + msg + "</p>";
   }
 
-  // Idle state (no query yet) — quick category chips instead of a
-  // blank scroll area. Re-rendered on open and whenever the input
-  // is cleared back to empty.
-  function renderSuggestions() {
-    keynavIndex = -1;
+  function categoryChipsMarkup(label) {
     var links = CATEGORY_LINKS[currentRegion()] || CATEGORY_LINKS.us;
-    resultsEl.innerHTML =
+    return (
       '<div class="search-suggest">' +
-        '<p class="search-suggest-label">Popular categories</p>' +
+        '<p class="search-suggest-label">' + label + "</p>" +
         '<div class="search-suggest-chips">' +
           links.map(function (c) {
             var icon = CATEGORY_ICONS[c.slug] || "";
             return '<a href="' + c.href + '" class="search-suggest-chip">' + icon + "<span>" + c.label + "</span></a>";
           }).join("") +
         "</div>" +
-      "</div>";
+      "</div>"
+    );
+  }
 
+  function animateChipsIn() {
     var chips = resultsEl.querySelectorAll(".search-suggest-chip");
     chips.forEach(function (chip, i) {
       if (prefersReducedMotion) {
@@ -270,6 +305,15 @@
       chip.style.animationDelay = (i * 0.06).toFixed(2) + "s";
       requestAnimationFrame(function () { chip.classList.add("is-in"); });
     });
+  }
+
+  // Idle state (no query yet) — quick category chips instead of a
+  // blank scroll area. Re-rendered on open and whenever the input
+  // is cleared back to empty.
+  function renderSuggestions() {
+    resultsEl.innerHTML = categoryChipsMarkup("Popular categories");
+    animateChipsIn();
+    prepareNavItems();
   }
 
   // Same lazy-shimmer pattern used on the main product grids
@@ -288,10 +332,13 @@
     });
   }
 
-  function renderResults(data) {
-    keynavIndex = -1;
+  function renderResults(data, query) {
     if (!data.length) {
-      renderState("No finds match that — try another word.");
+      resultsEl.innerHTML =
+        '<p class="search-state">No finds match "' + escapeHtml(query) + '" — try another word.</p>' +
+        categoryChipsMarkup("Or browse a category");
+      animateChipsIn();
+      prepareNavItems();
       return;
     }
     resultsEl.innerHTML = data
@@ -313,6 +360,7 @@
       .join("");
 
     watchResultImages();
+    prepareNavItems();
 
     var rows = resultsEl.querySelectorAll(".search-result");
     rows.forEach(function (row, i) {
@@ -329,9 +377,24 @@
     });
   }
 
+  function renderError(query) {
+    keynavIndex = -1;
+    if (input) input.removeAttribute("aria-activedescendant");
+    resultsEl.innerHTML =
+      '<p class="search-state">Something went wrong — try again.</p>' +
+      '<div class="search-retry-wrap"><button type="button" class="search-retry-btn" id="searchRetryBtn">Retry</button></div>';
+    var btn = document.getElementById("searchRetryBtn");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        if (lastQuery) runSearch(lastQuery);
+      });
+    }
+  }
+
   function runSearch(query) {
     var region = currentRegion();
     var myToken = ++searchToken;
+    lastQuery = query;
     renderState("Searching…");
 
     ensureSupabaseLib(function () {
@@ -346,10 +409,10 @@
         .then(function (res) {
           if (myToken !== searchToken) return;
           if (res.error) {
-            renderState("Something went wrong — try again.");
+            renderError(query);
             return;
           }
-          renderResults(res.data || []);
+          renderResults(res.data || [], query);
         });
     });
   }
@@ -362,6 +425,7 @@
         renderSuggestions();
       } else {
         resultsEl.innerHTML = "";
+        prepareNavItems();
       }
       return;
     }
@@ -401,6 +465,10 @@
       if (!isOpen) return;
       if (e.key === "Escape") {
         closeSearch();
+        return;
+      }
+      if (e.key === "Tab") {
+        trapFocus(e);
         return;
       }
       if (e.key === "ArrowDown") {
@@ -446,9 +514,32 @@
     });
   }
 
+  // Keeps Tab / Shift+Tab cycling inside the overlay while it's
+  // open, instead of letting focus escape onto the page behind it —
+  // otherwise a keyboard user could Tab straight past the close
+  // button into invisible (clip-path-hidden) page content.
+  function trapFocus(e) {
+    if (!overlay) return;
+    var focusable = overlay.querySelectorAll(
+      'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable.length) return;
+    var list = Array.prototype.slice.call(focusable);
+    var first = list[0];
+    var last = list[list.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   function hardResetOverlay() {
     isOpen = false;
     document.body.style.overflow = "";
+    clearParticles();
     if (!overlay) return;
     overlay.classList.remove("is-open");
     overlay.style.transition = "none";
