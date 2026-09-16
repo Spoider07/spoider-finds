@@ -55,6 +55,40 @@
   var isOpen = false;
   var searchToken = 0;
   var debounceTimer = null;
+  var keynavIndex = -1;
+
+  function getNavItems() {
+    if (!resultsEl) return [];
+    return Array.prototype.slice.call(resultsEl.querySelectorAll(".search-result, .search-suggest-chip"));
+  }
+
+  function clearKeynav() {
+    var items = getNavItems();
+    items.forEach(function (el) { el.classList.remove("is-keynav"); });
+    keynavIndex = -1;
+  }
+
+  function setKeynav(items) {
+    items.forEach(function (el, i) {
+      el.classList.toggle("is-keynav", i === keynavIndex);
+    });
+    var active = items[keynavIndex];
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }
+
+  function moveKeynav(delta) {
+    var items = getNavItems();
+    if (!items.length) return;
+    keynavIndex = Math.max(0, Math.min(keynavIndex + delta, items.length - 1));
+    setKeynav(items);
+  }
+
+  function activateKeynav() {
+    var items = getNavItems();
+    if (keynavIndex >= 0 && items[keynavIndex]) {
+      items[keynavIndex].click();
+    }
+  }
 
   function currentRegion() {
     return window.location.pathname.indexOf("india") !== -1 ? "india" : "us";
@@ -181,6 +215,7 @@
   function closeSearch(ox, oy) {
     if (!isOpen) return;
     isOpen = false;
+    keynavIndex = -1;
     overlay.classList.remove("is-open");
     document.body.style.overflow = "";
     input.value = "";
@@ -205,6 +240,7 @@
   }
 
   function renderState(msg) {
+    keynavIndex = -1;
     resultsEl.innerHTML = '<p class="search-state">' + msg + "</p>";
   }
 
@@ -212,6 +248,7 @@
   // blank scroll area. Re-rendered on open and whenever the input
   // is cleared back to empty.
   function renderSuggestions() {
+    keynavIndex = -1;
     var links = CATEGORY_LINKS[currentRegion()] || CATEGORY_LINKS.us;
     resultsEl.innerHTML =
       '<div class="search-suggest">' +
@@ -252,6 +289,7 @@
   }
 
   function renderResults(data) {
+    keynavIndex = -1;
     if (!data.length) {
       renderState("No finds match that — try another word.");
       return;
@@ -360,7 +398,21 @@
     document.querySelectorAll(".search-toggle").forEach(bindMagnetic);
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && isOpen) closeSearch();
+      if (!isOpen) return;
+      if (e.key === "Escape") {
+        closeSearch();
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        moveKeynav(1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        moveKeynav(-1);
+      } else if (e.key === "Enter" && keynavIndex >= 0) {
+        e.preventDefault();
+        activateKeynav();
+      }
     });
 
     // Category chips and search results navigate away via a plain
@@ -380,6 +432,18 @@
       true
     );
     window.addEventListener("pagehide", hardResetOverlay);
+
+    document.addEventListener("pointermove", function (e) {
+      if (!isOpen || e.pointerType !== "mouse" || !resultsEl) return;
+      var item = e.target.closest(".search-result, .search-suggest-chip");
+      if (!item || !resultsEl.contains(item)) return;
+      var items = getNavItems();
+      var idx = items.indexOf(item);
+      if (idx !== -1 && idx !== keynavIndex) {
+        keynavIndex = idx;
+        setKeynav(items);
+      }
+    });
   }
 
   function hardResetOverlay() {
