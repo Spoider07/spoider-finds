@@ -23,6 +23,23 @@
     "amazon-finds": "Amazon Finds"
   };
 
+  // Category chip targets per region — India pages use the
+  // "india-" prefixed filenames already live on the site.
+  var CATEGORY_LINKS = {
+    us: [
+      { label: "Desk Setup", href: "desk-setup.html" },
+      { label: "Fashion Finds", href: "fashion-finds.html" },
+      { label: "Accessories", href: "accessories.html" },
+      { label: "Amazon Finds", href: "amazon-finds.html" }
+    ],
+    india: [
+      { label: "Desk Setup", href: "india-desk-setup.html" },
+      { label: "Fashion Finds", href: "india-fashion-finds.html" },
+      { label: "Accessories", href: "india-accessories.html" },
+      { label: "Amazon Finds", href: "india-amazon-finds.html" }
+    ]
+  };
+
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var supportsHoverFine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
@@ -121,6 +138,7 @@
     if (prefersReducedMotion) {
       setClip(150, ox, oy);
       overlay.classList.add("is-open");
+      renderSuggestions();
       setTimeout(function () { input.focus(); }, 50);
       return;
     }
@@ -132,6 +150,7 @@
 
     setTimeout(function () {
       overlay.classList.add("is-open");
+      renderSuggestions();
       input.focus();
     }, 320);
   }
@@ -164,6 +183,32 @@
 
   function renderState(msg) {
     resultsEl.innerHTML = '<p class="search-state">' + msg + "</p>";
+  }
+
+  // Idle state (no query yet) — quick category chips instead of a
+  // blank scroll area. Re-rendered on open and whenever the input
+  // is cleared back to empty.
+  function renderSuggestions() {
+    var links = CATEGORY_LINKS[currentRegion()] || CATEGORY_LINKS.us;
+    resultsEl.innerHTML =
+      '<div class="search-suggest">' +
+        '<p class="search-suggest-label">Popular categories</p>' +
+        '<div class="search-suggest-chips">' +
+          links.map(function (c) {
+            return '<a href="' + c.href + '" class="search-suggest-chip">' + c.label + "</a>";
+          }).join("") +
+        "</div>" +
+      "</div>";
+
+    var chips = resultsEl.querySelectorAll(".search-suggest-chip");
+    chips.forEach(function (chip, i) {
+      if (prefersReducedMotion) {
+        chip.classList.add("is-in");
+        return;
+      }
+      chip.style.animationDelay = (i * 0.06).toFixed(2) + "s";
+      requestAnimationFrame(function () { chip.classList.add("is-in"); });
+    });
   }
 
   // Same lazy-shimmer pattern used on the main product grids
@@ -251,7 +296,11 @@
     var q = e.target.value.trim();
     clearTimeout(debounceTimer);
     if (q.length < 2) {
-      resultsEl.innerHTML = "";
+      if (q.length === 0) {
+        renderSuggestions();
+      } else {
+        resultsEl.innerHTML = "";
+      }
       return;
     }
     debounceTimer = setTimeout(function () { runSearch(q); }, 300);
