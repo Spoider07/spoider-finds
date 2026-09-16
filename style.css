@@ -2051,6 +2051,10 @@ html[data-theme="light"] .spoider-score-trigger {
   display: block;
   position: relative;
   z-index: 2;
+  transition: transform 0.5s var(--ease);
+}
+.search-result:hover .search-result-image img {
+  transform: scale(1.08);
 }
 
 .search-result-body { flex: 1; min-width: 0; }
@@ -2075,6 +2079,21 @@ html[data-theme="light"] .spoider-score-trigger {
 .search-result:hover .search-result-title { color: var(--gold-bright); }
 .search-result-arrow { color: var(--gold); flex-shrink: 0; transition: transform 0.25s var(--ease); }
 .search-result:hover .search-result-arrow { transform: translateX(4px); }
+
+/* Keyboard navigation highlight (desktop: ↑ / ↓ to move, Enter to
+   open) — same visual language as :hover so arrow-key and mouse
+   navigation feel identical, just triggered a different way. */
+.search-result.is-keynav,
+.search-suggest-chip.is-keynav {
+  border-color: var(--gold);
+  background: var(--surface-hover);
+  box-shadow: 0 0 0 1px var(--gold-dim);
+}
+.search-result.is-keynav { padding-left: 8px; }
+.search-result.is-keynav .search-result-title { color: var(--gold-bright); }
+.search-result.is-keynav .search-result-arrow { transform: translateX(4px); }
+.search-suggest-chip.is-keynav { color: var(--gold-bright); transform: translateY(-3px); }
+.search-suggest-chip.is-keynav .search-suggest-chip-icon { color: var(--gold-bright); opacity: 1; }
 
 .search-state {
   text-align: center;
@@ -2167,4 +2186,94 @@ html[data-theme="light"] .search-suggest-chip {
   .search-bar::before { animation: none; opacity: 0; }
   .search-suggest-chip { opacity: 1 !important; transform: none !important; animation: none !important; }
   .search-particle { display: none; }
+}
+
+/* =========================================================
+   SEARCH — desktop refinements
+   Mobile version just stretched wasn't enough: bar/typography
+   scale up properly, results move into a two-column grid instead
+   of one long list (better use of the extra width), and the glow
+   backdrop spreads a bit wider to fill the taller viewport.
+   ========================================================= */
+@media (min-width: 960px) {
+  .search-overlay {
+    padding: 130px 40px 60px;
+  }
+  .search-glow {
+    width: min(1100px, 130%);
+    height: 65%;
+  }
+  .search-field-wrap {
+    max-width: 760px;
+  }
+  .search-bar {
+    gap: 16px;
+    padding: 20px 26px 20px 28px;
+  }
+  .search-bar-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .search-input {
+    font-size: 1.3rem;
+  }
+  .search-region-tag {
+    font-size: 0.68rem;
+    padding: 6px 13px;
+  }
+  .search-close {
+    top: 34px;
+    right: 40px;
+    width: 42px;
+    height: 42px;
+  }
+  .search-close svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .search-suggest {
+    max-width: 760px;
+    margin-top: 40px;
+  }
+  .search-suggest-chips {
+    gap: 12px;
+  }
+  .search-suggest-chip {
+    padding: 11px 22px 11px 16px;
+    font-size: 0.9rem;
+  }
+  .search-suggest-chip-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Two-column result grid — each row keeps its own bottom border,
+     so it still reads cleanly as a list even though it's now a
+     grid underneath. */
+  .search-results {
+    max-width: 760px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px 32px;
+    margin-top: 34px;
+  }
+  .search-result {
+    padding: 18px 6px;
+    gap: 16px;
+  }
+  .search-result-image {
+    width: 62px;
+    height: 62px;
+    border-radius: 12px;
+  }
+  .search-result-title {
+    font-size: 1.05rem;
+  }
+  .search-state {
+    grid-column: 1 / -1;
+  }
+  .search-suggest {
+    grid-column: 1 / -1;
+  }
 }
