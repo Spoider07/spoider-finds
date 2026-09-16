@@ -1927,7 +1927,11 @@ html[data-theme="light"] .spoider-score-trigger {
 }
 /* Idle "breathing" halo so the bar doesn't sit dead-static while
    waiting for input — pauses and fades out once the user actually
-   focuses the field, handing over to the focus glow below. */
+   focuses the field, handing over to the focus glow below. Also
+   paused whenever the overlay itself isn't open at all — this rule
+   used to run non-stop in the background for the entire session
+   once the overlay was first built, burning CPU/battery for an
+   effect nobody could see. */
 .search-bar::before {
   content: "";
   position: absolute;
@@ -1937,7 +1941,11 @@ html[data-theme="light"] .spoider-score-trigger {
   background: radial-gradient(circle at 50% 50%, rgba(201, 168, 118, 0.28), transparent 72%);
   opacity: 0.18;
   animation: searchBarBreathe 4.5s ease-in-out infinite;
+  animation-play-state: paused;
   pointer-events: none;
+}
+.search-overlay.is-open .search-bar::before {
+  animation-play-state: running;
 }
 .search-bar:focus-within::before {
   animation-play-state: paused;
@@ -2102,6 +2110,33 @@ html[data-theme="light"] .spoider-score-trigger {
   margin-top: 30px;
   position: relative;
   z-index: 2;
+}
+
+.search-retry-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+.search-retry-btn {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
+  background: var(--gold-dim);
+  border: 1px solid rgba(201, 168, 118, 0.35);
+  padding: 9px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.2s var(--ease);
+}
+.search-retry-btn:hover {
+  background: rgba(201, 168, 118, 0.22);
+  border-color: var(--gold);
+}
+.search-retry-btn:active {
+  transform: scale(0.94);
 }
 
 /* Quick category suggestions — fills the idle empty state (before
