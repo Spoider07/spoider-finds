@@ -1860,19 +1860,20 @@ html[data-theme="light"] .spoider-score-trigger {
 .search-particle {
   position: absolute;
   bottom: -24px;
-  width: 3px;
-  height: 3px;
   border-radius: 50%;
   background: var(--gold-bright);
-  box-shadow: 0 0 7px 1.5px rgba(232, 199, 102, 0.55);
   opacity: 0;
   animation: searchParticleFloat linear infinite;
+  will-change: transform, opacity;
 }
 @keyframes searchParticleFloat {
-  0% { transform: translateY(0) scale(0.5); opacity: 0; }
-  12% { opacity: 0.85; }
-  85% { opacity: 0.4; }
-  100% { transform: translateY(-72vh) scale(1); opacity: 0; }
+  0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  8%   { opacity: 0.9; }
+  28%  { transform: translate(calc(var(--drift, 20px) * 1), -24vh) scale(1); opacity: 0.55; }
+  50%  { transform: translate(calc(var(--drift, 20px) * -1), -42vh) scale(0.85); opacity: 0.85; }
+  72%  { transform: translate(calc(var(--drift, 20px) * 1), -58vh) scale(1); opacity: 0.4; }
+  90%  { opacity: 0.6; }
+  100% { transform: translate(0, -74vh) scale(0.5); opacity: 0; }
 }
 
 .search-close {
@@ -2110,17 +2111,33 @@ html[data-theme="light"] .spoider-score-trigger {
   justify-content: center;
 }
 .search-suggest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--border);
-  padding: 9px 18px;
+  padding: 9px 18px 9px 14px;
   border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
   transform: translateY(10px);
-  transition: border-color 0.25s var(--ease), color 0.25s var(--ease), background 0.25s var(--ease), transform 0.25s var(--ease);
+  transition: border-color 0.3s var(--ease), color 0.3s var(--ease), background 0.3s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+html[data-theme="light"] .search-suggest-chip {
+  background: rgba(0, 0, 0, 0.012);
+}
+.search-suggest-chip-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--gold);
+  opacity: 0.8;
+  transition: color 0.3s var(--ease), transform 0.3s var(--ease), opacity 0.3s var(--ease);
 }
 .search-suggest-chip.is-in {
   animation: searchChipIn 0.5s var(--ease) forwards;
@@ -2129,12 +2146,19 @@ html[data-theme="light"] .spoider-score-trigger {
   to { opacity: 1; transform: translateY(0); }
 }
 .search-suggest-chip:hover {
-  border-color: var(--gold);
+  border-color: var(--gold-dim);
   color: var(--gold-bright);
   background: var(--surface-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px -18px var(--shadow-soft), 0 0 0 1px var(--gold-dim);
+}
+.search-suggest-chip:hover .search-suggest-chip-icon {
+  color: var(--gold-bright);
+  opacity: 1;
+  transform: scale(1.12);
 }
 .search-suggest-chip:active {
-  transform: translateY(0) scale(0.96);
+  transform: translateY(-1px) scale(0.96);
 }
 
 @media (prefers-reduced-motion: reduce) {
