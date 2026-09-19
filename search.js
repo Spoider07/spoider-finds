@@ -57,6 +57,9 @@
   var debounceTimer = null;
   var keynavIndex = -1;
   var lastQuery = "";
+  var lastResultsData = [];
+  var quickViewOpen = false;
+  var productCache = {};
 
   function getNavItems() {
     if (!resultsEl) return [];
@@ -237,6 +240,7 @@
     if (!isOpen) return;
     isOpen = false;
     keynavIndex = -1;
+    quickViewOpen = false;
     overlay.classList.remove("is-open");
     document.body.style.overflow = "";
     input.value = "";
@@ -333,6 +337,8 @@
   }
 
   function renderResults(data, query) {
+    lastResultsData = data;
+    lastQuery = query;
     if (!data.length) {
       resultsEl.innerHTML =
         '<p class="search-state">No finds match "' + escapeHtml(query) + '" — try another word.</p>' +
@@ -341,11 +347,13 @@
       prepareNavItems();
       return;
     }
+    data.forEach(function (p) { productCache[p.id] = p; });
+
     resultsEl.innerHTML = data
       .map(function (p) {
         var tag = CATEGORY_LABELS[p.category] || p.category;
         return (
-          '<a href="' + p.affiliate_link + '" class="search-result" target="_blank" rel="sponsored noopener nofollow">' +
+          '<a href="' + p.affiliate_link + '" class="search-result" data-product-id="' + p.id + '" target="_blank" rel="sponsored noopener nofollow">' +
             '<span class="search-result-image">' +
               '<img src="' + (p.image_url || "") + '" alt="' + p.title + '" loading="lazy">' +
             "</span>" +
@@ -377,6 +385,152 @@
     });
   }
 
+  // =========================================================
+  // Quick View — search-only detail panel. Tapping a result no
+  // longer sends the person straight to Amazon; it replaces the
+  // results list with a detail view (image, description, Spoider
+  // Score, related picks) with an explicit "View on Amazon" CTA.
+  // Category pages / Featured elsewhere on the site still go
+  // straight to Amazon on tap — this pattern is search-only, by
+  // design, since search is where someone is still deciding.
+  // =========================================================
+  function scoreBarRow(label, val) {
+    var v = Number(val) || 0;
+    var pct = Math.max(0, Math.min(10, v)) * 10;
+    return (
+      '<div class="spoider-bar-row" style="--fill:' + pct + '%">' +
+        '<span class="spoider-bar-label">' + label + "</span>" +
+        '<span class="spoider-bar-track"><span class="spoider-bar-fill"></span></span>' +
+        '<span class="spoider-bar-val">' + v.toFixed(1) + "</span>" +
+      "</div>"
+    );
+  }
+
+  function buildScoreBlock(p) {
+    if (p.spoider_score === null || p.spoider_score === undefined) {
+      return (
+        '<div class="qv-score qv-score--empty">' +
+          '<p class="qv-score-empty-label">Not yet scored</p>' +
+          '<p class="qv-score-empty-note">This pick hasn\'t been rated yet — check back soon.</p>' +
+        "</div>"
+      );
+    }
+    var note = p.editor_note ? escapeHtml(p.editor_note) : "";
+    return (
+      '<div class="qv-score">' +
+        '<div class="qv-score-head">' +
+          '<span class="qv-score-eyebrow">SPOIDER SCORE</span>' +
+          '<span class="qv-score-num">' + Number(p.spoider_score).toFixed(1) + "</span>" +
+        "</div>" +
+        (note ? '<p class="qv-score-note">' + note + "</p>" : "") +
+        '<div class="spoider-bars">' +
+          scoreBarRow("Design", p.score_design) +
+          scoreBarRow("Value", p.score_value) +
+          scoreBarRow("Usefulness", p.score_usefulness) +
+          scoreBarRow("Aesthetic", p.score_aesthetic) +
+        "</div>" +
+      "</div>"
+    );
+  }
+
+  function buildQuickViewMarkup(p) {
+    var tag = CATEGORY_LABELS[p.category] || p.category;
+    var desc = p.description ? escapeHtml(p.description) : "";
+    return (
+      '<div class="search-quickview" id="searchQuickview">' +
+        '<button type="button" class="qv-back" id="qvBack">' +
+          '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>' +
+          "Back to results" +
+        "</button>" +
+        '<div class="qv-body">' +
+          '<div class="qv-image"><img src="' + (p.image_url || "") + '" alt="' + escapeHtml(p.title) + '" loading="lazy"></div>' +
+          '<div class="qv-info">' +
+            '<span class="qv-tag">' + tag + "</span>" +
+            '<h3 class="qv-title">' + escapeHtml(p.title) + "</h3>" +
+            (desc ? '<p class="qv-desc">' + desc + "</p>" : "") +
+            buildScoreBlock(p) +
+            '<a href="' + p.affiliate_link + '" class="btn btn-primary qv-amazon-btn" target="_blank" rel="sponsored noopener nofollow">View on Amazon →</a>' +
+          "</div>" +
+        "</div>" +
+        '<div class="qv-related" id="qvRelated"></div>' +
+      "</div>"
+    );
+  }
+
+  function openQuickView(p) {
+    if (!p) return;
+    quickViewOpen = true;
+    keynavIndex = -1;
+    if (input) input.removeAttribute("aria-activedescendant");
+    resultsEl.innerHTML = buildQuickViewMarkup(p);
+
+    var wrap = document.getElementById("searchQuickview");
+    if (prefersReducedMotion) {
+      if (wrap) wrap.classList.add("is-in");
+    } else {
+      requestAnimationFrame(function () { if (wrap) wrap.classList.add("is-in"); });
+    }
+
+    var backBtn = document.getElementById("qvBack");
+    if (backBtn) backBtn.addEventListener("click", closeQuickViewToList);
+
+    var img = wrap ? wrap.querySelector(".qv-image") : null;
+    if (img) {
+      var imgEl = img.querySelector("img");
+      if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
+        img.classList.add("img-loaded");
+      } else if (imgEl) {
+        imgEl.addEventListener("load", function () { img.classList.add("img-loaded"); });
+        imgEl.addEventListener("error", function () { img.classList.add("img-loaded"); });
+      }
+    }
+
+    loadRelated(p);
+  }
+
+  function closeQuickViewToList() {
+    quickViewOpen = false;
+    renderResults(lastResultsData, lastQuery);
+  }
+
+  function loadRelated(p) {
+    var host = document.getElementById("qvRelated");
+    if (!host) return;
+    ensureSupabaseLib(function () {
+      if (!quickViewOpen) return; // user already navigated away
+      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      sb.from("products")
+        .select("*")
+        .eq("region", p.region)
+        .eq("category", p.category)
+        .eq("active", true)
+        .neq("id", p.id)
+        .order("created_at", { ascending: false })
+        .limit(4)
+        .then(function (res) {
+          if (!quickViewOpen) return; // Quick View was closed while this was in flight
+          var items = res.error ? [] : (res.data || []);
+          if (!items.length) {
+            host.innerHTML = "";
+            return;
+          }
+          items.forEach(function (rp) { productCache[rp.id] = rp; });
+          host.innerHTML =
+            '<p class="qv-related-label">You might also like</p>' +
+            '<div class="qv-related-grid">' +
+              items.map(function (rp) {
+                return (
+                  '<button type="button" class="qv-related-card" data-product-id="' + rp.id + '">' +
+                    '<span class="qv-related-image"><img src="' + (rp.image_url || "") + '" alt="' + escapeHtml(rp.title) + '" loading="lazy"></span>' +
+                    '<span class="qv-related-title">' + escapeHtml(rp.title) + "</span>" +
+                  "</button>"
+                );
+              }).join("") +
+            "</div>";
+        });
+    });
+  }
+
   function renderError(query) {
     keynavIndex = -1;
     if (input) input.removeAttribute("aria-activedescendant");
@@ -401,7 +555,7 @@
       if (myToken !== searchToken) return;
       var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       sb.from("products")
-        .select("id, title, description, image_url, affiliate_link, category, region")
+        .select("id, title, description, image_url, affiliate_link, category, region, spoider_score, editor_note, score_design, score_value, score_usefulness, score_aesthetic")
         .eq("region", region)
         .eq("active", true)
         .or("title.ilike.%" + query + "%,description.ilike.%" + query + "%")
@@ -464,7 +618,11 @@
     document.addEventListener("keydown", function (e) {
       if (!isOpen) return;
       if (e.key === "Escape") {
-        closeSearch();
+        if (quickViewOpen) {
+          closeQuickViewToList();
+        } else {
+          closeSearch();
+        }
         return;
       }
       if (e.key === "Tab") {
@@ -483,17 +641,36 @@
       }
     });
 
-    // Category chips and search results navigate away via a plain
-    // <a href>, without ever closing the overlay first — so if the
-    // browser bfcaches this page (or the back button restores it),
-    // the snapshot would otherwise be frozen mid-open (body scroll
+    // A result tap opens Quick View instead of leaving the site —
+    // only a genuine "open in new tab" gesture (middle-click, or a
+    // modifier held down) is left to the browser's default handling
+    // of the real affiliate href underneath.
+    document.addEventListener("click", function (e) {
+      var result = e.target.closest(".search-result");
+      if (result && resultsEl && resultsEl.contains(result)) {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        openQuickView(productCache[result.dataset.productId]);
+        return;
+      }
+      var relatedCard = e.target.closest(".qv-related-card");
+      if (relatedCard && resultsEl && resultsEl.contains(relatedCard)) {
+        openQuickView(productCache[relatedCard.dataset.productId]);
+      }
+    });
+
+    // Category chips and the Quick View's "View on Amazon" button are
+    // the only things left that actually navigate away from the page
+    // without the overlay being closed first — so if the browser
+    // bfcaches this page (or the back button restores it), the
+    // snapshot would otherwise be frozen mid-open (body scroll
     // locked, overlay expanded), which is what looked "broken" on
     // return. Force an instant, unanimated close the moment either
     // is tapped, and again on pagehide as a second safety net.
     document.addEventListener(
       "click",
       function (e) {
-        if (e.target.closest(".search-result, .search-suggest-chip")) {
+        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn")) {
           hardResetOverlay();
         }
       },
@@ -538,6 +715,7 @@
 
   function hardResetOverlay() {
     isOpen = false;
+    quickViewOpen = false;
     document.body.style.overflow = "";
     clearParticles();
     if (!overlay) return;
