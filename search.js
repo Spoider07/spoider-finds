@@ -442,16 +442,21 @@
           '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>' +
           "Back to results" +
         "</button>" +
-        '<div class="qv-body">' +
-          '<div class="qv-image"><img src="' + (p.image_url || "") + '" alt="' + escapeHtml(p.title) + '" loading="lazy"></div>' +
+        '<a href="' + p.affiliate_link + '" class="qv-body" target="_blank" rel="sponsored noopener nofollow" aria-label="' + escapeHtml(p.title) + ' — view on Amazon">' +
+          '<div class="qv-image">' +
+            '<img src="' + (p.image_url || "") + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
+            '<span class="qv-image-hint" aria-hidden="true">' +
+              '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg>' +
+            "</span>" +
+          "</div>" +
           '<div class="qv-info">' +
             '<span class="qv-tag">' + tag + "</span>" +
             '<h3 class="qv-title">' + escapeHtml(p.title) + "</h3>" +
             (desc ? '<p class="qv-desc">' + desc + "</p>" : "") +
             buildScoreBlock(p) +
-            '<a href="' + p.affiliate_link + '" class="btn btn-primary qv-amazon-btn" target="_blank" rel="sponsored noopener nofollow">View on Amazon →</a>' +
           "</div>" +
-        "</div>" +
+        "</a>" +
+        '<a href="' + p.affiliate_link + '" class="btn btn-primary qv-amazon-btn" target="_blank" rel="sponsored noopener nofollow">View on Amazon →</a>' +
         '<div class="qv-related" id="qvRelated"></div>' +
       "</div>"
     );
@@ -670,7 +675,7 @@
     document.addEventListener(
       "click",
       function (e) {
-        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn")) {
+        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn, .qv-body")) {
           hardResetOverlay();
         }
       },
