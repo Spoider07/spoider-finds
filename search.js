@@ -306,7 +306,7 @@
         chip.classList.add("is-in");
         return;
       }
-      chip.style.animationDelay = (i * 0.06).toFixed(2) + "s";
+      chip.style.transitionDelay = (i * 0.06).toFixed(2) + "s";
       requestAnimationFrame(function () { chip.classList.add("is-in"); });
     });
   }
@@ -409,7 +409,7 @@
   function buildScoreBlock(p) {
     if (p.spoider_score === null || p.spoider_score === undefined) {
       return (
-        '<div class="qv-score qv-score--empty">' +
+        '<div class="qv-score qv-score--empty qv-cascade">' +
           '<p class="qv-score-empty-label">Not yet scored</p>' +
           '<p class="qv-score-empty-note">This pick hasn\'t been rated yet — check back soon.</p>' +
         "</div>"
@@ -417,7 +417,7 @@
     }
     var note = p.editor_note ? escapeHtml(p.editor_note) : "";
     return (
-      '<div class="qv-score">' +
+      '<div class="qv-score qv-cascade">' +
         '<div class="qv-score-head">' +
           '<span class="qv-score-eyebrow">SPOIDER SCORE</span>' +
           '<span class="qv-score-num">' + Number(p.spoider_score).toFixed(1) + "</span>" +
@@ -438,25 +438,25 @@
     var desc = p.description ? escapeHtml(p.description) : "";
     return (
       '<div class="search-quickview" id="searchQuickview">' +
-        '<button type="button" class="qv-back" id="qvBack">' +
+        '<button type="button" class="qv-back qv-cascade" id="qvBack">' +
           '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>' +
           "Back to results" +
         "</button>" +
         '<a href="' + p.affiliate_link + '" class="qv-body" target="_blank" rel="sponsored noopener nofollow" aria-label="' + escapeHtml(p.title) + ' — view on Amazon">' +
-          '<div class="qv-image">' +
+          '<div class="qv-image qv-cascade">' +
             '<img src="' + (p.image_url || "") + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
             '<span class="qv-image-hint" aria-hidden="true">' +
               '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M8 7h9v9"/></svg>' +
             "</span>" +
           "</div>" +
           '<div class="qv-info">' +
-            '<span class="qv-tag">' + tag + "</span>" +
-            '<h3 class="qv-title">' + escapeHtml(p.title) + "</h3>" +
-            (desc ? '<p class="qv-desc">' + desc + "</p>" : "") +
+            '<span class="qv-tag qv-cascade">' + tag + "</span>" +
+            '<h3 class="qv-title qv-cascade">' + escapeHtml(p.title) + "</h3>" +
+            (desc ? '<p class="qv-desc qv-cascade">' + desc + "</p>" : "") +
             buildScoreBlock(p) +
           "</div>" +
         "</a>" +
-        '<a href="' + p.affiliate_link + '" class="btn btn-primary qv-amazon-btn" target="_blank" rel="sponsored noopener nofollow">View on Amazon →</a>' +
+        '<a href="' + p.affiliate_link + '" class="btn btn-primary qv-amazon-btn qv-cascade" target="_blank" rel="sponsored noopener nofollow">View on Amazon →</a>' +
         '<div class="qv-related" id="qvRelated"></div>' +
       "</div>"
     );
@@ -470,11 +470,6 @@
     resultsEl.innerHTML = buildQuickViewMarkup(p);
 
     var wrap = document.getElementById("searchQuickview");
-    if (prefersReducedMotion) {
-      if (wrap) wrap.classList.add("is-in");
-    } else {
-      requestAnimationFrame(function () { if (wrap) wrap.classList.add("is-in"); });
-    }
 
     var backBtn = document.getElementById("qvBack");
     if (backBtn) backBtn.addEventListener("click", closeQuickViewToList);
@@ -521,7 +516,7 @@
           }
           items.forEach(function (rp) { productCache[rp.id] = rp; });
           host.innerHTML =
-            '<p class="qv-related-label">You might also like</p>' +
+            '<p class="qv-related-label qv-cascade">You might also like</p>' +
             '<div class="qv-related-grid">' +
               items.map(function (rp) {
                 return (
@@ -532,6 +527,16 @@
                 );
               }).join("") +
             "</div>";
+
+          var cards = host.querySelectorAll(".qv-related-card");
+          cards.forEach(function (card, i) {
+            if (prefersReducedMotion) {
+              card.classList.add("is-in");
+              return;
+            }
+            card.style.transitionDelay = (i * 0.07).toFixed(2) + "s";
+            requestAnimationFrame(function () { card.classList.add("is-in"); });
+          });
         });
     });
   }
