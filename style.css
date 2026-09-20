@@ -2127,14 +2127,29 @@ html[data-theme="light"] .spoider-score-trigger {
   max-width: 640px;
   margin-top: 22px;
   text-align: left;
+}
+
+/* Cascading entrance — each piece (back link, image, tag, title,
+   description, score, CTA) reveals on its own beat instead of the
+   whole panel fading in as one flat block. Transform/opacity/filter
+   only (no layout-triggering properties), so it stays smooth even
+   with several pieces animating in the same ~1s window. */
+.qv-cascade {
   opacity: 0;
   transform: translateY(14px);
-  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  filter: blur(4px);
+  animation: qvCascadeIn 0.55s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
-.search-quickview.is-in {
-  opacity: 1;
-  transform: translateY(0);
+@keyframes qvCascadeIn {
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
+.qv-back.qv-cascade   { animation-delay: 0s; }
+.qv-image.qv-cascade  { animation-delay: 0.05s; }
+.qv-tag.qv-cascade    { animation-delay: 0.16s; }
+.qv-title.qv-cascade  { animation-delay: 0.21s; }
+.qv-desc.qv-cascade   { animation-delay: 0.28s; }
+.qv-score.qv-cascade  { animation-delay: 0.36s; }
+.qv-amazon-btn.qv-cascade { animation-delay: 0.46s; }
 
 .qv-back {
   display: inline-flex;
@@ -2359,7 +2374,15 @@ html[data-theme="light"] .qv-image-hint {
   padding: 0;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  opacity: 0;
+  transform: scale(0.85) translateY(12px) rotate(-2deg);
+  filter: blur(4px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+.qv-related-card.is-in {
+  opacity: 1;
+  transform: scale(1) translateY(0) rotate(0deg);
+  filter: blur(0);
 }
 .qv-related-card:hover {
   border-color: var(--gold-dim);
@@ -2396,8 +2419,9 @@ html[data-theme="light"] .qv-image-hint {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .search-quickview { opacity: 1; transform: none; transition: none; }
+  .qv-cascade { opacity: 1 !important; transform: none !important; filter: none !important; animation: none !important; }
   .qv-image::before { animation: none; opacity: 0; }
+  .qv-related-card { opacity: 1 !important; transform: none !important; filter: none !important; animation: none !important; }
 }
 
 .search-retry-wrap {
@@ -2468,7 +2492,7 @@ html[data-theme="light"] .qv-image-hint {
   -webkit-backdrop-filter: blur(8px);
   opacity: 0;
   transform: translateY(10px);
-  transition: border-color 0.3s var(--ease), color 0.3s var(--ease), background 0.3s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s var(--ease), border-color 0.3s var(--ease), color 0.3s var(--ease), background 0.3s var(--ease), box-shadow 0.3s var(--ease);
 }
 html[data-theme="light"] .search-suggest-chip {
   background: rgba(0, 0, 0, 0.012);
@@ -2482,10 +2506,8 @@ html[data-theme="light"] .search-suggest-chip {
   transition: color 0.3s var(--ease), transform 0.3s var(--ease), opacity 0.3s var(--ease);
 }
 .search-suggest-chip.is-in {
-  animation: searchChipIn 0.5s var(--ease) forwards;
-}
-@keyframes searchChipIn {
-  to { opacity: 1; transform: translateY(0); }
+  opacity: 1;
+  transform: translateY(0);
 }
 .search-suggest-chip:hover {
   border-color: var(--gold-dim);
