@@ -1544,17 +1544,34 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
     height: 248px;
   }
 
-  .hero--home .hero-mark-inner::after {
-    content: '';
-    position: absolute;
-    inset: -30%;
-    border-radius: 50%;
-    border: 1px solid rgba(201, 168, 118, 0.16);
-    pointer-events: none;
-    animation: heroMarkRingRotate 70s linear infinite;
+  /* Desktop mark glow.
+     The mark is ~3x bigger here than on mobile (208px vs 68px), but the
+     halo / drop-shadow values in :root were tuned for 68px, so the glow
+     read as weak at this size. Fix: rescale them for the big mark.
+     Most of the extra glow comes from the halo (only opacity/transform
+     animate = cheap, GPU-friendly); the animated drop-shadow radii are
+     raised only moderately, because animating a huge blur filter on a
+     large element is what makes a page feel laggy.
+     Tune: --mark-halo-a alpha = overall glow strength. */
+  .hero--home .hero-mark-inner {
+    --mark-halo-a: rgba(220, 185, 120, 0.5);
+    --mark-halo-b: rgba(180, 140, 70, 0.18);
+    --mark-glow-min: drop-shadow(0 0 8px rgba(232, 199, 102, 0.26)) drop-shadow(0 0 16px rgba(180, 140, 70, 0.12));
+    --mark-glow-max: drop-shadow(0 0 16px rgba(232, 199, 102, 0.42)) drop-shadow(0 0 8px rgba(255, 238, 190, 0.22));
+    --mark-flash-min: drop-shadow(0 0 10px rgba(232, 199, 102, 0.3)) drop-shadow(0 0 18px rgba(180, 140, 70, 0.16));
+    --mark-flash-max: drop-shadow(0 0 32px rgba(255, 238, 190, 0.9)) drop-shadow(0 0 16px rgba(232, 199, 102, 0.6));
   }
-  @keyframes heroMarkRingRotate {
-    to { transform: rotate(360deg); }
+  html[data-theme="light"] .hero--home .hero-mark-inner {
+    --mark-halo-a: rgba(184, 149, 85, 0.5);
+    --mark-halo-b: rgba(140, 108, 55, 0.2);
+    --mark-glow-min: var(--mark-outline) drop-shadow(0 0 10px rgba(184, 149, 85, 0.34));
+    --mark-glow-max: var(--mark-outline) drop-shadow(0 0 20px rgba(184, 149, 85, 0.55));
+    --mark-flash-min: var(--mark-outline) drop-shadow(0 0 12px rgba(184, 149, 85, 0.42));
+    --mark-flash-max: var(--mark-outline) drop-shadow(0 0 34px rgba(150, 112, 55, 0.8));
+  }
+  .hero--home .hero-mark-halo {
+    inset: -40%;
+    filter: blur(30px);
   }
 
   .hero--home .hero-text-glow {
