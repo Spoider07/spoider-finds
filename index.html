@@ -1615,53 +1615,33 @@
   </main>
 
   <!-- ================= FOOTER (persistent — outside #page-wrap, never swapped) ================= -->
-  <footer class="footer" id="footerWeb">
-    <div class="footer-web-stage" id="footerWebStage">
-      <div class="footer-web-particles" id="footerWebParticles" aria-hidden="true"></div>
-      <svg class="footer-web-svg" viewBox="0 0 320 170" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-        <path class="footer-thread" pathLength="1" d="M160,8 Q108,90 26,165"/>
-        <path class="footer-thread" pathLength="1" d="M160,8 Q124,90 68,165"/>
-        <path class="footer-thread" pathLength="1" d="M160,8 Q140,90 110,165"/>
-        <path class="footer-thread" pathLength="1" d="M160,8 Q160,90 160,165"/>
-        <path class="footer-thread" pathLength="1" d="M160,8 Q180,90 210,165"/>
-        <path class="footer-thread" pathLength="1" d="M160,8 Q196,90 252,165"/>
-        <path class="footer-thread" pathLength="1" d="M160,8 Q212,90 294,165"/>
-        <path class="footer-ring" pathLength="1" d="M99.7,80 C118,86 137,74 160,82 C183,90 202,74 220,80"/>
-        <path class="footer-ring" pathLength="1" d="M52.8,133.6 C86,140 120,126 160,134 C200,142 234,126 267,133"/>
-        <circle class="footer-node" cx="52.8" cy="133.6" r="2.2"/>
-        <circle class="footer-node" cx="86.4" cy="133.6" r="2.2"/>
-        <circle class="footer-node" cx="120" cy="133.6" r="2.2"/>
-        <circle class="footer-node" cx="160" cy="134" r="2.4"/>
-        <circle class="footer-node" cx="200" cy="133.6" r="2.2"/>
-        <circle class="footer-node" cx="233.6" cy="133.6" r="2.2"/>
-        <circle class="footer-node" cx="267.2" cy="133" r="2.2"/>
-      </svg>
-      <img src="assets/images/spoider-logo-vector.svg" alt="" class="footer-web-mark" aria-hidden="true">
+  <footer class="footer footer--cinematic" id="footerWeb">
+    <div class="footer-glow" aria-hidden="true"></div>
+    <div class="footer-bg-text" aria-hidden="true">SPOIDER</div>
+
+    <div class="footer-content">
+      <p class="eyebrow center reveal">A THREAD OF GOOD TASTE</p>
+      <h2 class="footer-heading">Every find, one thread — hand-picked, never mass-produced.</h2>
+      <div class="footer-pills reveal" style="--reveal-delay:0.1s;">
+        <a href="about.html" class="footer-pill">About</a>
+        <a href="contact.html" class="footer-pill">Contact</a>
+        <a href="privacy.html" class="footer-pill">Privacy Policy</a>
+        <a href="affiliate-disclosure.html" class="footer-pill">Affiliate Disclosure</a>
+        <a href="india.html" class="footer-pill">🇮🇳 India Edition</a>
+      </div>
     </div>
 
-    <div class="footer-inner">
-      <div class="footer-brand reveal">
-        <a href="index.html" class="logo"><img src="assets/images/spoider-logo-vector.svg" alt="Spoider Finds" class="footer-logo-img">Spoider<span class="logo-accent">Finds</span></a>
-        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
+    <div class="footer-bottom-bar reveal" style="--reveal-delay:0.2s;">
+      <div class="footer-legal">
+        <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+        <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
       </div>
-      <div class="footer-links">
-        <div class="footer-col reveal" style="--reveal-delay:0.08s;">
-          <h4>Site</h4>
-          <a href="about.html">About</a>
-          <a href="contact.html">Contact</a>
-        </div>
-        <div class="footer-col reveal" style="--reveal-delay:0.16s;">
-          <h4>Legal</h4>
-          <a href="privacy.html">Privacy Policy</a>
-          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
-        </div>
-      </div>
+      <button class="footer-top-btn" id="footerTopBtn" type="button" aria-label="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </button>
     </div>
-    <div class="footer-bottom reveal" style="--reveal-delay:0.22s;">
-      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
-      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
-    </div>
-    <p class="footer-signature reveal" style="--reveal-delay:0.28s;">Founder <span class="gold-text">~</span> Spoider</p>
   </footer>
 
   <script src="script.js"></script>
