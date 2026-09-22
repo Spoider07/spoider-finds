@@ -111,7 +111,7 @@ html[data-theme="light"] {
 }
 .reveal.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
@@ -125,7 +125,7 @@ html[data-theme="light"] {
 }
 .snap-reveal.in-view {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
   color: inherit;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -149,11 +149,10 @@ html[data-theme="light"] {
     transform 1.05s cubic-bezier(0.19, 1, 0.22, 1),
     filter 0.8s cubic-bezier(0.19, 1, 0.22, 1),
     opacity 0.7s cubic-bezier(0.19, 1, 0.22, 1);
-  will-change: transform, filter, opacity;
 }
 .split-reveal.is-visible .word-inner {
-  transform: translateY(0) rotate(0deg);
-  filter: blur(0);
+  transform: none;
+  filter: none;
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -194,8 +193,8 @@ h3.split-reveal .word-inner {
 .hero .split-reveal.is-visible .word-inner,
 .eyebrow.split-reveal.is-visible .word-inner,
 h3.split-reveal.is-visible .word-inner {
-  transform: translateY(0) rotate(0deg);
-  filter: blur(0);
+  transform: none;
+  filter: none;
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -259,8 +258,11 @@ body {
   font-family: var(--font-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
   transition: background-color 0.4s var(--ease), color 0.4s var(--ease);
+}
+@supports not (overflow: clip) {
+  body { overflow-x: hidden; }
 }
 
 a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
@@ -311,7 +313,6 @@ img { max-width: 100%; display: block; }
   stroke: var(--gold);
   stroke-width: 1;
   stroke-dasharray: 6 3000;
-  transition: stroke-dasharray 0.1s linear;
 }
 
 /* Flank threads — same visual language as the center .thread, but
@@ -467,18 +468,16 @@ img { max-width: 100%; display: block; }
   top: 0;
   z-index: 100;
   background: rgba(10, 10, 11, 0.72);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
-  transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
+  transition: background 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease);
 }
 html[data-theme="light"] .nav {
   background: rgba(247, 245, 240, 0.72);
 }
 .nav.scrolled {
   background: rgba(8, 8, 9, 0.88);
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
   box-shadow: 0 12px 32px -16px var(--shadow-soft);
 }
 html[data-theme="light"] .nav.scrolled {
@@ -788,7 +787,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 30px 22px;
-  backdrop-filter: blur(10px);
   overflow: hidden;
   transition: transform 0.3s var(--ease), border-color 0.3s var(--ease), background 0.3s var(--ease);
 }
@@ -1261,7 +1259,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 48px 30px;
-  backdrop-filter: blur(10px);
 }
 .founder-note {
   color: var(--text-secondary);
@@ -1301,7 +1298,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   border: 1px solid var(--gold-dim);
   border-radius: var(--radius-lg);
   padding: 60px 30px;
-  backdrop-filter: blur(10px);
 }
 .cta-inner h2 {
   font-family: var(--font-display);
@@ -1601,7 +1597,7 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   display: inline-flex;
   align-items: baseline;
   gap: 4px;
-  background: rgba(10, 10, 11, 0.82);
+  background: rgba(10, 10, 11, 0.9);
   border: 1px solid var(--gold-dim);
   border-radius: 999px;
   padding: 4px 10px;
@@ -1609,8 +1605,6 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   font-size: 0.62rem;
   letter-spacing: 0.04em;
   color: var(--gold-bright);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   pointer-events: none;
 }
 .spoider-badge b {
@@ -1619,7 +1613,7 @@ html[data-theme="light"] .aurora-blob { mix-blend-mode: multiply; }
   font-size: 0.74rem;
 }
 html[data-theme="light"] .spoider-badge {
-  background: rgba(23, 23, 23, 0.82);
+  background: rgba(23, 23, 23, 0.9);
 }
 
 .spoider-panel {
