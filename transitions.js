@@ -37,10 +37,26 @@
 // window.SpoiderPage.onCleanup(fn) once, right after it attaches
 // its listeners — fn is called (and then discarded) right before
 // the NEXT page swap wipes #page-wrap's content.
+//
+// AUTH LOADER:
+// This file is loaded on every page and lives outside #page-wrap,
+// so it is also the one place that loads auth.js (Google sign-in).
+// auth.js runs once per real page load and its header button
+// survives every AJAX swap.
 // ============================================================
 
 (function () {
   "use strict";
+
+  // ---------- auth loader (runs once, before anything else) ----------
+  (function loadAuth() {
+    if (window.SpoiderAuth || document.querySelector("script[data-sf-auth]")) return;
+    var s = document.createElement("script");
+    s.src = "auth.js";
+    s.async = true;
+    s.setAttribute("data-sf-auth", "true");
+    document.body.appendChild(s);
+  })();
 
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var wrap = document.getElementById("page-wrap");
