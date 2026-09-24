@@ -5,17 +5,18 @@
 // unified split-reveal typography system, the hero-web-to-
 // category-grid scroll transition, the user-controlled
 // light/dark theme toggle (sweep transition + persistence),
-// and the Spoider Score hold/hover-to-reveal panel.
+// the Spoider Score hold/hover-to-reveal panel, and anonymous
+// affiliate click logging to Supabase (public.clicks).
 //
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
 // (see transitions.js). One-time, page-independent behaviors
 // (cursor trail, first-load intro overlay, global tap-spark,
-// theme toggle binding, Spoider Score panel toggling) live in
-// bindGlobalOnce() and only ever run once per real browser
-// session, bound via event delegation on document — so they
-// survive every AJAX swap without rebinding to newly injected
-// product cards.
+// theme toggle binding, Spoider Score panel toggling, affiliate
+// click tracking) live in bindGlobalOnce() and only ever run
+// once per real browser session, bound via event delegation on
+// document — so they survive every AJAX swap without rebinding
+// to newly injected product cards.
 // ============================================================
 
 (function () {
@@ -376,12 +377,89 @@
     );
   }
 
+  // ============================================================
+  // Affiliate click tracking (anonymous, fire-and-forget).
+  //
+  // Logs one row into Supabase's public.clicks table every time a
+  // visitor taps/clicks an <a class="product-card">. Bound once on
+  // document via delegation (same pattern as the Spoider Score
+  // handler above), so it automatically covers every category page
+  // and every card injected later by any Supabase loader, including
+  // after an AJAX page transition — no per-page edits needed.
+  //
+  // Design notes:
+  //   - Uses a plain fetch() to Supabase's REST endpoint with
+  //     keepalive:true, so the request still completes even if the
+  //     browser navigates away right after the click. It doesn't
+  //     depend on the supabase-js library having loaded.
+  //   - Only the publishable key is sent (as the apikey header).
+  //     "Prefer: return=minimal" is required: the clicks table has
+  //     an INSERT-only RLS policy for anon, so asking Supabase to
+  //     return the inserted row would be rejected.
+  //   - Every failure is swallowed. Tracking must NEVER slow down,
+  //     block, or break the redirect to Amazon.
+  //   - Clicks on the "Why this?" trigger and panel close button are
+  //     ignored (they're not a product visit), and so is the click
+  //     that follows a completed Spoider Score hold (that handler
+  //     swallows it in the capture phase before this one runs).
+  //   - A 1.5s per-card debounce avoids double-logging a double-tap.
+  //   - Region is inferred from the page path: any page whose path
+  //     contains "india" logs 'in', everything else logs 'us'.
+  //   - The product title (from the card's <h3>) is logged in
+  //     product_title. product_id is filled only if a card ever
+  //     carries a data-product-id attribute; otherwise it is null.
+  // ============================================================
+  function bindAffiliateClickTracking() {
+    const CLICKS_URL = "https://gqnwinkddckytrfpnhng.supabase.co/rest/v1/clicks";
+    const SUPABASE_KEY = "sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ";
+    const DEBOUNCE_MS = 1500;
+    const lastLogged = new WeakMap();
+
+    document.addEventListener("click", (e) => {
+      try {
+        if (e.defaultPrevented) return;
+        if (e.target.closest(".spoider-score-trigger, .spoider-panel-close")) return;
+
+        const card = e.target.closest("a.product-card");
+        if (!card) return;
+
+        const now = Date.now();
+        if (now - (lastLogged.get(card) || 0) < DEBOUNCE_MS) return;
+        lastLogged.set(card, now);
+
+        const heading = card.querySelector("h3");
+        const title = heading ? heading.textContent.trim().slice(0, 200) : "";
+        const path = window.location.pathname || "";
+        const productId = card.dataset && card.dataset.productId ? String(card.dataset.productId).slice(0, 64) : null;
+
+        fetch(CLICKS_URL, {
+          method: "POST",
+          keepalive: true,
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_KEY,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            product_title: title || null,
+            region: /india/i.test(path) ? "in" : "us",
+            page: path.slice(0, 200),
+          }),
+        }).catch(() => {});
+      } catch (err) {
+        /* tracking must never interfere with navigation */
+      }
+    });
+  }
+
   function bindGlobalOnce() {
     if (globalBound) return;
     globalBound = true;
 
     bindThemeToggle();
     bindSpoiderScorePanels();
+    bindAffiliateClickTracking();
 
     // ---- Cursor-trail particles (fine-pointer / desktop only) ----
     if (supportsHoverFine && !prefersReducedMotion) {
