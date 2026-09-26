@@ -10,12 +10,16 @@
 //   - mobile (<= 760px): the header has no spare room, so the
 //     entry sits at the top of the hamburger menu
 //
-// v2: clicking the sign-in entry (desktop pill or mobile button)
-// now opens a "Join the thread" modal — a small illustrated night
+// v3: clicking the sign-in entry (desktop pill or mobile button)
+// opens a "Join the thread" modal — a small illustrated night
 // scene (moon halo, hills, lantern, twinkling stars) above the
 // actual "Continue with Google" action — instead of firing the
-// OAuth redirect immediately. Colors/fonts are pulled straight
-// from style.css's design tokens (--gold, --bg-elevated, Fraunces/
+// OAuth redirect immediately. The scene now has one orchestrated
+// entrance moment (staggered content reveal + a gold burst off
+// the moon + a single shooting star) plus a quiet ambient loop
+// (rising embers off the lantern), and the Google button carries
+// a premium hover shine. Colors/fonts are pulled straight from
+// style.css's design tokens (--gold, --bg-elevated, Fraunces/
 // Inter/Space Mono), so it can never drift from the rest of the
 // site. The scene itself stays dark regardless of the site's
 // light/dark toggle (a night illustration in "light mode" reads
@@ -112,15 +116,21 @@
    is intentionally NOT theme-reactive (see note above) — it's a
    fixed night illustration, like a piece of brand art, while the
    card shell around it (text/border) still follows light/dark.
+
+   One orchestrated entrance moment on open: the card tilts in,
+   content reveals in a short stagger, the moon fires a single
+   gold burst ring, and a shooting star crosses a beat later.
+   Everything else (embers off the lantern) is a quiet ambient
+   loop so the scene doesn't feel static while the modal sits open.
    ========================================================= */
-.auth-modal-backdrop{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:6vh 20px;padding-top:calc(6vh + env(safe-area-inset-top,0px));padding-bottom:calc(6vh + env(safe-area-inset-bottom,0px));background:rgba(4,3,2,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s var(--ease),visibility 0s linear .3s;}
+.auth-modal-backdrop{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:6vh 20px;padding-top:calc(6vh + env(safe-area-inset-top,0px));padding-bottom:calc(6vh + env(safe-area-inset-bottom,0px));background:rgba(4,3,2,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s var(--ease),visibility 0s linear .3s;perspective:1200px;}
 .auth-modal-backdrop.is-open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .3s var(--ease);}
-.auth-modal{position:relative;width:min(400px,100%);background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 50px 100px -24px rgba(0,0,0,.7),0 0 0 1px var(--gold-dim);transform:translateY(18px) scale(.96);opacity:0;transition:transform .5s var(--ease-spring),opacity .3s var(--ease);}
+.auth-modal{position:relative;width:min(400px,100%);background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 50px 100px -24px rgba(0,0,0,.7),0 0 0 1px var(--gold-dim);transform:translateY(22px) scale(.95) rotateX(6deg);transform-origin:center bottom;opacity:0;transition:transform .6s var(--ease-spring),opacity .3s var(--ease);}
 .auth-modal-backdrop.is-open .auth-modal{transform:none;opacity:1;}
 
-.auth-modal-close{position:absolute;top:14px;right:14px;z-index:4;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(8,7,5,.45);border:1px solid rgba(232,199,102,.25);color:rgba(245,244,240,.75);font-size:13px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),color .2s var(--ease),background .2s var(--ease);}
-.auth-modal-close:hover{border-color:var(--gold);color:var(--gold-bright);background:rgba(8,7,5,.7);}
-.auth-modal-close:active{transform:scale(.9);}
+.auth-modal-close{position:absolute;top:14px;right:14px;z-index:4;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(8,7,5,.45);border:1px solid rgba(232,199,102,.25);color:rgba(245,244,240,.75);font-size:13px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),color .2s var(--ease),background .2s var(--ease),transform .3s var(--ease-spring);}
+.auth-modal-close:hover{border-color:var(--gold);color:var(--gold-bright);background:rgba(8,7,5,.7);transform:rotate(90deg);}
+.auth-modal-close:active{transform:rotate(90deg) scale(.9);}
 
 .auth-modal-scene{position:relative;height:200px;overflow:hidden;background:radial-gradient(120% 90% at 78% 0%,#2a1c0c 0%,transparent 55%),linear-gradient(180deg,#0b0906 0%,#19110a 62%,#241708 100%);}
 .auth-modal-scene::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(to bottom,transparent,var(--bg-elevated));pointer-events:none;}
@@ -135,11 +145,18 @@
 .auth-modal-stars span:nth-child(7){top:34%;left:6%;animation-delay:1.8s;}
 @keyframes authStarTwinkle{0%,100%{opacity:.15;}50%{opacity:1;box-shadow:0 0 5px 1px var(--gold-bright);}}
 
+.auth-modal-shooting{position:absolute;top:20%;left:-8%;width:64px;height:2px;background:linear-gradient(90deg,transparent,var(--gold-bright) 55%,#fff);border-radius:2px;opacity:0;transform:rotate(20deg);}
+.auth-modal-backdrop.is-open .auth-modal-shooting{animation:authShootingStar 1.9s ease-in .95s 1;}
+@keyframes authShootingStar{0%{opacity:0;transform:translate(0,0) rotate(20deg);}10%{opacity:1;}24%{opacity:1;}38%{opacity:0;transform:translate(340px,95px) rotate(20deg);}100%{opacity:0;}}
+
 .auth-modal-moon{position:absolute;top:14px;right:24px;width:74px;height:74px;}
 .auth-modal-moon .halo{position:absolute;inset:-22px;border-radius:50%;background:radial-gradient(circle,rgba(232,199,102,.55),transparent 68%);animation:authMoonGlow 4.5s ease-in-out infinite;}
 @keyframes authMoonGlow{0%,100%{opacity:.7;transform:scale(.95);}50%{opacity:1;transform:scale(1.07);}}
 .auth-modal-moon .moon-body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold-bright),var(--gold) 70%);box-shadow:0 0 24px 4px rgba(232,199,102,.5);}
 .auth-modal-moon .shade{position:absolute;top:-6px;left:-14px;width:68px;height:68px;border-radius:50%;background:#0b0906;}
+.auth-modal-moon .burst{position:absolute;inset:-10px;border-radius:50%;border:1.5px solid var(--gold-bright);opacity:0;}
+.auth-modal-backdrop.is-open .auth-modal-moon .burst{animation:authMoonBurst 1.1s var(--ease) .1s 1;}
+@keyframes authMoonBurst{0%{opacity:.9;transform:scale(.55);}100%{opacity:0;transform:scale(2.5);}}
 
 .auth-modal-hills{position:absolute;bottom:0;left:0;width:100%;height:auto;}
 
@@ -147,13 +164,26 @@
 .auth-modal-lamp .pole{position:absolute;bottom:0;left:50%;width:2px;height:100%;background:linear-gradient(rgba(138,111,42,.7),transparent);transform:translateX(-50%);}
 .auth-modal-lamp .bulb{position:absolute;top:-4px;left:50%;width:9px;height:9px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px 3px rgba(232,199,102,.7);transform:translateX(-50%);animation:authLampFlicker 3.6s ease-in-out infinite;}
 @keyframes authLampFlicker{0%,100%{opacity:1;}48%{opacity:1;}50%{opacity:.6;}52%{opacity:1;}}
+.auth-modal-lamp .ember{position:absolute;bottom:0;left:50%;width:3px;height:3px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 4px 1px rgba(232,199,102,.8);opacity:0;}
+.auth-modal-lamp .ember:nth-child(3){animation:authEmberRise 4.2s ease-in infinite;animation-delay:.6s;--driftX:8px;}
+.auth-modal-lamp .ember:nth-child(4){left:44%;animation:authEmberRise 5s ease-in infinite;animation-delay:2s;--driftX:-9px;}
+.auth-modal-lamp .ember:nth-child(5){left:57%;animation:authEmberRise 4.6s ease-in infinite;animation-delay:3.2s;--driftX:6px;}
+@keyframes authEmberRise{0%{opacity:0;transform:translate(-50%,0) scale(.6);}14%{opacity:.9;}78%{opacity:0;}100%{opacity:0;transform:translate(calc(-50% + var(--driftX,6px)),-68px) scale(1);}}
 
 .auth-modal-content{position:relative;z-index:2;padding:26px 28px 28px;text-align:center;}
+.auth-modal-title,.auth-modal-sub,.auth-modal-google,.auth-modal-legal{opacity:0;transform:translateY(12px);}
+.auth-modal-backdrop.is-open .auth-modal-title{animation:authContentIn .6s var(--ease-spring) .2s 1 forwards;}
+.auth-modal-backdrop.is-open .auth-modal-sub{animation:authContentIn .6s var(--ease-spring) .28s 1 forwards;}
+.auth-modal-backdrop.is-open .auth-modal-google{animation:authContentIn .6s var(--ease-spring) .36s 1 forwards;}
+.auth-modal-backdrop.is-open .auth-modal-legal{animation:authContentIn .6s var(--ease-spring) .44s 1 forwards;}
+@keyframes authContentIn{to{opacity:1;transform:none;}}
 .auth-modal-title{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:1.7rem;color:var(--text-primary);margin-bottom:10px;}
 .auth-modal-sub{color:var(--text-secondary);font-size:.88rem;line-height:1.55;margin-bottom:22px;}
-.auth-modal-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:transparent;border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--text-primary);font-family:var(--font-body);font-weight:500;font-size:.9rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),background .2s var(--ease);}
-.auth-modal-google:hover{border-color:var(--gold);background:var(--surface-hover);}
-.auth-modal-google:active{transform:scale(.98);}
+.auth-modal-google{position:relative;overflow:hidden;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:transparent;border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--text-primary);font-family:var(--font-body);font-weight:500;font-size:.9rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),background .2s var(--ease),box-shadow .3s var(--ease),transform .2s var(--ease);}
+.auth-modal-google::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(232,199,102,.35),transparent);transform:skewX(-20deg);transition:left .65s var(--ease);pointer-events:none;}
+.auth-modal-google:hover{border-color:var(--gold);background:var(--surface-hover);box-shadow:0 12px 28px -16px rgba(232,199,102,.45);transform:translateY(-1px);}
+.auth-modal-google:hover::after{left:130%;}
+.auth-modal-google:active{transform:translateY(0) scale(.98);}
 .auth-modal-legal{margin-top:16px;font-size:.72rem;color:var(--text-muted);}
 .auth-modal-legal a{color:var(--gold);text-decoration:underline;text-underline-offset:2px;}
 
@@ -168,8 +198,12 @@
 
 @media (prefers-reduced-motion:reduce){
   .auth-spin{animation:none;}
-  .auth-pop,.auth-toast,.auth-modal-backdrop,.auth-modal{transition:none;}
+  .auth-pop,.auth-toast,.auth-modal-backdrop,.auth-modal,.auth-modal-close{transition:none;}
   .auth-modal-stars span,.auth-modal-moon .halo,.auth-modal-lamp .bulb{animation:none;}
+  .auth-modal-shooting,.auth-modal-moon .burst{display:none;}
+  .auth-modal-lamp .ember{animation:none;opacity:0;}
+  .auth-modal-title,.auth-modal-sub,.auth-modal-google,.auth-modal-legal{opacity:1;transform:none;animation:none;}
+  .auth-modal-google::after{display:none;}
 }
 `;
     var el = document.createElement("style");
@@ -357,12 +391,13 @@
         '<button class="auth-modal-close" type="button" data-auth="modal-close" aria-label="Close">&#10005;</button>' +
         '<div class="auth-modal-scene" aria-hidden="true">' +
           '<div class="auth-modal-stars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
-          '<div class="auth-modal-moon"><span class="halo"></span><span class="moon-body"></span><span class="shade"></span></div>' +
+          '<div class="auth-modal-shooting"></div>' +
+          '<div class="auth-modal-moon"><span class="halo"></span><span class="moon-body"></span><span class="shade"></span><span class="burst"></span></div>' +
           '<svg class="auth-modal-hills" viewBox="0 0 380 100" preserveAspectRatio="none">' +
             '<path d="M0,60 Q95,20 190,55 T380,45 V100 H0 Z" fill="#1c1309"/>' +
             '<path d="M0,80 Q100,50 200,75 T380,68 V100 H0 Z" fill="#140d06"/>' +
           "</svg>" +
-          '<div class="auth-modal-lamp"><span class="pole"></span><span class="bulb"></span></div>' +
+          '<div class="auth-modal-lamp"><span class="pole"></span><span class="bulb"></span><span class="ember"></span><span class="ember"></span><span class="ember"></span></div>' +
         "</div>" +
         '<div class="auth-modal-content">' +
           '<h2 id="sfAuthModalTitle" class="auth-modal-title">Join the thread</h2>' +
