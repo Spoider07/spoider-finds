@@ -2836,3 +2836,69 @@ html[data-theme="light"] .search-suggest-chip {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* =========================================================
+   WISHLIST HEART — bottom-right of every product-image, on
+   every product card site-wide. Outline gold heart by default;
+   tapping toggles it to a solid gold heart with a spring pop +
+   a soft gold ripple burst, then syncs straight to Supabase
+   (public.wishlist) — no separate search/add flow needed. Click
+   handling lives in script.js (delegated on document), so this
+   works on every page/card without per-page rebinding.
+   ========================================================= */
+.wishlist-heart {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 11, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-theme="light"] .wishlist-heart {
+  background: rgba(255, 255, 255, 0.65);
+}
+.wishlist-heart svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.7;
+  transition: fill 0.3s var(--ease), stroke 0.3s var(--ease), transform 0.3s var(--ease-spring);
+}
+.wishlist-heart.is-wishlisted svg {
+  fill: var(--gold-bright);
+  stroke: var(--gold-bright);
+}
+.wishlist-heart.is-animating svg {
+  animation: wishlistHeartPop 0.5s var(--ease-spring);
+}
+@keyframes wishlistHeartPop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.4); }
+  60%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+.wishlist-heart.is-animating {
+  animation: wishlistHeartBurst 0.55s ease-out;
+}
+@keyframes wishlistHeartBurst {
+  0%   { box-shadow: 0 0 0 0 rgba(232, 199, 102, 0.55); }
+  60%  { box-shadow: 0 0 0 11px rgba(232, 199, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 199, 102, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wishlist-heart svg { transition: fill 0.2s ease, stroke 0.2s ease; }
+  .wishlist-heart.is-animating,
+  .wishlist-heart.is-animating svg { animation: none; }
+}
