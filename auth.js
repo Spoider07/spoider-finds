@@ -10,6 +10,17 @@
 //   - mobile (<= 760px): the header has no spare room, so the
 //     entry sits at the top of the hamburger menu
 //
+// v2: clicking the sign-in entry (desktop pill or mobile button)
+// now opens a "Join the thread" modal — a small illustrated night
+// scene (moon halo, hills, lantern, twinkling stars) above the
+// actual "Continue with Google" action — instead of firing the
+// OAuth redirect immediately. Colors/fonts are pulled straight
+// from style.css's design tokens (--gold, --bg-elevated, Fraunces/
+// Inter/Space Mono), so it can never drift from the rest of the
+// site. The scene itself stays dark regardless of the site's
+// light/dark toggle (a night illustration in "light mode" reads
+// wrong); the card shell (text, border) still follows the theme.
+//
 // The visitor session lives under its own storage key
 // ("sf-user-auth") on purpose: other Supabase clients on the site
 // (page loaders, admin panel) never see or touch it, and it can
@@ -43,7 +54,7 @@
   var client = null;
   var state = { user: null, profile: null, busy: false };
   var subscribers = [];
-  var refs = { wrap: null, mobile: null };
+  var refs = { wrap: null, mobile: null, modalBackdrop: null };
   var toastTimer = null;
 
   // ---------- styles ----------
@@ -54,7 +65,7 @@
 .auth-btn{display:inline-flex;align-items:center;gap:9px;height:34px;padding:0 16px 0 7px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-primary);font-family:var(--font-body);font-weight:500;font-size:.82rem;cursor:pointer;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:border-color .3s var(--ease),background .3s var(--ease),color .3s var(--ease),transform .2s var(--ease),box-shadow .3s var(--ease);}
 .auth-btn:hover{border-color:var(--gold-dim);color:var(--gold-bright);background:var(--surface-hover);box-shadow:0 12px 28px -16px var(--shadow-soft),0 0 0 1px var(--gold-dim);}
 .auth-btn:active{transform:scale(.95);}
-.auth-btn[disabled],.auth-mobile-btn[disabled]{opacity:.75;cursor:progress;}
+.auth-btn[disabled],.auth-mobile-btn[disabled],.auth-modal-google[disabled]{opacity:.75;cursor:progress;}
 .auth-g{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fff;flex-shrink:0;}
 .auth-g svg{width:13px;height:13px;display:block;}
 .auth-spin{width:14px;height:14px;margin:0 4px 0 4px;border-radius:50%;border:2px solid var(--gold-dim);border-top-color:var(--gold-bright);animation:authSpin .7s linear infinite;flex-shrink:0;}
@@ -91,7 +102,75 @@
 .auth-toast.is-in{opacity:1;transform:translate(-50%,0);}
 .auth-toast-dot{width:7px;height:7px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px rgba(232,199,102,.7);flex-shrink:0;}
 @media (max-width:760px){.auth-wrap{display:none;}.auth-mobile{display:block;}}
-@media (prefers-reduced-motion:reduce){.auth-spin{animation:none;}.auth-pop,.auth-toast{transition:none;}}
+
+/* =========================================================
+   AUTH MODAL — "Join the thread"
+   Illustrated night scene (moon halo, hills, lantern, stars)
+   above the real Google sign-in action. Every color/font here
+   is a design-token var from style.css, so it can never drift
+   out of sync with the rest of the site. The scene panel itself
+   is intentionally NOT theme-reactive (see note above) — it's a
+   fixed night illustration, like a piece of brand art, while the
+   card shell around it (text/border) still follows light/dark.
+   ========================================================= */
+.auth-modal-backdrop{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:6vh 20px;padding-top:calc(6vh + env(safe-area-inset-top,0px));padding-bottom:calc(6vh + env(safe-area-inset-bottom,0px));background:rgba(4,3,2,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s var(--ease),visibility 0s linear .3s;}
+.auth-modal-backdrop.is-open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .3s var(--ease);}
+.auth-modal{position:relative;width:min(400px,100%);background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 50px 100px -24px rgba(0,0,0,.7),0 0 0 1px var(--gold-dim);transform:translateY(18px) scale(.96);opacity:0;transition:transform .5s var(--ease-spring),opacity .3s var(--ease);}
+.auth-modal-backdrop.is-open .auth-modal{transform:none;opacity:1;}
+
+.auth-modal-close{position:absolute;top:14px;right:14px;z-index:4;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(8,7,5,.45);border:1px solid rgba(232,199,102,.25);color:rgba(245,244,240,.75);font-size:13px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),color .2s var(--ease),background .2s var(--ease);}
+.auth-modal-close:hover{border-color:var(--gold);color:var(--gold-bright);background:rgba(8,7,5,.7);}
+.auth-modal-close:active{transform:scale(.9);}
+
+.auth-modal-scene{position:relative;height:200px;overflow:hidden;background:radial-gradient(120% 90% at 78% 0%,#2a1c0c 0%,transparent 55%),linear-gradient(180deg,#0b0906 0%,#19110a 62%,#241708 100%);}
+.auth-modal-scene::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(to bottom,transparent,var(--bg-elevated));pointer-events:none;}
+
+.auth-modal-stars span{position:absolute;width:2px;height:2px;background:var(--gold-bright);border-radius:50%;animation:authStarTwinkle 3.4s ease-in-out infinite;}
+.auth-modal-stars span:nth-child(1){top:16%;left:12%;animation-delay:0s;}
+.auth-modal-stars span:nth-child(2){top:28%;left:32%;animation-delay:.5s;width:1.5px;height:1.5px;}
+.auth-modal-stars span:nth-child(3){top:11%;left:50%;animation-delay:1s;}
+.auth-modal-stars span:nth-child(4){top:38%;left:19%;animation-delay:1.6s;width:1.5px;height:1.5px;}
+.auth-modal-stars span:nth-child(5){top:20%;left:65%;animation-delay:2.1s;}
+.auth-modal-stars span:nth-child(6){top:8%;left:79%;animation-delay:.3s;width:1.5px;height:1.5px;}
+.auth-modal-stars span:nth-child(7){top:34%;left:6%;animation-delay:1.8s;}
+@keyframes authStarTwinkle{0%,100%{opacity:.15;}50%{opacity:1;box-shadow:0 0 5px 1px var(--gold-bright);}}
+
+.auth-modal-moon{position:absolute;top:14px;right:24px;width:74px;height:74px;}
+.auth-modal-moon .halo{position:absolute;inset:-22px;border-radius:50%;background:radial-gradient(circle,rgba(232,199,102,.55),transparent 68%);animation:authMoonGlow 4.5s ease-in-out infinite;}
+@keyframes authMoonGlow{0%,100%{opacity:.7;transform:scale(.95);}50%{opacity:1;transform:scale(1.07);}}
+.auth-modal-moon .moon-body{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold-bright),var(--gold) 70%);box-shadow:0 0 24px 4px rgba(232,199,102,.5);}
+.auth-modal-moon .shade{position:absolute;top:-6px;left:-14px;width:68px;height:68px;border-radius:50%;background:#0b0906;}
+
+.auth-modal-hills{position:absolute;bottom:0;left:0;width:100%;height:auto;}
+
+.auth-modal-lamp{position:absolute;bottom:60px;left:33%;width:8px;height:52px;}
+.auth-modal-lamp .pole{position:absolute;bottom:0;left:50%;width:2px;height:100%;background:linear-gradient(rgba(138,111,42,.7),transparent);transform:translateX(-50%);}
+.auth-modal-lamp .bulb{position:absolute;top:-4px;left:50%;width:9px;height:9px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px 3px rgba(232,199,102,.7);transform:translateX(-50%);animation:authLampFlicker 3.6s ease-in-out infinite;}
+@keyframes authLampFlicker{0%,100%{opacity:1;}48%{opacity:1;}50%{opacity:.6;}52%{opacity:1;}}
+
+.auth-modal-content{position:relative;z-index:2;padding:26px 28px 28px;text-align:center;}
+.auth-modal-title{font-family:var(--font-display);font-style:italic;font-weight:500;font-size:1.7rem;color:var(--text-primary);margin-bottom:10px;}
+.auth-modal-sub{color:var(--text-secondary);font-size:.88rem;line-height:1.55;margin-bottom:22px;}
+.auth-modal-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:transparent;border:1px solid var(--border);border-radius:12px;padding:13px;color:var(--text-primary);font-family:var(--font-body);font-weight:500;font-size:.9rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),background .2s var(--ease);}
+.auth-modal-google:hover{border-color:var(--gold);background:var(--surface-hover);}
+.auth-modal-google:active{transform:scale(.98);}
+.auth-modal-legal{margin-top:16px;font-size:.72rem;color:var(--text-muted);}
+.auth-modal-legal a{color:var(--gold);text-decoration:underline;text-underline-offset:2px;}
+
+@media (min-width:761px){
+  .auth-modal{width:min(430px,100%);}
+  .auth-modal-scene{height:230px;}
+  .auth-modal-content{padding:32px 36px 34px;}
+  .auth-modal-title{font-size:1.85rem;}
+  .auth-modal-sub{font-size:.92rem;margin-bottom:26px;}
+  .auth-modal-google{padding:14px;font-size:.92rem;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .auth-spin{animation:none;}
+  .auth-pop,.auth-toast,.auth-modal-backdrop,.auth-modal{transition:none;}
+  .auth-modal-stars span,.auth-modal-moon .halo,.auth-modal-lamp .bulb{animation:none;}
+}
 `;
     var el = document.createElement("style");
     el.id = "sf-auth-styles";
@@ -225,9 +304,22 @@
     wireAvatars(refs.mobile);
   }
 
+  // Only the Google button inside the modal needs a busy/spinner
+  // re-render — the scene markup never changes, so we patch just
+  // that button instead of rebuilding the whole modal.
+  function renderModalGoogleBtn() {
+    var btn = refs.modalBackdrop && refs.modalBackdrop.querySelector(".auth-modal-google");
+    if (!btn) return;
+    btn.disabled = state.busy;
+    btn.innerHTML = state.busy
+      ? '<span class="auth-spin"></span><span>Connecting…</span>'
+      : '<span class="auth-g">' + G_ICON + "</span><span>Continue with Google</span>";
+  }
+
   function render() {
     if (refs.wrap) renderDesktop();
     if (refs.mobile) renderMobile();
+    renderModalGoogleBtn();
   }
 
   function notify() {
@@ -249,6 +341,59 @@
     if (!pop || !btn) return;
     pop.classList.toggle("is-open", open);
     btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  // ---------- "Join the thread" modal ----------
+  function mountModal() {
+    if (document.getElementById("sfAuthModal")) {
+      refs.modalBackdrop = document.getElementById("sfAuthModal");
+      return;
+    }
+    var el = document.createElement("div");
+    el.id = "sfAuthModal";
+    el.className = "auth-modal-backdrop";
+    el.innerHTML =
+      '<div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="sfAuthModalTitle">' +
+        '<button class="auth-modal-close" type="button" data-auth="modal-close" aria-label="Close">&#10005;</button>' +
+        '<div class="auth-modal-scene" aria-hidden="true">' +
+          '<div class="auth-modal-stars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
+          '<div class="auth-modal-moon"><span class="halo"></span><span class="moon-body"></span><span class="shade"></span></div>' +
+          '<svg class="auth-modal-hills" viewBox="0 0 380 100" preserveAspectRatio="none">' +
+            '<path d="M0,60 Q95,20 190,55 T380,45 V100 H0 Z" fill="#1c1309"/>' +
+            '<path d="M0,80 Q100,50 200,75 T380,68 V100 H0 Z" fill="#140d06"/>' +
+          "</svg>" +
+          '<div class="auth-modal-lamp"><span class="pole"></span><span class="bulb"></span></div>' +
+        "</div>" +
+        '<div class="auth-modal-content">' +
+          '<h2 id="sfAuthModalTitle" class="auth-modal-title">Join the thread</h2>' +
+          '<p class="auth-modal-sub">Sign in to save your finds and start building your own collection.</p>' +
+          '<button class="auth-modal-google" type="button" data-auth="modal-google">' +
+            '<span class="auth-g">' + G_ICON + "</span><span>Continue with Google</span>" +
+          "</button>" +
+          '<p class="auth-modal-legal">By continuing you agree to our <a href="privacy.html">Privacy Policy</a></p>' +
+        "</div>" +
+      "</div>";
+    document.body.appendChild(el);
+    refs.modalBackdrop = el;
+
+    // click on the dimmed backdrop itself (not the card) closes it
+    el.addEventListener("click", function (e) {
+      if (e.target === el) closeModal();
+    });
+  }
+
+  function isModalOpen() {
+    return !!(refs.modalBackdrop && refs.modalBackdrop.classList.contains("is-open"));
+  }
+  function openModal() {
+    if (identity()) return; // already signed in — nothing to open
+    if (!refs.modalBackdrop) return;
+    renderModalGoogleBtn();
+    refs.modalBackdrop.classList.add("is-open");
+  }
+  function closeModal() {
+    if (!refs.modalBackdrop) return;
+    refs.modalBackdrop.classList.remove("is-open");
   }
 
   // ---------- auth actions ----------
@@ -311,6 +456,7 @@
     state.busy = false;
     render();
     if (user) {
+      closeModal();
       if (changed || !state.profile) loadProfile(user.id);
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && takePending()) {
         toast("Welcome, " + identity().first + ".");
@@ -376,6 +522,7 @@
       mob.insertBefore(m, mob.firstChild);
       refs.mobile = m;
     }
+    mountModal();
     render();
   }
 
@@ -402,7 +549,9 @@
       var t = e.target.closest("[data-auth]");
       if (t) {
         var action = t.getAttribute("data-auth");
-        if (action === "signin") signIn();
+        if (action === "signin") openModal();
+        else if (action === "modal-google") signIn();
+        else if (action === "modal-close") closeModal();
         else if (action === "signout") signOut();
         else if (action === "toggle") setPop(!isPopOpen());
         return;
@@ -410,7 +559,9 @@
       if (isPopOpen() && !e.target.closest(".auth-pop")) setPop(false);
     });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && isPopOpen()) setPop(false);
+      if (e.key !== "Escape") return;
+      if (isModalOpen()) closeModal();
+      else if (isPopOpen()) setPop(false);
     });
     // coming back via the browser's back button can restore a frozen
     // "Connecting…" state from bfcache — reset it
@@ -433,6 +584,8 @@
     },
     signIn: signIn,
     signOut: signOut,
+    openModal: openModal,
+    closeModal: closeModal,
   };
 
   function boot() {
