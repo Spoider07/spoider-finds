@@ -5,18 +5,20 @@
 // unified split-reveal typography system, the hero-web-to-
 // category-grid scroll transition, the user-controlled
 // light/dark theme toggle (sweep transition + persistence),
-// the Spoider Score hold/hover-to-reveal panel, and anonymous
-// affiliate click logging to Supabase (public.clicks).
+// the Spoider Score hold/hover-to-reveal panel, anonymous
+// affiliate click logging to Supabase (public.clicks), and
+// the site-wide wishlist heart on every product card
+// (public.wishlist).
 //
 // Refactored so all per-page setup lives in initPage(), which
 // runs on first load AND after every AJAX page transition
 // (see transitions.js). One-time, page-independent behaviors
 // (cursor trail, first-load intro overlay, global tap-spark,
 // theme toggle binding, Spoider Score panel toggling, affiliate
-// click tracking) live in bindGlobalOnce() and only ever run
-// once per real browser session, bound via event delegation on
-// document — so they survive every AJAX swap without rebinding
-// to newly injected product cards.
+// click tracking, wishlist hearts) live in bindGlobalOnce() and
+// only ever run once per real browser session, bound via event
+// delegation on document — so they survive every AJAX swap
+// without rebinding to newly injected product cards.
 // ============================================================
 
 (function () {
@@ -398,10 +400,11 @@
   //     return the inserted row would be rejected.
   //   - Every failure is swallowed. Tracking must NEVER slow down,
   //     block, or break the redirect to Amazon.
-  //   - Clicks on the "Why this?" trigger and panel close button are
-  //     ignored (they're not a product visit), and so is the click
-  //     that follows a completed Spoider Score hold (that handler
-  //     swallows it in the capture phase before this one runs).
+  //   - Clicks on the "Why this?" trigger, the panel close button,
+  //     and the wishlist heart are ignored (none of them are a
+  //     product visit), and so is the click that follows a
+  //     completed Spoider Score hold (that handler swallows it in
+  //     the capture phase before this one runs).
   //   - A 1.5s per-card debounce avoids double-logging a double-tap.
   //   - Region is inferred from the page path: any page whose path
   //     contains "india" logs 'in', everything else logs 'us'.
@@ -418,7 +421,7 @@
     document.addEventListener("click", (e) => {
       try {
         if (e.defaultPrevented) return;
-        if (e.target.closest(".spoider-score-trigger, .spoider-panel-close")) return;
+        if (e.target.closest(".spoider-score-trigger, .spoider-panel-close, .wishlist-heart")) return;
 
         const card = e.target.closest("a.product-card");
         if (!card) return;
@@ -453,6 +456,143 @@
     });
   }
 
+  // ============================================================
+  // Wishlist heart — bottom-right of every product card, site-wide.
+  //
+  // Bound once on document via delegation (same pattern as every
+  // other handler above), so any card injected by any page's
+  // Supabase loader — including after an AJAX transition — works
+  // immediately with no per-page rebinding. The heart's product id
+  // comes from data-heart-id on the button itself.
+  //
+  // Behavior:
+  //   - Signed out: tapping the heart starts Google sign-in
+  //     (redirects back to the same page). The tap itself isn't
+  //     queued/remembered — the person just taps the heart again
+  //     once they're back and signed in.
+  //   - Signed in: optimistic toggle — the heart fills/empties and
+  //     plays its pop + gold-ring animation immediately, then the
+  //     row is inserted into (or deleted from) public.wishlist. If
+  //     that call fails, the heart's visual state is reverted.
+  //   - On every real page load and after every AJAX transition,
+  //     once the page's Supabase loader has rendered its cards, it
+  //     calls window.syncWishlistHearts() so hearts for products
+  //     already on the signed-in user's wishlist start out filled.
+  //   - Uses the supabase-js client (lazy-loaded once), not a plain
+  //     fetch, because inserting/deleting a row here is scoped to
+  //     the signed-in user via RLS (auth.uid() = user_id) and needs
+  //     an authenticated request, not just the anon key.
+  // ============================================================
+  function bindWishlistHearts() {
+    const SUPABASE_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ";
+    let sbClient = null;
+    let libPromise = null;
+
+    function ensureLib() {
+      if (window.supabase && typeof window.supabase.createClient === "function") return Promise.resolve();
+      if (libPromise) return libPromise;
+      libPromise = new Promise((resolve) => {
+        const existing = document.querySelector("script[data-supabase-lib]");
+        if (existing) {
+          existing.addEventListener("load", resolve, { once: true });
+          return;
+        }
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        s.setAttribute("data-supabase-lib", "true");
+        s.onload = resolve;
+        document.head.appendChild(s);
+      });
+      return libPromise;
+    }
+
+    function getSb() {
+      if (!sbClient) sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      return sbClient;
+    }
+
+    async function syncHeartsOnPage() {
+      try {
+        await ensureLib();
+        const sb = getSb();
+        const {
+          data: { session },
+        } = await sb.auth.getSession();
+        if (!session) return;
+
+        const hearts = document.querySelectorAll(".wishlist-heart");
+        if (!hearts.length) return;
+
+        const ids = Array.from(hearts)
+          .map((h) => h.dataset.heartId)
+          .filter(Boolean);
+        if (!ids.length) return;
+
+        const res = await sb.from("wishlist").select("product_id").eq("user_id", session.user.id).in("product_id", ids);
+        const owned = new Set((res.data || []).map((r) => String(r.product_id)));
+        hearts.forEach((h) => {
+          h.classList.toggle("is-wishlisted", owned.has(String(h.dataset.heartId)));
+        });
+      } catch (err) {
+        /* sync is best-effort — hearts just stay outline if this fails */
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      const heart = e.target.closest(".wishlist-heart");
+      if (!heart) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (heart.dataset.busy === "1") return;
+      heart.dataset.busy = "1";
+
+      (async () => {
+        try {
+          await ensureLib();
+          const sb = getSb();
+          const {
+            data: { session },
+          } = await sb.auth.getSession();
+
+          if (!session) {
+            await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } });
+            heart.dataset.busy = "0";
+            return;
+          }
+
+          const productId = heart.dataset.heartId;
+          const wasWishlisted = heart.classList.contains("is-wishlisted");
+
+          heart.classList.toggle("is-wishlisted", !wasWishlisted);
+          heart.classList.remove("is-animating");
+          void heart.offsetWidth; // restart the pop/burst animation even on rapid re-taps
+          heart.classList.add("is-animating");
+
+          try {
+            if (wasWishlisted) {
+              const del = await sb.from("wishlist").delete().eq("user_id", session.user.id).eq("product_id", productId);
+              if (del.error) throw del.error;
+            } else {
+              const up = await sb
+                .from("wishlist")
+                .upsert({ user_id: session.user.id, product_id: productId }, { onConflict: "user_id,product_id" });
+              if (up.error) throw up.error;
+            }
+          } catch (err) {
+            heart.classList.toggle("is-wishlisted", wasWishlisted); // revert on failure
+          }
+        } catch (err) {
+          /* never let a wishlist failure block the rest of the page */
+        }
+        heart.dataset.busy = "0";
+      })();
+    });
+
+    window.syncWishlistHearts = syncHeartsOnPage;
+    syncHeartsOnPage();
+  }
+
   function bindGlobalOnce() {
     if (globalBound) return;
     globalBound = true;
@@ -460,6 +600,7 @@
     bindThemeToggle();
     bindSpoiderScorePanels();
     bindAffiliateClickTracking();
+    bindWishlistHearts();
 
     // ---- Cursor-trail particles (fine-pointer / desktop only) ----
     if (supportsHoverFine && !prefersReducedMotion) {
@@ -525,7 +666,10 @@
     // .hero-mark-inner entirely — that element already has its own
     // dedicated burst/flash treatment, and layering this on top would
     // double up and look cheap. Also skips .theme-toggle — that has
-    // its own sweep transition and doesn't need the generic spark. ----
+    // its own sweep transition and doesn't need the generic spark.
+    // Also skips .wishlist-heart — that has its own pop + burst
+    // animation, and layering the generic spark on top of it would
+    // double up in exactly the same way. ----
     if (!prefersReducedMotion) {
       const sparkStyle = document.createElement("style");
       sparkStyle.textContent =
@@ -556,7 +700,7 @@
         (e) => {
           if (e.pointerType === "mouse" && e.button !== 0) return;
           const target = e.target.closest(TAP_SPARK_SELECTOR);
-          if (!target || target.closest(".hero-mark-inner") || target.closest(".theme-toggle")) return;
+          if (!target || target.closest(".hero-mark-inner") || target.closest(".theme-toggle") || target.closest(".wishlist-heart")) return;
           spawnTapSpark(e.clientX, e.clientY);
         },
         { passive: true }
@@ -1167,6 +1311,13 @@
         window.removeEventListener("resize", updateThread);
       });
     }
+
+    // ---- Wishlist hearts: mark already-wishlisted products filled
+    // for any cards that are already in the DOM at this point (a
+    // Supabase loader's own render call is still the primary trigger
+    // — see loadFeatured()/loadProducts() — but this covers the
+    // rare case of static/pre-rendered cards on a page). ----
+    if (window.syncWishlistHearts) window.syncWishlistHearts();
   }
 
   // Exposed so transitions.js can re-run page setup after swapping in new content
