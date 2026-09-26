@@ -291,6 +291,12 @@
           <path d="M21 21l-4.3-4.3"/>
         </svg>
       </button>
+      <a href="profile.html" class="theme-toggle" aria-label="Profile" style="text-decoration:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.2"/>
+          <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/>
+        </svg>
+      </a>
       <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light mode">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
           <circle cx="12" cy="12" r="4.2"/>
@@ -309,6 +315,7 @@
       <a href="#featured">Featured</a>
       <a href="about.html">About</a>
       <a href="#latest">Latest</a>
+      <a href="profile.html">👤 My Profile</a>
       <a href="india.html">🇮🇳 For India<span class="nav-badge-new">NEW</span></a>
     </nav>
   </header>
@@ -1565,6 +1572,16 @@
           '</div>';
       }
 
+      // ---- Wishlist heart HTML — bottom-right of every product image,
+      // site-wide. All the click/toggle/sign-in logic lives in script.js
+      // (delegated on document), so this loader only needs to render the
+      // markup with the product's id on data-heart-id. ----
+      function wishlistHeartHTML(p) {
+        return '<button type="button" class="wishlist-heart" data-heart-id="' + p.id + '" aria-label="Add to wishlist">' +
+          '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.6 8.4 2 4.8 5.6 4A5.4 5.4 0 0 1 12 7a5.4 5.4 0 0 1 6.4-3A5.6 5.6 0 0 1 22 11.8C19.5 16.4 12 21 12 21Z"/></svg>' +
+        '</button>';
+      }
+
       async function loadFeatured() {
         var grid = document.getElementById('featuredGrid');
         if (!grid) return;
@@ -1590,11 +1607,12 @@
 
         grid.innerHTML = data.map(function (p, i) {
           var tag = CATEGORY_LABELS[p.category] || p.category;
-          return '<a href="' + p.affiliate_link + '" class="product-card" data-index="' + i + '" target="_blank" rel="sponsored noopener nofollow">' +
+          return '<a href="' + p.affiliate_link + '" class="product-card" data-index="' + i + '" data-product-id="' + p.id + '" target="_blank" rel="sponsored noopener nofollow">' +
             '<div class="product-glow" aria-hidden="true"></div>' +
             '<div class="product-image">' +
               '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
               scoreBadgeHTML(p) +
+              wishlistHeartHTML(p) +
             '</div>' +
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
             scorePanelHTML(p) +
@@ -1602,6 +1620,7 @@
         }).join('');
 
         watchImagesForLoad(grid);
+        if (window.syncWishlistHearts) window.syncWishlistHearts();
 
         if (window.initFeaturedScale) window.initFeaturedScale();
       }
