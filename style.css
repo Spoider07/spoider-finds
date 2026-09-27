@@ -540,7 +540,17 @@ html[data-theme="light"] .nav.scrolled {
 .nav-links a.active::after { transform: scaleX(1); }
 .nav-links a.active { color: var(--gold); }
 
-.theme-toggle {
+/* Theme toggle (dark/light switch) AND the header profile icon share
+   this same visual treatment — a small circular pill button. They
+   used to share the literal .theme-toggle CLASS too, which meant a
+   click on the profile icon was also matched by script.js's global
+   `.theme-toggle` click listener, firing a theme sweep animation at
+   the same time the browser tried to navigate to profile.html. The
+   profile icon now uses its own .profile-toggle class (see
+   index.html) and both selectors are styled together here so the
+   look stays identical. */
+.theme-toggle,
+.profile-toggle {
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -556,12 +566,15 @@ html[data-theme="light"] .nav.scrolled {
   -webkit-tap-highlight-color: transparent;
   transition: background 0.3s var(--ease), border-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.2s var(--ease);
 }
-.theme-toggle:hover {
+.theme-toggle:hover,
+.profile-toggle:hover {
   border-color: var(--gold-dim);
   transform: translateY(-1px);
 }
-.theme-toggle:active { transform: scale(0.92); }
-.theme-toggle svg { display: block; width: 16px; height: 16px; }
+.theme-toggle:active,
+.profile-toggle:active { transform: scale(0.92); }
+.theme-toggle svg,
+.profile-toggle svg { display: block; width: 16px; height: 16px; }
 .theme-toggle .icon-moon { display: none; }
 html[data-theme="light"] .theme-toggle .icon-sun { display: none; }
 html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
@@ -612,7 +625,8 @@ html[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 @media (max-width: 760px) {
   .nav-links { display: none; }
   .nav-toggle { display: flex; }
-  .theme-toggle { margin-left: auto; }
+  .theme-toggle,
+  .profile-toggle { margin-left: auto; }
 }
 
 .hero {
