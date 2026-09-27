@@ -19,6 +19,19 @@
 // only ever run once per real browser session, bound via event
 // delegation on document — so they survive every AJAX swap
 // without rebinding to newly injected product cards.
+//
+// FIX (auth storage key): the wishlist heart used to spin up its
+// own Supabase client with no auth options at all, which puts it
+// on a DIFFERENT localStorage key than the one the header's
+// sign-in (auth.js) actually uses ("sf-user-auth"). That meant a
+// visitor could be signed in at the top of the page and the
+// wishlist heart would still think they were signed out — tapping
+// it re-triggered Google sign-in every time, and any heart that
+// did go through could silently fail Supabase's row-level-security
+// check (auth.uid() was null). The client below now shares the
+// exact same storageKey as auth.js, with detectSessionInUrl
+// switched off so it never races auth.js for the same OAuth
+// redirect.
 // ============================================================
 
 (function () {
@@ -46,6 +59,11 @@
   // each page's <head> already sets the attribute before first
   // paint if Light was previously chosen, so this code never has
   // to "fix" an initial flash — it only handles the toggle itself.
+  //
+  // NOTE: this listener is scoped to `.theme-toggle` specifically —
+  // the header's profile icon uses its own separate `.profile-toggle`
+  // class (see index.html / style.css) precisely so it is never
+  // caught by this click handler and never triggers a theme sweep.
   //
   // Transition, three layered effects:
   //   1) Shockwave ring — a thin gold ring bursts outward from
@@ -482,6 +500,10 @@
   //     fetch, because inserting/deleting a row here is scoped to
   //     the signed-in user via RLS (auth.uid() = user_id) and needs
   //     an authenticated request, not just the anon key.
+  //   - The client shares the exact same auth storageKey
+  //     ("sf-user-auth") as the header's sign-in (auth.js), so a
+  //     visitor who signed in from the nav is correctly recognized
+  //     here too — see the fix note at the top of this file.
   // ============================================================
   function bindWishlistHearts() {
     const SUPABASE_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
@@ -508,7 +530,16 @@
     }
 
     function getSb() {
-      if (!sbClient) sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      if (!sbClient) {
+        sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: {
+            storageKey: "sf-user-auth",
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: false,
+          },
+        });
+      }
       return sbClient;
     }
 
@@ -979,6 +1010,12 @@
   // #page-wrap, or navigated back to this same page again before
   // the first fetch resolved) — the token is captured locally and
   // checked before every DOM write and on every animation frame.
+  //
+  // This is a public read-only count (no signed-in session
+  // needed), so — same fix as the Featured loader in index.html —
+  // the client explicitly disables session persistence/detection.
+  // Without this it would silently race auth.js for any Google
+  // OAuth redirect landing on the page.
   // ============================================================
   function initCuratedCountStat() {
     const el = document.getElementById("stat-curated-count");
@@ -1040,7 +1077,9 @@
       if (myToken !== curatedCountToken) return; // page moved on while the lib was loading
 
       try {
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
         const res = await sb
           .from("products")
           .select("*", { count: "exact", head: true })
