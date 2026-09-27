@@ -30,379 +30,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    /* =========================================================
-       PROFILE PAGE — scoped styles (pf- prefix), reuses the site's
-       existing design tokens (--gold, --surface, --border, etc.)
-       from style.css so nothing here fights the main theme.
-       ========================================================= */
-
-    .pf-wrap {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 70px 24px 100px;
-    }
-
-    /* ---- Sign-in prompt (logged out / no profile) ---- */
-    .pf-signin {
-      text-align: center;
-      max-width: 460px;
-      margin: 90px auto;
-      padding: 48px 30px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-    }
-    .pf-signin p { color: var(--text-secondary); margin-bottom: 22px; }
-
-    /* ---- Profile header ---- */
-    .pf-hero {
-      position: relative;
-      text-align: center;
-      padding-bottom: 46px;
-      margin-bottom: 46px;
-      border-bottom: 1px solid var(--border);
-    }
-    .pf-hero-glow {
-      position: absolute;
-      top: -60px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 420px;
-      height: 260px;
-      background: radial-gradient(ellipse at 50% 0%, var(--gold-dim), transparent 72%);
-      pointer-events: none;
-      z-index: 0;
-    }
-    .pf-avatar-wrap {
-      position: relative;
-      width: 108px;
-      height: 108px;
-      margin: 0 auto 20px;
-    }
-    .pf-avatar-ring {
-      position: absolute;
-      inset: -6px;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, var(--gold), var(--gold-bright), var(--gold) 70%);
-      opacity: 0.55;
-      animation: pfRingSpin 12s linear infinite;
-      z-index: 0;
-    }
-    @keyframes pfRingSpin { to { transform: rotate(360deg); } }
-    .pf-avatar {
-      position: relative;
-      z-index: 1;
-      width: 108px;
-      height: 108px;
-      border-radius: 50%;
-      object-fit: cover;
-      display: block;
-      border: 3px solid var(--bg);
-      background: var(--surface);
-    }
-    .pf-name {
-      position: relative;
-      z-index: 1;
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: clamp(1.6rem, 4vw, 2.1rem);
-      letter-spacing: -0.01em;
-      margin-bottom: 4px;
-    }
-    .pf-username {
-      position: relative;
-      z-index: 1;
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      color: var(--gold);
-      margin-bottom: 14px;
-    }
-    .pf-bio {
-      position: relative;
-      z-index: 1;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      max-width: 440px;
-      margin: 0 auto 22px;
-    }
-    .pf-hero-actions {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .pf-share-msg {
-      display: block;
-      margin-top: 10px;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--gold-bright);
-      min-height: 1em;
-    }
-
-    /* ---- Edit form ---- */
-    .pf-edit-form {
-      position: relative;
-      z-index: 1;
-      max-width: 360px;
-      margin: 18px auto 0;
-      text-align: left;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 22px;
-    }
-    .pf-edit-form label {
-      display: block;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin: 14px 0 6px;
-    }
-    .pf-edit-form label:first-child { margin-top: 0; }
-    .pf-edit-form input,
-    .pf-edit-form textarea {
-      width: 100%;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      font-size: 0.92rem;
-      padding: 10px 12px;
-      outline: none;
-      resize: vertical;
-      transition: border-color 0.2s var(--ease);
-    }
-    .pf-edit-form input:focus,
-    .pf-edit-form textarea:focus { border-color: var(--gold); }
-    .pf-edit-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .pf-edit-msg {
-      margin-top: 10px;
-      font-size: 0.8rem;
-      color: var(--gold-bright);
-      min-height: 1.2em;
-    }
-
-    /* ---- Section heads ---- */
-    .pf-section { margin-bottom: 50px; }
-    .pf-section-head {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 22px;
-    }
-
-    /* ---- Owned grid — premium "trophy shelf" treatment ---- */
-    .pf-owned-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-    .pf-owned-card {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid rgba(201, 168, 118, 0.3);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      box-shadow: 0 0 0 1px var(--gold-dim), 0 18px 34px -22px var(--shadow-soft);
-      transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
-    }
-    .pf-owned-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--gold);
-      box-shadow: 0 0 0 1px var(--gold), 0 24px 44px -20px var(--shadow-soft), 0 0 30px -10px rgba(201, 168, 118, 0.45);
-    }
-    .pf-ribbon {
-      position: absolute;
-      top: 9px;
-      left: 9px;
-      z-index: 3;
-      font-family: var(--font-mono);
-      font-size: 0.58rem;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-      color: #0a0a0b;
-      background: linear-gradient(120deg, var(--gold-bright), var(--gold));
-      padding: 3px 9px;
-      border-radius: 999px;
-      box-shadow: 0 0 12px -2px rgba(232, 199, 102, 0.7);
-    }
-    .pf-owned-card-image,
-    .pf-wishlist-card-image {
-      display: block;
-      aspect-ratio: 1 / 1;
-      background: linear-gradient(135deg, var(--shimmer-a), var(--shimmer-b));
-      overflow: hidden;
-    }
-    .pf-owned-card-image img,
-    .pf-wishlist-card-image img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.5s var(--ease);
-    }
-    .pf-owned-card:hover .pf-owned-card-image img { transform: scale(1.06); }
-    .pf-owned-card-body,
-    .pf-wishlist-card-body {
-      padding: 12px 14px 14px;
-    }
-    .pf-owned-card-body h3,
-    .pf-wishlist-card-body h3 {
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 0.92rem;
-      line-height: 1.3;
-      margin-bottom: 6px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .pf-remove-btn {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      transition: color 0.2s var(--ease);
-    }
-    .pf-remove-btn:hover { color: var(--gold-bright); }
-
-    /* ---- Wishlist ---- */
-    .pf-wishlist-toggle {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 14px 20px;
-      font-family: var(--font-body);
-      font-weight: 500;
-      font-size: 0.95rem;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
-    }
-    .pf-wishlist-toggle:hover { border-color: var(--gold-dim); background: var(--surface-hover); }
-    .pf-wishlist-count {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--gold-bright);
-      background: var(--gold-dim);
-      padding: 2px 9px;
-      border-radius: 999px;
-      margin-right: auto;
-      margin-left: 10px;
-    }
-    .pf-wishlist-chevron {
-      color: var(--gold);
-      transition: transform 0.25s var(--ease);
-    }
-    .pf-wishlist-toggle.is-open .pf-wishlist-chevron { transform: rotate(180deg); }
-    .pf-wishlist-body { margin-top: 18px; }
-    .pf-wishlist-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-    .pf-wishlist-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      transition: transform 0.25s var(--ease), border-color 0.25s var(--ease);
-    }
-    .pf-wishlist-card:hover { transform: translateY(-3px); border-color: var(--gold-dim); }
-
-    /* ---- Add widgets (own profile only) ---- */
-    .pf-add-widget { margin-top: 18px; position: relative; }
-    .pf-add-widget input {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      padding: 12px 18px;
-      outline: none;
-      transition: border-color 0.2s var(--ease);
-    }
-    .pf-add-widget input:focus { border-color: var(--gold); }
-    .pf-add-results {
-      margin-top: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .pf-add-result-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      text-align: left;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      cursor: pointer;
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-      color: var(--text-primary);
-      transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
-    }
-    .pf-add-result-item:hover { border-color: var(--gold-dim); background: var(--surface-hover); }
-    .pf-add-result-item img {
-      width: 34px; height: 34px;
-      border-radius: 6px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: var(--shimmer-a);
-    }
-    .pf-add-result-item span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .state-msg {
-      text-align: center;
-      padding: 2rem 1rem;
-      opacity: 0.7;
-      font-size: 0.9rem;
-      grid-column: 1 / -1;
-    }
-
-    /* ---- Desktop ---- */
-    @media (min-width: 960px) {
-      .pf-wrap { max-width: 900px; padding: 110px 40px 130px; }
-      .pf-avatar-wrap, .pf-avatar { width: 132px; height: 132px; }
-      .pf-owned-grid { grid-template-columns: repeat(4, 1fr); gap: 22px; }
-      .pf-wishlist-grid { grid-template-columns: repeat(4, 1fr); gap: 18px; }
-      .pf-edit-form { max-width: 420px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .pf-avatar-ring { animation: none; }
-    }
-  </style>
+  <!-- This page's layout CSS (.pf-*) now lives in style.css instead of
+       a block here — see the note in style.css. A per-page <head>
+       block never survives transitions.js's AJAX page-swap, which
+       only ever touches #page-wrap. -->
 </head>
 <body>
   <div class="grain"></div>
@@ -446,21 +77,34 @@
         <button class="btn btn-primary" id="pfGoogleBtn">Continue with Google</button>
       </div>
 
-      <!-- Profile header -->
-      <section class="pf-hero" id="pfHero" style="display:none;">
-        <div class="pf-hero-glow" aria-hidden="true"></div>
-        <div class="pf-avatar-wrap">
-          <div class="pf-avatar-ring" aria-hidden="true"></div>
-          <img class="pf-avatar" id="pfAvatar" src="assets/images/spoider-logo-vector.svg" alt="">
+      <!-- Everything below is one wrapper, shown/hidden as a unit —
+           simpler and more reliable than toggling three separate
+           sections independently, and there's less for a broken
+           navigation to leave half-shown. -->
+      <section id="pfProfile" style="display:none;">
+
+        <div class="pf-cover" aria-hidden="true">
+          <div class="pf-cover-glow"></div>
         </div>
-        <h1 class="pf-name" id="pfName">—</h1>
-        <p class="pf-username" id="pfUsername"></p>
-        <p class="pf-bio" id="pfBio"></p>
-        <div class="pf-hero-actions">
-          <button class="btn btn-ghost" id="pfEditBtn" style="display:none;">Edit Profile</button>
-          <button class="btn btn-ghost" id="pfShareBtn" style="display:none;">Share Profile</button>
+
+        <div class="pf-header">
+          <div class="pf-avatar-wrap">
+            <div class="pf-avatar-ring" aria-hidden="true"></div>
+            <img class="pf-avatar" id="pfAvatar" src="assets/images/spoider-logo-vector.svg" alt="">
+          </div>
+          <div class="pf-header-actions">
+            <button class="btn btn-ghost pf-btn" id="pfEditBtn" style="display:none;">Edit Profile</button>
+            <button class="btn btn-ghost pf-btn" id="pfShareBtn" style="display:none;">Share</button>
+          </div>
         </div>
-        <span class="pf-share-msg" id="pfShareMsg"></span>
+
+        <div class="pf-identity">
+          <h1 class="pf-name" id="pfName">—</h1>
+          <p class="pf-username" id="pfUsername"></p>
+          <p class="pf-bio" id="pfBio"></p>
+          <div class="pf-meta" id="pfMeta"></div>
+          <span class="pf-share-msg" id="pfShareMsg"></span>
+        </div>
 
         <div class="pf-edit-form" id="pfEditForm" style="display:none;">
           <label>Display name</label>
@@ -469,46 +113,444 @@
           <input type="text" id="pfEditUsername" maxlength="24" placeholder="e.g. spoider_faraz">
           <label>Bio</label>
           <textarea id="pfEditBio" rows="3" maxlength="160" placeholder="A short line about you"></textarea>
+          <label>Location</label>
+          <input type="text" id="pfEditLocation" maxlength="60" placeholder="e.g. Delhi, India">
+          <label>Instagram / website link</label>
+          <input type="text" id="pfEditSocial" maxlength="120" placeholder="instagram.com/yourhandle">
           <div class="pf-edit-actions">
             <button class="btn btn-primary" id="pfSaveBtn" type="button">Save</button>
             <button class="btn btn-ghost" id="pfCancelBtn" type="button">Cancel</button>
           </div>
           <p class="pf-edit-msg" id="pfEditMsg"></p>
         </div>
-      </section>
 
-      <!-- Owned Products -->
-      <section class="pf-section" id="pfOwnedSection" style="display:none;">
-        <div class="pf-section-head">
-          <div>
-            <p class="eyebrow gold-text" style="margin-bottom:4px;">THE COLLECTION</p>
-            <h2 class="section-title" style="font-size:1.5rem; margin-bottom:0;">Owned</h2>
+        <div class="pf-stats-row">
+          <div class="pf-stat">
+            <span class="pf-stat-num" id="pfStatOwned">0</span>
+            <span class="pf-stat-label">Owned</span>
+          </div>
+          <div class="pf-stat-divider"></div>
+          <div class="pf-stat">
+            <span class="pf-stat-num" id="pfStatWishlist">0</span>
+            <span class="pf-stat-label">Wishlist</span>
           </div>
         </div>
-        <div class="pf-owned-grid" id="pfOwnedGrid"><p class="state-msg">Loading…</p></div>
-        <div class="pf-add-widget" id="pfAddOwnedWidget" style="display:none;">
-          <input type="text" id="pfAddOwnedSearch" placeholder="Search your products to mark as owned…">
-          <div class="pf-add-results" id="pfAddOwnedResults"></div>
-        </div>
-      </section>
 
-      <!-- Wishlist -->
-      <section class="pf-section" id="pfWishlistSection" style="display:none;">
-        <button class="pf-wishlist-toggle" id="pfWishlistToggle" type="button">
-          <span>💛 Wishlist</span>
-          <span class="pf-wishlist-count" id="pfWishlistCount">0</span>
-          <span class="pf-wishlist-chevron">▾</span>
-        </button>
-        <div class="pf-wishlist-body" id="pfWishlistBody" style="display:none;">
+        <div class="pf-tabs" role="tablist">
+          <button class="pf-tab is-active" id="pfTabOwned" type="button" role="tab" aria-selected="true" aria-controls="pfPanelOwned">Owned</button>
+          <button class="pf-tab" id="pfTabWishlist" type="button" role="tab" aria-selected="false" aria-controls="pfPanelWishlist">Wishlist</button>
+        </div>
+
+        <div class="pf-tab-panel" id="pfPanelOwned" role="tabpanel">
+          <div class="pf-owned-grid" id="pfOwnedGrid"><p class="state-msg">Loading…</p></div>
+          <div class="pf-add-widget" id="pfAddOwnedWidget" style="display:none;">
+            <input type="text" id="pfAddOwnedSearch" placeholder="Search your products to mark as owned…">
+            <div class="pf-add-results" id="pfAddOwnedResults"></div>
+          </div>
+        </div>
+
+        <div class="pf-tab-panel" id="pfPanelWishlist" role="tabpanel" hidden>
           <div class="pf-wishlist-grid" id="pfWishlistGrid"><p class="state-msg">Loading…</p></div>
           <div class="pf-add-widget" id="pfAddWishlistWidget" style="display:none;">
             <input type="text" id="pfAddWishlistSearch" placeholder="Search products to add to wishlist…">
             <div class="pf-add-results" id="pfAddWishlistResults"></div>
           </div>
         </div>
-      </section>
 
+      </section>
     </div>
+
+    <!-- ================= PROFILE PAGE LOGIC =================
+         Lives INSIDE #page-wrap on purpose. transitions.js only
+         ever extracts and re-runs the script elements found inside
+         #page-wrap when it AJAX-swaps a new page in (see
+         runInlineScripts() in transitions.js) — a script placed
+         after the closing main tag, like this one used to be, never
+         runs again once you arrive here via a page-transition
+         instead of a full browser load, leaving every section below
+         stuck on its default display:none. This was the actual
+         cause of "profile only half-opens" / "have to hit back for
+         it to work". -->
+    <script>
+    (function () {
+      var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
+      var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+      var sb = null;
+      var addWidgetBound = {};
+
+      function ensureSupabaseLib(cb) {
+        if (window.supabase && typeof window.supabase.createClient === 'function') { cb(); return; }
+        var existing = document.querySelector('script[data-supabase-lib]');
+        if (existing) { existing.addEventListener('load', cb, { once: true }); return; }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        s.setAttribute('data-supabase-lib', 'true');
+        s.onload = cb;
+        document.head.appendChild(s);
+      }
+
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      // Only ever return an http(s) URL, or null. The social link is
+      // free text a person types into their own profile, but it gets
+      // rendered back out as a real <a href>, so it has to be checked
+      // first — otherwise something like "javascript:alert(1)" typed
+      // into that field would execute when a VISITOR clicks it.
+      function safeHref(raw) {
+        if (!raw) return null;
+        var s = String(raw).trim();
+        if (!s) return null;
+        if (!/^https?:\/\//i.test(s)) s = 'https://' + s.replace(/^\/+/, '');
+        try {
+          var u = new URL(s);
+          if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+          return u.href;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function formatJoined(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      }
+
+      function el(id) { return document.getElementById(id); }
+
+      async function initProfilePage() {
+        // Shares the exact same auth storageKey as the header's
+        // Google sign-in (auth.js) so a visitor who signed in from
+        // the nav is recognized here too, and detectSessionInUrl is
+        // off so this client never races auth.js for the same Google
+        // OAuth redirect landing on this page.
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: {
+            storageKey: 'sf-user-auth',
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: false,
+          },
+        });
+
+        var googleBtn = el('pfGoogleBtn');
+        if (googleBtn) {
+          googleBtn.addEventListener('click', function () {
+            sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+          });
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        var targetUsername = params.get('u');
+
+        var sessionRes = await sb.auth.getSession();
+        var session = sessionRes.data ? sessionRes.data.session : null;
+        var currentUser = session ? session.user : null;
+
+        var profile = null;
+        if (targetUsername) {
+          var r1 = await sb.from('profiles').select('*').eq('username', targetUsername).maybeSingle();
+          profile = r1.data;
+        } else if (currentUser) {
+          var r2 = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+          profile = r2.data;
+        }
+
+        if (!profile) {
+          el('pfSignin').style.display = 'block';
+          if (!currentUser) {
+            el('pfSignin').querySelector('p').textContent = 'Sign in to see and customize your profile.';
+          } else {
+            el('pfSignin').querySelector('p').textContent = 'Profile not found.';
+            if (googleBtn) googleBtn.style.display = 'none';
+          }
+          return;
+        }
+
+        var isOwn = !!(currentUser && profile.id === currentUser.id);
+
+        el('pfProfile').style.display = 'block';
+
+        renderHeader(profile, isOwn);
+        if (isOwn) bindEdit(profile);
+        bindShare(profile);
+        bindTabs();
+
+        loadOwned(profile.id, isOwn);
+        loadWishlist(profile.id, isOwn);
+      }
+
+      function renderHeader(profile, isOwn) {
+        el('pfAvatar').src = profile.avatar_url || 'assets/images/spoider-logo-vector.svg';
+        el('pfName').textContent = profile.display_name || profile.username || 'Spoider User';
+        el('pfUsername').textContent = profile.username ? '@' + profile.username : '';
+        el('pfBio').textContent = profile.bio || (isOwn ? 'Add a bio to tell people about yourself.' : '');
+
+        var metaParts = [];
+        if (profile.location) {
+          metaParts.push(
+            '<span class="pf-meta-item">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.8-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.2-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></svg>' +
+              escapeHtml(profile.location) +
+            '</span>'
+          );
+        }
+        var link = safeHref(profile.social_url);
+        if (link) {
+          var label = link.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+          metaParts.push(
+            '<span class="pf-meta-item">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1"/><path d="M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"/></svg>' +
+              '<a href="' + escapeHtml(link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>' +
+            '</span>'
+          );
+        }
+        var joined = formatJoined(profile.created_at);
+        if (joined) {
+          metaParts.push(
+            '<span class="pf-meta-item">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>' +
+              'Joined ' + joined +
+            '</span>'
+          );
+        }
+        el('pfMeta').innerHTML = metaParts.join('');
+
+        if (isOwn) {
+          el('pfEditBtn').style.display = 'inline-block';
+          el('pfAddOwnedWidget').style.display = 'block';
+          el('pfAddWishlistWidget').style.display = 'block';
+        }
+        if (profile.username) el('pfShareBtn').style.display = 'inline-block';
+      }
+
+      function bindShare(profile) {
+        var btn = el('pfShareBtn');
+        var msg = el('pfShareMsg');
+        btn.addEventListener('click', function () {
+          if (!profile.username) { msg.textContent = 'Set a username first to get a shareable link.'; return; }
+          var url = window.location.origin + window.location.pathname + '?u=' + encodeURIComponent(profile.username);
+          navigator.clipboard.writeText(url).then(function () {
+            msg.textContent = 'Link copied!';
+            setTimeout(function () { msg.textContent = ''; }, 2200);
+          }).catch(function () {
+            msg.textContent = url;
+          });
+        });
+      }
+
+      function bindTabs() {
+        var tabOwned = el('pfTabOwned');
+        var tabWishlist = el('pfTabWishlist');
+        var panelOwned = el('pfPanelOwned');
+        var panelWishlist = el('pfPanelWishlist');
+
+        function show(which) {
+          var ownedActive = which === 'owned';
+          tabOwned.classList.toggle('is-active', ownedActive);
+          tabWishlist.classList.toggle('is-active', !ownedActive);
+          tabOwned.setAttribute('aria-selected', ownedActive ? 'true' : 'false');
+          tabWishlist.setAttribute('aria-selected', ownedActive ? 'false' : 'true');
+          panelOwned.hidden = !ownedActive;
+          panelWishlist.hidden = ownedActive;
+        }
+
+        tabOwned.addEventListener('click', function () { show('owned'); });
+        tabWishlist.addEventListener('click', function () { show('wishlist'); });
+      }
+
+      function bindEdit(profile) {
+        var editBtn = el('pfEditBtn');
+        var form = el('pfEditForm');
+        var saveBtn = el('pfSaveBtn');
+        var cancelBtn = el('pfCancelBtn');
+        var msg = el('pfEditMsg');
+
+        editBtn.addEventListener('click', function () {
+          el('pfEditName').value = profile.display_name || '';
+          el('pfEditUsername').value = profile.username || '';
+          el('pfEditBio').value = profile.bio || '';
+          el('pfEditLocation').value = profile.location || '';
+          el('pfEditSocial').value = profile.social_url || '';
+          form.style.display = 'block';
+          editBtn.style.display = 'none';
+          msg.textContent = '';
+        });
+
+        cancelBtn.addEventListener('click', function () {
+          form.style.display = 'none';
+          editBtn.style.display = 'inline-block';
+          msg.textContent = '';
+        });
+
+        saveBtn.addEventListener('click', async function () {
+          var display_name = el('pfEditName').value.trim().slice(0, 60);
+          var username = el('pfEditUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24);
+          var bio = el('pfEditBio').value.trim().slice(0, 160);
+          var location = el('pfEditLocation').value.trim().slice(0, 60);
+          var socialRaw = el('pfEditSocial').value.trim().slice(0, 120);
+          var social_url = socialRaw ? (safeHref(socialRaw) || null) : null;
+
+          if (socialRaw && !social_url) {
+            msg.textContent = "That link doesn't look valid — try again.";
+            return;
+          }
+
+          msg.textContent = 'Saving…';
+          saveBtn.disabled = true;
+
+          var res = await sb.from('profiles')
+            .update({
+              display_name: display_name,
+              username: username || null,
+              bio: bio,
+              location: location || null,
+              social_url: social_url,
+            })
+            .eq('id', profile.id);
+
+          saveBtn.disabled = false;
+
+          if (res.error) {
+            if (res.error.message && /duplicate/i.test(res.error.message)) {
+              msg.textContent = 'That username is already taken.';
+            } else {
+              msg.textContent = 'Could not save — try again.';
+            }
+            return;
+          }
+
+          profile.display_name = display_name;
+          profile.username = username || null;
+          profile.bio = bio;
+          profile.location = location || null;
+          profile.social_url = social_url;
+          renderHeader(profile, true);
+          form.style.display = 'none';
+          editBtn.style.display = 'inline-block';
+          msg.textContent = '';
+        });
+      }
+
+      function productCardHTML(p, opts) {
+        opts = opts || {};
+        var wrapClass = opts.owned ? 'pf-owned-card' : 'pf-wishlist-card';
+        var imgClass = opts.owned ? 'pf-owned-card-image' : 'pf-wishlist-card-image';
+        var bodyClass = opts.owned ? 'pf-owned-card-body' : 'pf-wishlist-card-body';
+        var ribbon = opts.owned ? '<span class="pf-ribbon">OWNED</span>' : '';
+        var removeBtn = opts.removable
+          ? '<button type="button" class="pf-remove-btn" data-remove-id="' + p.id + '">Remove</button>'
+          : '';
+        return '' +
+          '<div class="' + wrapClass + '">' +
+            ribbon +
+            '<a href="' + p.affiliate_link + '" class="' + imgClass + '" target="_blank" rel="sponsored noopener nofollow">' +
+              '<img src="' + (p.image_url || '') + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
+            '</a>' +
+            '<div class="' + bodyClass + '">' +
+              '<h3>' + escapeHtml(p.title) + '</h3>' +
+              removeBtn +
+            '</div>' +
+          '</div>';
+      }
+
+      function bindRemoveButtons(container, table, userId, onDone) {
+        container.querySelectorAll('[data-remove-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var pid = btn.getAttribute('data-remove-id');
+            btn.disabled = true;
+            await sb.from(table).delete().eq('user_id', userId).eq('product_id', pid);
+            onDone();
+          });
+        });
+      }
+
+      function setupAddWidget(inputId, resultsId, table, userId, onAdded) {
+        var input = el(inputId);
+        var results = el(resultsId);
+        if (!input || addWidgetBound[inputId]) return;
+        addWidgetBound[inputId] = true;
+        var debounceTimer;
+        input.addEventListener('input', function () {
+          clearTimeout(debounceTimer);
+          var q = input.value.trim();
+          if (!q) { results.innerHTML = ''; return; }
+          debounceTimer = setTimeout(async function () {
+            var res = await sb.from('products').select('id,title,image_url')
+              .ilike('title', '%' + q + '%')
+              .eq('active', true)
+              .limit(6);
+            var data = res.data || [];
+            if (!data.length) {
+              results.innerHTML = '<p class="state-msg" style="padding:8px 0;">No matches.</p>';
+              return;
+            }
+            results.innerHTML = data.map(function (p) {
+              return '<button type="button" class="pf-add-result-item" data-add-id="' + p.id + '">' +
+                '<img src="' + (p.image_url || '') + '" alt="">' +
+                '<span>' + escapeHtml(p.title) + '</span>' +
+              '</button>';
+            }).join('');
+            results.querySelectorAll('[data-add-id]').forEach(function (btn) {
+              btn.addEventListener('click', async function () {
+                var pid = btn.getAttribute('data-add-id');
+                btn.disabled = true;
+                await sb.from(table).upsert({ user_id: userId, product_id: pid }, { onConflict: 'user_id,product_id' });
+                input.value = '';
+                results.innerHTML = '';
+                onAdded();
+              });
+            });
+          }, 300);
+        });
+      }
+
+      async function loadOwned(userId, isOwn) {
+        var grid = el('pfOwnedGrid');
+        var res = await sb.from('owned_products')
+          .select('product_id, owned_at, products(*)')
+          .eq('user_id', userId)
+          .order('owned_at', { ascending: false });
+
+        var items = (res.data || []).filter(function (r) { return r.products; });
+        el('pfStatOwned').textContent = items.length;
+        if (res.error || !items.length) {
+          grid.innerHTML = '<p class="state-msg">' + (isOwn ? "You haven't marked anything as owned yet." : 'Nothing owned yet.') + '</p>';
+        } else {
+          grid.innerHTML = items.map(function (r) { return productCardHTML(r.products, { owned: true, removable: isOwn }); }).join('');
+        }
+        if (isOwn) bindRemoveButtons(grid, 'owned_products', userId, function () { loadOwned(userId, true); });
+        if (isOwn) setupAddWidget('pfAddOwnedSearch', 'pfAddOwnedResults', 'owned_products', userId, function () { loadOwned(userId, true); });
+      }
+
+      async function loadWishlist(userId, isOwn) {
+        var grid = el('pfWishlistGrid');
+        var res = await sb.from('wishlist')
+          .select('product_id, added_at, products(*)')
+          .eq('user_id', userId)
+          .order('added_at', { ascending: false });
+
+        var items = (res.data || []).filter(function (r) { return r.products; });
+        el('pfStatWishlist').textContent = items.length;
+
+        if (res.error || !items.length) {
+          grid.innerHTML = '<p class="state-msg">' + (isOwn ? 'Your wishlist is empty.' : 'No wishlist items.') + '</p>';
+        } else {
+          grid.innerHTML = items.map(function (r) { return productCardHTML(r.products, { owned: false, removable: isOwn }); }).join('');
+        }
+        if (isOwn) bindRemoveButtons(grid, 'wishlist', userId, function () { loadWishlist(userId, true); });
+        if (isOwn) setupAddWidget('pfAddWishlistSearch', 'pfAddWishlistResults', 'wishlist', userId, function () { loadWishlist(userId, true); });
+      }
+
+      ensureSupabaseLib(initProfilePage);
+    })();
+    </script>
+
   </main>
 
   <footer class="footer">
@@ -539,307 +581,5 @@
 
   <script src="script.js"></script>
   <script src="transitions.js"></script>
-
-  <!-- ================= PROFILE PAGE LOGIC ================= -->
-  <script>
-  (function () {
-    var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
-    var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
-    var sb = null;
-    var addWidgetBound = {};
-
-    function ensureSupabaseLib(cb) {
-      if (window.supabase && typeof window.supabase.createClient === 'function') { cb(); return; }
-      var existing = document.querySelector('script[data-supabase-lib]');
-      if (existing) { existing.addEventListener('load', cb, { once: true }); return; }
-      var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      s.setAttribute('data-supabase-lib', 'true');
-      s.onload = cb;
-      document.head.appendChild(s);
-    }
-
-    function escapeHtml(str) {
-      return String(str || '').replace(/[&<>"']/g, function (c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-      });
-    }
-
-    function el(id) { return document.getElementById(id); }
-
-    async function initProfilePage() {
-      // FIX: this client used to be created with no auth options at
-      // all, which put its session on a DIFFERENT localStorage key
-      // than the one the header's Google sign-in (auth.js) actually
-      // writes to ("sf-user-auth"). That's why signing in from the
-      // header and then opening this page still showed "sign in to
-      // see your profile" — this page's own client had no idea a
-      // session existed. Sharing the same storageKey fixes that.
-      // detectSessionInUrl is switched off here so this client never
-      // races auth.js for the same Google OAuth redirect landing on
-      // this exact page.
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: {
-          storageKey: 'sf-user-auth',
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: false,
-        },
-      });
-
-      var googleBtn = el('pfGoogleBtn');
-      if (googleBtn) {
-        googleBtn.addEventListener('click', function () {
-          sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
-        });
-      }
-
-      var params = new URLSearchParams(window.location.search);
-      var targetUsername = params.get('u');
-
-      var sessionRes = await sb.auth.getSession();
-      var session = sessionRes.data ? sessionRes.data.session : null;
-      var currentUser = session ? session.user : null;
-
-      var profile = null;
-      if (targetUsername) {
-        var r1 = await sb.from('profiles').select('*').eq('username', targetUsername).maybeSingle();
-        profile = r1.data;
-      } else if (currentUser) {
-        var r2 = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
-        profile = r2.data;
-      }
-
-      if (!profile) {
-        el('pfSignin').style.display = 'block';
-        if (!currentUser) {
-          el('pfSignin').querySelector('p').textContent = 'Sign in to see and customize your profile.';
-        } else {
-          el('pfSignin').querySelector('p').textContent = 'Profile not found.';
-          if (googleBtn) googleBtn.style.display = 'none';
-        }
-        return;
-      }
-
-      var isOwn = !!(currentUser && profile.id === currentUser.id);
-
-      el('pfHero').style.display = 'block';
-      el('pfOwnedSection').style.display = 'block';
-      el('pfWishlistSection').style.display = 'block';
-
-      renderHeader(profile, isOwn);
-      if (isOwn) bindEdit(profile);
-      bindShare(profile);
-
-      loadOwned(profile.id, isOwn);
-      loadWishlist(profile.id, isOwn);
-    }
-
-    function renderHeader(profile, isOwn) {
-      el('pfAvatar').src = profile.avatar_url || 'assets/images/spoider-logo-vector.svg';
-      el('pfName').textContent = profile.display_name || profile.username || 'Spoider User';
-      el('pfUsername').textContent = profile.username ? '@' + profile.username : '';
-      el('pfBio').textContent = profile.bio || (isOwn ? 'Add a bio to tell people about yourself.' : '');
-      if (isOwn) {
-        el('pfEditBtn').style.display = 'inline-block';
-        el('pfAddOwnedWidget').style.display = 'block';
-        el('pfAddWishlistWidget').style.display = 'block';
-      }
-      if (profile.username) el('pfShareBtn').style.display = 'inline-block';
-    }
-
-    function bindShare(profile) {
-      var btn = el('pfShareBtn');
-      var msg = el('pfShareMsg');
-      btn.addEventListener('click', function () {
-        if (!profile.username) { msg.textContent = 'Set a username first to get a shareable link.'; return; }
-        var url = window.location.origin + window.location.pathname + '?u=' + encodeURIComponent(profile.username);
-        navigator.clipboard.writeText(url).then(function () {
-          msg.textContent = 'Link copied!';
-          setTimeout(function () { msg.textContent = ''; }, 2200);
-        }).catch(function () {
-          msg.textContent = url;
-        });
-      });
-    }
-
-    function bindEdit(profile) {
-      var editBtn = el('pfEditBtn');
-      var form = el('pfEditForm');
-      var saveBtn = el('pfSaveBtn');
-      var cancelBtn = el('pfCancelBtn');
-      var msg = el('pfEditMsg');
-
-      editBtn.addEventListener('click', function () {
-        el('pfEditName').value = profile.display_name || '';
-        el('pfEditUsername').value = profile.username || '';
-        el('pfEditBio').value = profile.bio || '';
-        form.style.display = 'block';
-        editBtn.style.display = 'none';
-        msg.textContent = '';
-      });
-
-      cancelBtn.addEventListener('click', function () {
-        form.style.display = 'none';
-        editBtn.style.display = 'inline-block';
-        msg.textContent = '';
-      });
-
-      saveBtn.addEventListener('click', async function () {
-        var display_name = el('pfEditName').value.trim().slice(0, 60);
-        var username = el('pfEditUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24);
-        var bio = el('pfEditBio').value.trim().slice(0, 160);
-
-        msg.textContent = 'Saving…';
-        saveBtn.disabled = true;
-
-        var res = await sb.from('profiles')
-          .update({ display_name: display_name, username: username || null, bio: bio })
-          .eq('id', profile.id);
-
-        saveBtn.disabled = false;
-
-        if (res.error) {
-          if (res.error.message && /duplicate/i.test(res.error.message)) {
-            msg.textContent = 'That username is already taken.';
-          } else {
-            msg.textContent = 'Could not save — try again.';
-          }
-          return;
-        }
-
-        profile.display_name = display_name;
-        profile.username = username || null;
-        profile.bio = bio;
-        renderHeader(profile, true);
-        form.style.display = 'none';
-        editBtn.style.display = 'inline-block';
-        msg.textContent = '';
-      });
-    }
-
-    function productCardHTML(p, opts) {
-      opts = opts || {};
-      var wrapClass = opts.owned ? 'pf-owned-card' : 'pf-wishlist-card';
-      var imgClass = opts.owned ? 'pf-owned-card-image' : 'pf-wishlist-card-image';
-      var bodyClass = opts.owned ? 'pf-owned-card-body' : 'pf-wishlist-card-body';
-      var ribbon = opts.owned ? '<span class="pf-ribbon">OWNED</span>' : '';
-      var removeBtn = opts.removable
-        ? '<button type="button" class="pf-remove-btn" data-remove-id="' + p.id + '">Remove</button>'
-        : '';
-      return '' +
-        '<div class="' + wrapClass + '">' +
-          ribbon +
-          '<a href="' + p.affiliate_link + '" class="' + imgClass + '" target="_blank" rel="sponsored noopener nofollow">' +
-            '<img src="' + (p.image_url || '') + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
-          '</a>' +
-          '<div class="' + bodyClass + '">' +
-            '<h3>' + escapeHtml(p.title) + '</h3>' +
-            removeBtn +
-          '</div>' +
-        '</div>';
-    }
-
-    function bindRemoveButtons(container, table, userId, onDone) {
-      container.querySelectorAll('[data-remove-id]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-          var pid = btn.getAttribute('data-remove-id');
-          btn.disabled = true;
-          await sb.from(table).delete().eq('user_id', userId).eq('product_id', pid);
-          onDone();
-        });
-      });
-    }
-
-    function setupAddWidget(inputId, resultsId, table, userId, onAdded) {
-      var input = el(inputId);
-      var results = el(resultsId);
-      if (!input || addWidgetBound[inputId]) return;
-      addWidgetBound[inputId] = true;
-      var debounceTimer;
-      input.addEventListener('input', function () {
-        clearTimeout(debounceTimer);
-        var q = input.value.trim();
-        if (!q) { results.innerHTML = ''; return; }
-        debounceTimer = setTimeout(async function () {
-          var res = await sb.from('products').select('id,title,image_url')
-            .ilike('title', '%' + q + '%')
-            .eq('active', true)
-            .limit(6);
-          var data = res.data || [];
-          if (!data.length) {
-            results.innerHTML = '<p class="state-msg" style="padding:8px 0;">No matches.</p>';
-            return;
-          }
-          results.innerHTML = data.map(function (p) {
-            return '<button type="button" class="pf-add-result-item" data-add-id="' + p.id + '">' +
-              '<img src="' + (p.image_url || '') + '" alt="">' +
-              '<span>' + escapeHtml(p.title) + '</span>' +
-            '</button>';
-          }).join('');
-          results.querySelectorAll('[data-add-id]').forEach(function (btn) {
-            btn.addEventListener('click', async function () {
-              var pid = btn.getAttribute('data-add-id');
-              btn.disabled = true;
-              await sb.from(table).upsert({ user_id: userId, product_id: pid }, { onConflict: 'user_id,product_id' });
-              input.value = '';
-              results.innerHTML = '';
-              onAdded();
-            });
-          });
-        }, 300);
-      });
-    }
-
-    async function loadOwned(userId, isOwn) {
-      var grid = el('pfOwnedGrid');
-      var res = await sb.from('owned_products')
-        .select('product_id, owned_at, products(*)')
-        .eq('user_id', userId)
-        .order('owned_at', { ascending: false });
-
-      var items = (res.data || []).filter(function (r) { return r.products; });
-      if (res.error || !items.length) {
-        grid.innerHTML = '<p class="state-msg">' + (isOwn ? "You haven't marked anything as owned yet." : 'Nothing owned yet.') + '</p>';
-      } else {
-        grid.innerHTML = items.map(function (r) { return productCardHTML(r.products, { owned: true, removable: isOwn }); }).join('');
-      }
-      if (isOwn) bindRemoveButtons(grid, 'owned_products', userId, function () { loadOwned(userId, true); });
-      if (isOwn) setupAddWidget('pfAddOwnedSearch', 'pfAddOwnedResults', 'owned_products', userId, function () { loadOwned(userId, true); });
-    }
-
-    async function loadWishlist(userId, isOwn) {
-      var grid = el('pfWishlistGrid');
-      var countEl = el('pfWishlistCount');
-      var res = await sb.from('wishlist')
-        .select('product_id, added_at, products(*)')
-        .eq('user_id', userId)
-        .order('added_at', { ascending: false });
-
-      var items = (res.data || []).filter(function (r) { return r.products; });
-      countEl.textContent = items.length;
-
-      if (res.error || !items.length) {
-        grid.innerHTML = '<p class="state-msg">' + (isOwn ? 'Your wishlist is empty.' : 'No wishlist items.') + '</p>';
-      } else {
-        grid.innerHTML = items.map(function (r) { return productCardHTML(r.products, { owned: false, removable: isOwn }); }).join('');
-      }
-      if (isOwn) bindRemoveButtons(grid, 'wishlist', userId, function () { loadWishlist(userId, true); });
-      if (isOwn) setupAddWidget('pfAddWishlistSearch', 'pfAddWishlistResults', 'wishlist', userId, function () { loadWishlist(userId, true); });
-    }
-
-    var toggleBtn = el('pfWishlistToggle');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function () {
-        var body = el('pfWishlistBody');
-        var open = body.style.display === 'block';
-        body.style.display = open ? 'none' : 'block';
-        toggleBtn.classList.toggle('is-open', !open);
-      });
-    }
-
-    ensureSupabaseLib(initProfilePage);
-  })();
-  </script>
 </body>
 </html>
