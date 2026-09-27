@@ -568,7 +568,24 @@
     function el(id) { return document.getElementById(id); }
 
     async function initProfilePage() {
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      // FIX: this client used to be created with no auth options at
+      // all, which put its session on a DIFFERENT localStorage key
+      // than the one the header's Google sign-in (auth.js) actually
+      // writes to ("sf-user-auth"). That's why signing in from the
+      // header and then opening this page still showed "sign in to
+      // see your profile" — this page's own client had no idea a
+      // session existed. Sharing the same storageKey fixes that.
+      // detectSessionInUrl is switched off here so this client never
+      // races auth.js for the same Google OAuth redirect landing on
+      // this exact page.
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+          storageKey: 'sf-user-auth',
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+        },
+      });
 
       var googleBtn = el('pfGoogleBtn');
       if (googleBtn) {
