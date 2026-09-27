@@ -291,7 +291,15 @@
           <path d="M21 21l-4.3-4.3"/>
         </svg>
       </button>
-      <a href="profile.html" class="theme-toggle" aria-label="Profile" style="text-decoration:none;">
+      <!-- FIX: this used to share the .theme-toggle class with the
+           actual dark/light button below, so script.js's global
+           `.theme-toggle` click handler fired the theme sweep
+           animation at the same time the browser navigated to
+           profile.html — the two fought each other and the page
+           looked broken. Now it has its own .profile-toggle class
+           (styled identically in style.css), so only this link's
+           own navigation happens on click. -->
+      <a href="profile.html" class="profile-toggle" aria-label="Profile" style="text-decoration:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="8" r="3.2"/>
           <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/>
@@ -1585,7 +1593,16 @@
       async function loadFeatured() {
         var grid = document.getElementById('featuredGrid');
         if (!grid) return;
-        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Public read-only fetch — no signed-in session is ever needed
+        // here, so we tell the client not to look for one at all
+        // (persistSession/autoRefreshToken/detectSessionInUrl: false).
+        // Without this, this client would also try to read/consume any
+        // Google OAuth redirect in the URL — racing against the site's
+        // single real auth client in auth.js and risking a "code already
+        // used" error on sign-in.
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
         var res = await sb
           .from('products')
           .select('*')
