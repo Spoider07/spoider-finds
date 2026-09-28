@@ -14,24 +14,35 @@
 // runs on first load AND after every AJAX page transition
 // (see transitions.js). One-time, page-independent behaviors
 // (cursor trail, first-load intro overlay, global tap-spark,
-// theme toggle binding, Spoider Score panel toggling, affiliate
-// click tracking, wishlist hearts) live in bindGlobalOnce() and
-// only ever run once per real browser session, bound via event
-// delegation on document — so they survive every AJAX swap
-// without rebinding to newly injected product cards.
+// theme toggle binding, mobile nav, Spoider Score panel toggling,
+// affiliate click tracking, wishlist hearts) live in
+// bindGlobalOnce() and only ever run once per real browser
+// session, bound via event delegation on document — so they
+// survive every AJAX swap without rebinding to newly injected
+// product cards.
 //
-// FIX (auth storage key): the wishlist heart used to spin up its
-// own Supabase client with no auth options at all, which puts it
-// on a DIFFERENT localStorage key than the one the header's
-// sign-in (auth.js) actually uses ("sf-user-auth"). That meant a
-// visitor could be signed in at the top of the page and the
-// wishlist heart would still think they were signed out — tapping
-// it re-triggered Google sign-in every time, and any heart that
-// did go through could silently fail Supabase's row-level-security
-// check (auth.uid() was null). The client below now shares the
-// exact same storageKey as auth.js, with detectSessionInUrl
-// switched off so it never races auth.js for the same OAuth
-// redirect.
+// FIXES in this version:
+//   1) Hamburger menu: the nav lives OUTSIDE #page-wrap, so it is
+//      never replaced on an AJAX swap — but initPage() runs again
+//      after every swap and used to add ANOTHER click listener to
+//      the same #navToggle each time. After one navigation the
+//      button had two listeners that toggled the menu open and
+//      immediately shut again (an even number of toggles = nothing
+//      happens), so the hamburger looked dead. The menu is now
+//      handled once, by delegation, in bindMobileNav().
+//   2) Spoider Score hold-to-reveal: if the click that normally
+//      follows a completed hold never fired (long-press on a link
+//      often doesn't), the "swallow next click" flag stayed set and
+//      ate the person's NEXT unrelated tap anywhere on the site.
+//      The flag now expires on its own after 500ms.
+//   3) Wishlist hearts no longer create a Supabase client of their
+//      own. They reuse the single client owned by auth.js
+//      (window.SpoiderAuth.client). Two clients on the same
+//      storage key both auto-refresh the same rotating refresh
+//      token, which can randomly sign a visitor out. Signed-out
+//      taps on a heart now open the same "Join the thread" modal
+//      as the header instead of jumping straight to Google, and
+//      hearts clear themselves if the person signs out.
 // ============================================================
 
 (function () {
@@ -65,23 +76,13 @@
   // class (see index.html / style.css) precisely so it is never
   // caught by this click handler and never triggers a theme sweep.
   //
-  // Transition, three layered effects:
-  //   1) Shockwave ring — a thin gold ring bursts outward from
-  //      the tapped button the instant it's pressed, reading as
-  //      an energy pulse that precedes the color fill.
-  //   2) Sweep — an expanding circle (Web Animations API), grown
-  //      from the tapped button's position in the DESTINATION
-  //      theme's --bg-elevated color, fully covers the viewport.
-  //      Once covered, data-theme flips (invisible, hidden under
-  //      the circle), then the circle fades to reveal the new
-  //      theme already settled.
-  //   3) Icon morph — the sun/moon glyph itself rotates + blurs
-  //      out as the sweep grows, then rotates + blurs back in
-  //      once the theme has flipped underneath the cover, instead
-  //      of an instant CSS display swap.
-  //   4) Depth-pulse — a brief whole-page blur (camera focus-pull)
-  //      timed to the moment of the flip, resolving to sharp just
-  //      as the sweep fades away.
+  // Transition, layered effects:
+  //   1) Shockwave ring from the tapped button.
+  //   2) Sweep — an expanding circle in the DESTINATION theme's
+  //      --bg-elevated color fully covers the viewport, data-theme
+  //      flips underneath it, then it fades away.
+  //   3) Icon morph — sun/moon glyph rotates + blurs out, then in.
+  //   4) Depth-pulse — a brief whole-page blur timed to the flip.
   // ============================================================
   const THEME_KEY = "sf-theme";
 
@@ -257,6 +258,48 @@
   }
 
   // ============================================================
+  // Mobile nav (hamburger) — bound ONCE, by delegation.
+  //
+  // The header is persistent (outside #page-wrap), so per-page
+  // binding in initPage() stacked a new listener on every AJAX
+  // navigation — see FIX 1 at the top of this file. Delegation
+  // also means links injected into the menu later (the account
+  // block from auth.js) close the menu on tap automatically, and
+  // tapping outside the header while it's open closes it too.
+  // ============================================================
+  function bindMobileNav() {
+    function setOpen(open) {
+      const navToggle = document.getElementById("navToggle");
+      const navMobile = document.getElementById("navMobile");
+      if (!navToggle || !navMobile) return;
+      navMobile.classList.toggle("open", open);
+      navToggle.classList.toggle("active", open);
+      navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    document.addEventListener("click", (e) => {
+      const navMobile = document.getElementById("navMobile");
+      if (!navMobile) return;
+      const isOpen = navMobile.classList.contains("open");
+
+      if (e.target.closest("#navToggle")) {
+        setOpen(!isOpen);
+        return;
+      }
+      if (!isOpen) return;
+      if (e.target.closest("#navMobile a")) {
+        setOpen(false);
+        return;
+      }
+      if (!e.target.closest(".nav")) setOpen(false);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setOpen(false);
+    });
+  }
+
+  // ============================================================
   // Spoider Score panel: hold-to-reveal (mobile) / hover-to-reveal
   // (desktop), delegated on document.
   //
@@ -276,21 +319,18 @@
   // swallows the click that would otherwise follow, so the card's
   // affiliate link isn't triggered by the hold itself. A normal
   // quick tap is left completely alone and navigates as before.
-  //
-  // Bound once on document via delegation (same pattern as the
-  // tap-spark handler below), so newly injected cards — from any
-  // page's Supabase loader, including after an AJAX transition —
-  // work immediately with no rebinding.
   // ============================================================
   function bindSpoiderScorePanels() {
     const HOLD_MS = 260;
     const MOVE_CANCEL_PX = 10;
+    const SUPPRESS_WINDOW_MS = 500;
 
     let holdTimer = null;
     let holdCard = null;
     let startX = 0;
     let startY = 0;
     let suppressNextClick = false;
+    let suppressTimer = null;
 
     function activate(card) {
       document.querySelectorAll(".product-card.is-active").forEach((c) => {
@@ -363,6 +403,13 @@
         clearHold();
         if (wasRevealed) {
           suppressNextClick = true;
+          // If the browser never fires the follow-up click (common after a
+          // long-press), don't leave the flag armed — it would swallow the
+          // person's next, unrelated tap.
+          clearTimeout(suppressTimer);
+          suppressTimer = setTimeout(() => {
+            suppressNextClick = false;
+          }, SUPPRESS_WINDOW_MS);
           setTimeout(() => deactivate(card), 240);
         }
       },
@@ -377,6 +424,7 @@
       (e) => {
         if (suppressNextClick) {
           suppressNextClick = false;
+          clearTimeout(suppressTimer);
           e.preventDefault();
           e.stopPropagation();
         }
@@ -402,33 +450,25 @@
   //
   // Logs one row into Supabase's public.clicks table every time a
   // visitor taps/clicks an <a class="product-card">. Bound once on
-  // document via delegation (same pattern as the Spoider Score
-  // handler above), so it automatically covers every category page
-  // and every card injected later by any Supabase loader, including
-  // after an AJAX page transition — no per-page edits needed.
+  // document via delegation, so it automatically covers every
+  // category page and every card injected later by any Supabase
+  // loader, including after an AJAX page transition.
   //
   // Design notes:
-  //   - Uses a plain fetch() to Supabase's REST endpoint with
-  //     keepalive:true, so the request still completes even if the
-  //     browser navigates away right after the click. It doesn't
-  //     depend on the supabase-js library having loaded.
-  //   - Only the publishable key is sent (as the apikey header).
-  //     "Prefer: return=minimal" is required: the clicks table has
-  //     an INSERT-only RLS policy for anon, so asking Supabase to
-  //     return the inserted row would be rejected.
+  //   - Plain fetch() to Supabase's REST endpoint with keepalive:true,
+  //     so the request still completes even if the browser navigates
+  //     away right after the click. Doesn't depend on supabase-js.
+  //   - Only the publishable key is sent. "Prefer: return=minimal" is
+  //     required: the clicks table has an INSERT-only RLS policy for
+  //     anon, so asking Supabase to return the row would be rejected.
   //   - Every failure is swallowed. Tracking must NEVER slow down,
   //     block, or break the redirect to Amazon.
   //   - Clicks on the "Why this?" trigger, the panel close button,
-  //     and the wishlist heart are ignored (none of them are a
-  //     product visit), and so is the click that follows a
-  //     completed Spoider Score hold (that handler swallows it in
-  //     the capture phase before this one runs).
+  //     and the wishlist heart are ignored, and so is the click that
+  //     follows a completed Spoider Score hold.
   //   - A 1.5s per-card debounce avoids double-logging a double-tap.
   //   - Region is inferred from the page path: any page whose path
   //     contains "india" logs 'in', everything else logs 'us'.
-  //   - The product title (from the card's <h3>) is logged in
-  //     product_title. product_id is filled only if a card ever
-  //     carries a data-product-id attribute; otherwise it is null.
   // ============================================================
   function bindAffiliateClickTracking() {
     const CLICKS_URL = "https://gqnwinkddckytrfpnhng.supabase.co/rest/v1/clicks";
@@ -477,83 +517,65 @@
   // ============================================================
   // Wishlist heart — bottom-right of every product card, site-wide.
   //
-  // Bound once on document via delegation (same pattern as every
-  // other handler above), so any card injected by any page's
-  // Supabase loader — including after an AJAX transition — works
-  // immediately with no per-page rebinding. The heart's product id
-  // comes from data-heart-id on the button itself.
+  // Bound once on document via delegation, so any card injected by
+  // any page's Supabase loader — including after an AJAX
+  // transition — works immediately with no per-page rebinding. The
+  // heart's product id comes from data-heart-id on the button.
   //
   // Behavior:
-  //   - Signed out: tapping the heart starts Google sign-in
-  //     (redirects back to the same page). The tap itself isn't
-  //     queued/remembered — the person just taps the heart again
-  //     once they're back and signed in.
+  //   - Signed out: tapping the heart opens the site's "Join the
+  //     thread" sign-in modal (auth.js). The tap itself isn't
+  //     remembered — the person just taps the heart again once
+  //     they're back and signed in.
   //   - Signed in: optimistic toggle — the heart fills/empties and
   //     plays its pop + gold-ring animation immediately, then the
   //     row is inserted into (or deleted from) public.wishlist. If
   //     that call fails, the heart's visual state is reverted.
   //   - On every real page load and after every AJAX transition,
-  //     once the page's Supabase loader has rendered its cards, it
-  //     calls window.syncWishlistHearts() so hearts for products
-  //     already on the signed-in user's wishlist start out filled.
-  //   - Uses the supabase-js client (lazy-loaded once), not a plain
-  //     fetch, because inserting/deleting a row here is scoped to
-  //     the signed-in user via RLS (auth.uid() = user_id) and needs
-  //     an authenticated request, not just the anon key.
-  //   - The client shares the exact same auth storageKey
-  //     ("sf-user-auth") as the header's sign-in (auth.js), so a
-  //     visitor who signed in from the nav is correctly recognized
-  //     here too — see the fix note at the top of this file.
+  //     once the page's loader has rendered its cards, it calls
+  //     window.syncWishlistHearts() so hearts for products already
+  //     on the signed-in user's wishlist start out filled. If the
+  //     person signs out, every heart empties again.
+  //   - Uses the ONE Supabase client owned by auth.js
+  //     (window.SpoiderAuth.client). See FIX 3 at the top of this
+  //     file for why a second client is a bad idea.
   // ============================================================
   function bindWishlistHearts() {
-    const SUPABASE_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ";
-    let sbClient = null;
-    let libPromise = null;
-
-    function ensureLib() {
-      if (window.supabase && typeof window.supabase.createClient === "function") return Promise.resolve();
-      if (libPromise) return libPromise;
-      libPromise = new Promise((resolve) => {
-        const existing = document.querySelector("script[data-supabase-lib]");
-        if (existing) {
-          existing.addEventListener("load", resolve, { once: true });
-          return;
-        }
-        const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-        s.setAttribute("data-supabase-lib", "true");
-        s.onload = resolve;
-        document.head.appendChild(s);
+    // Waits (up to ~6s) for auth.js to finish creating its client.
+    function getAuthClient() {
+      return new Promise((resolve) => {
+        let tries = 0;
+        (function check() {
+          if (window.SpoiderAuth && window.SpoiderAuth.client) {
+            resolve(window.SpoiderAuth.client);
+            return;
+          }
+          if (++tries > 60) {
+            resolve(null);
+            return;
+          }
+          setTimeout(check, 100);
+        })();
       });
-      return libPromise;
-    }
-
-    function getSb() {
-      if (!sbClient) {
-        sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-          auth: {
-            storageKey: "sf-user-auth",
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: false,
-          },
-        });
-      }
-      return sbClient;
     }
 
     async function syncHeartsOnPage() {
       try {
-        await ensureLib();
-        const sb = getSb();
+        if (!document.querySelector(".wishlist-heart")) return;
+        const sb = await getAuthClient();
+        if (!sb) return;
         const {
           data: { session },
         } = await sb.auth.getSession();
-        if (!session) return;
 
+        // re-query AFTER the awaits — the page may have been swapped meanwhile
         const hearts = document.querySelectorAll(".wishlist-heart");
         if (!hearts.length) return;
+
+        if (!session) {
+          hearts.forEach((h) => h.classList.remove("is-wishlisted"));
+          return;
+        }
 
         const ids = Array.from(hearts)
           .map((h) => h.dataset.heartId)
@@ -562,11 +584,11 @@
 
         const res = await sb.from("wishlist").select("product_id").eq("user_id", session.user.id).in("product_id", ids);
         const owned = new Set((res.data || []).map((r) => String(r.product_id)));
-        hearts.forEach((h) => {
+        document.querySelectorAll(".wishlist-heart").forEach((h) => {
           h.classList.toggle("is-wishlisted", owned.has(String(h.dataset.heartId)));
         });
       } catch (err) {
-        /* sync is best-effort — hearts just stay outline if this fails */
+        /* sync is best-effort — hearts just stay as they are if this fails */
       }
     }
 
@@ -580,15 +602,16 @@
 
       (async () => {
         try {
-          await ensureLib();
-          const sb = getSb();
+          const sb = await getAuthClient();
+          if (!sb) return;
           const {
             data: { session },
           } = await sb.auth.getSession();
 
           if (!session) {
-            await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } });
-            heart.dataset.busy = "0";
+            if (window.SpoiderAuth && typeof window.SpoiderAuth.openModal === "function") {
+              window.SpoiderAuth.openModal();
+            }
             return;
           }
 
@@ -615,12 +638,23 @@
           }
         } catch (err) {
           /* never let a wishlist failure block the rest of the page */
+        } finally {
+          heart.dataset.busy = "0";
         }
-        heart.dataset.busy = "0";
       })();
     });
 
     window.syncWishlistHearts = syncHeartsOnPage;
+
+    // keep hearts in step with sign-in / sign-out done from the header
+    (function hookAuth(tries) {
+      if (window.SpoiderAuth && typeof window.SpoiderAuth.onChange === "function") {
+        window.SpoiderAuth.onChange(() => syncHeartsOnPage());
+        return;
+      }
+      if (tries < 60) setTimeout(() => hookAuth(tries + 1), 100);
+    })(0);
+
     syncHeartsOnPage();
   }
 
@@ -629,6 +663,7 @@
     globalBound = true;
 
     bindThemeToggle();
+    bindMobileNav();
     bindSpoiderScorePanels();
     bindAffiliateClickTracking();
     bindWishlistHearts();
@@ -690,17 +725,10 @@
 
     // ---- Global tap-spark: a restrained, premium micro-feedback on
     // interactive taps. A small radial gold spark spawns at the exact
-    // tap point and fades out — never a bounce, never a ripple that
-    // fills the element. Deliberately understated so it reads as
-    // polish, not decoration. Bound once on document via delegation,
+    // tap point and fades out. Bound once on document via delegation,
     // so it survives every AJAX page swap without rebinding. Skips
-    // .hero-mark-inner entirely — that element already has its own
-    // dedicated burst/flash treatment, and layering this on top would
-    // double up and look cheap. Also skips .theme-toggle — that has
-    // its own sweep transition and doesn't need the generic spark.
-    // Also skips .wishlist-heart — that has its own pop + burst
-    // animation, and layering the generic spark on top of it would
-    // double up in exactly the same way. ----
+    // .hero-mark-inner (own burst treatment), .theme-toggle (own sweep
+    // transition) and .wishlist-heart (own pop + burst animation). ----
     if (!prefersReducedMotion) {
       const sparkStyle = document.createElement("style");
       sparkStyle.textContent =
@@ -746,33 +774,17 @@
   // with the word rising up from below on reveal while resolving
   // from a soft blur + slight tilt into sharp focus (see the
   // matching .split-reveal CSS). Inline formatting elements (e.g.
-  // <em>, a colored <span>) are preserved on a PER-WORD basis: if
-  // <em>Multiple Words</em> appears inside a heading, each word
-  // gets its own mask/stagger, each still wrapped in its own
-  // <em> clone — so the italic styling survives, and the element
-  // is never accidentally treated as one giant animated word.
+  // <em>, a colored <span>) are preserved on a PER-WORD basis.
   //
-  // Motion tiers (element decides its own pace/feel via context —
-  // see the matching .split-reveal CSS tiers):
+  // Motion tiers (element decides its own pace/feel via context):
   //   .hero-title / anything inside .hero → dramatic, slow, spring
-  //   .eyebrow                             → restrained, fast, label-like
+  //   .eyebrow                             → restrained, fast
   //   <h3>                                 → very subtle, fast
-  //   everything else (section headings)   → the base, controlled tier
-  //
-  // Stagger timing (organic, not mechanical):
-  //   Delay follows a power curve — words start close together and
-  //   fan out slightly as the sequence progresses, reading like a
-  //   natural ripple rather than a metronome. Noticeably longer
-  //   words get a small extra beat so they don't feel rushed past.
-  //   Each tier has its own pace so a small label doesn't take as
-  //   long to resolve as the hero headline.
+  //   everything else (section headings)   → the base tier
   //
   // Trigger modes:
   //   data-trigger="load"  → reveals once, shortly after page load
   //   (default)             → reveals once, on scroll into view
-  //
-  // Whole-word transform/filter animation only (no per-character
-  // DOM, no opacity flicker) — safe and smooth on low-power devices.
   // ============================================================
   function getStaggerTier(el) {
     if (el.classList.contains("hero-title") || el.closest(".hero")) {
@@ -834,9 +846,9 @@
     }
 
     // Walks the original nodes, tracking the chain of inline formatting
-    // elements (e.g. [em] or [em, span.gold-text]) currently wrapping
-    // each piece of text, so every individual word can be masked and
-    // staggered while still carrying its formatting.
+    // elements currently wrapping each piece of text, so every
+    // individual word can be masked and staggered while still carrying
+    // its formatting.
     function walk(node, formatChain) {
       if (node.nodeType === Node.TEXT_NODE) {
         const parts = node.textContent.split(/(\s+)/).filter((p) => p.length > 0);
@@ -902,24 +914,14 @@
   // ============================================================
   // Hero web → category grid scroll transition
   //
-  // The hero's spider-web canvas (built in index.html's inline
-  // script) previously just switched on/off via its own
-  // IntersectionObserver, with no connection to what happened
-  // next on the page. This ties the two together: as the user
-  // scrolls from the hero into the Categories section, the web
-  // canvas fades and gently contracts, while each category card
-  // "catches" a thin gold thread line across its top edge, one
-  // card after another (a small stagger per card) — reading as
-  // the overhead web's threads landing into the grid below,
-  // rather than two disconnected sections.
-  //
-  // Driven by scroll position (smoothstepped, same pattern as
-  // the featured-card scroll-scale effect in index.html's inline
-  // script and the .thread SVG draw below) rather than a CSS
-  // transition, since the value needs to track scroll 1:1 every
-  // frame. No-ops safely on any page that doesn't have both a
-  // .web-canvas and a .category-grid (only index.html and
-  // india.html currently have the web canvas).
+  // As the user scrolls from the hero into the Categories section,
+  // the web canvas fades and gently contracts, while each category
+  // card "catches" a thin gold thread line across its top edge, one
+  // card after another — reading as the overhead web's threads
+  // landing into the grid below, rather than two disconnected
+  // sections. Driven by scroll position (smoothstepped). No-ops
+  // safely on any page that doesn't have both a .web-canvas and a
+  // .category-grid.
   // ============================================================
   function initHeroWebToGridThread() {
     if (prefersReducedMotion) return;
@@ -947,9 +949,7 @@
       const vh = window.innerHeight;
 
       // Progress window: starts once the grid's top edge climbs to
-      // 85% of viewport height (user is nearing the end of the
-      // hero), finishes once it reaches 40% (grid substantially in
-      // view). Mirrors the featured-card scale effect's approach.
+      // 85% of viewport height, finishes once it reaches 40%.
       const start = vh * 0.85;
       const end = vh * 0.4;
       const raw = (start - gridRect.top) / (start - end);
@@ -960,8 +960,7 @@
       canvas.style.opacity = (1 - progress).toFixed(3);
       canvas.style.transform = "scale(" + (1 - progress * 0.12).toFixed(3) + ")";
 
-      // Each card catches its thread a beat after the previous one,
-      // instead of all four lighting up at once.
+      // Each card catches its thread a beat after the previous one.
       cards.forEach((card, i) => {
         const staggerOffset = i * 0.12;
         const cardProgress = smoothstep((progress - staggerOffset) / (1 - staggerOffset));
@@ -1000,22 +999,13 @@
   // the two never race for control of the same DOM node.
   //
   // Counts every active product across BOTH regions (US + India
-  // combined) — no .eq('region', ...) filter. If you ever want a
-  // region-specific version on india.html, give that element a
-  // different id (e.g. stat-india-count) and add a filtered
-  // variant rather than reusing this one.
-  //
-  // curatedCountToken guards against a stale fetch landing after
-  // the user has already navigated away (SPA transition swapped
-  // #page-wrap, or navigated back to this same page again before
-  // the first fetch resolved) — the token is captured locally and
-  // checked before every DOM write and on every animation frame.
+  // combined). curatedCountToken guards against a stale fetch
+  // landing after the user has already navigated away.
   //
   // This is a public read-only count (no signed-in session
-  // needed), so — same fix as the Featured loader in index.html —
-  // the client explicitly disables session persistence/detection.
-  // Without this it would silently race auth.js for any Google
-  // OAuth redirect landing on the page.
+  // needed), so the client explicitly disables session
+  // persistence/detection — otherwise it could race auth.js for
+  // any Google OAuth redirect landing on the page.
   // ============================================================
   function initCuratedCountStat() {
     const el = document.getElementById("stat-curated-count");
@@ -1107,25 +1097,8 @@
     const yearEl = document.getElementById("year");
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    // ---- Mobile nav toggle ----
-    const navToggle = document.getElementById("navToggle");
-    const navMobile = document.getElementById("navMobile");
-
-    if (navToggle && navMobile) {
-      navToggle.addEventListener("click", () => {
-        const isOpen = navMobile.classList.toggle("open");
-        navToggle.classList.toggle("active", isOpen);
-        navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-      });
-
-      navMobile.querySelectorAll("a").forEach((link) => {
-        link.addEventListener("click", () => {
-          navMobile.classList.remove("open");
-          navToggle.classList.remove("active");
-          navToggle.setAttribute("aria-expanded", "false");
-        });
-      });
-    }
+    // (Mobile nav toggle used to be bound here — it now lives in
+    // bindMobileNav(), bound once. See FIX 1 at the top of the file.)
 
     // ---- Product image shimmer ----
     document.querySelectorAll(".product-image").forEach((wrapper) => {
@@ -1353,9 +1326,9 @@
 
     // ---- Wishlist hearts: mark already-wishlisted products filled
     // for any cards that are already in the DOM at this point (a
-    // Supabase loader's own render call is still the primary trigger
-    // — see loadFeatured()/loadProducts() — but this covers the
-    // rare case of static/pre-rendered cards on a page). ----
+    // page loader's own render call is still the primary trigger —
+    // see loadFeatured()/loadProducts() — but this covers the rare
+    // case of static/pre-rendered cards on a page). ----
     if (window.syncWishlistHearts) window.syncWishlistHearts();
   }
 
