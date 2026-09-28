@@ -6,32 +6,41 @@
 // survives every transition. Injects its own styles and its own
 // markup:
 //   - desktop (>= 761px): pill in the header; avatar + account
-//     popover once signed in
+//     popover once signed in (popover now has a "View profile" link)
 //   - mobile (<= 760px): the header has no spare room, so the
-//     entry sits at the top of the hamburger menu
+//     entry sits at the top of the hamburger menu; once signed in
+//     the avatar + name there is itself the link to the profile page
 //
 // v3: clicking the sign-in entry (desktop pill or mobile button)
 // opens a "Join the thread" modal — a small illustrated night
-// scene (moon halo, hills, lantern, twinkling stars) above the
-// actual "Continue with Google" action — instead of firing the
-// OAuth redirect immediately. The scene now has one orchestrated
-// entrance moment (staggered content reveal + a gold burst off
-// the moon + a single shooting star) plus a quiet ambient loop
-// (rising embers off the lantern), and the Google button carries
-// a premium hover shine. Colors/fonts are pulled straight from
-// style.css's design tokens (--gold, --bg-elevated, Fraunces/
-// Inter/Space Mono), so it can never drift from the rest of the
-// site. The scene itself stays dark regardless of the site's
-// light/dark toggle (a night illustration in "light mode" reads
-// wrong); the card shell (text, border) still follows the theme.
+// scene above the actual "Continue with Google" action — instead
+// of firing the OAuth redirect immediately.
+//
+// v4 (this version):
+//   - Any hardcoded "My Profile" link found in a page's mobile menu
+//     is removed on mount. The profile icon in the header and the
+//     account block below already cover it, and pages that still
+//     carry the old link no longer need to be edited one by one.
+//   - window.SpoiderAuth.onChange() now returns an unsubscribe
+//     function (page scripts used to pile up subscribers forever).
+//   - window.SpoiderAuth.refreshProfile() re-reads the profile row so
+//     the header name/avatar update right after an edit on the
+//     profile page.
+//   - Modal moves focus to the Google button on open and gives it
+//     back to whatever had it on close.
+//
+// This is THE Supabase auth client for the whole site. Other
+// scripts (script.js wishlist hearts, profile.html) reuse
+// window.SpoiderAuth.client instead of creating their own on the
+// same storage key — two clients refreshing one rotating refresh
+// token can randomly sign a visitor out.
 //
 // The visitor session lives under its own storage key
-// ("sf-user-auth") on purpose: other Supabase clients on the site
-// (page loaders, admin panel) never see or touch it, and it can
-// never mix with the admin session.
+// ("sf-user-auth") on purpose: it can never mix with the admin
+// session.
 //
-// Hooks for later features (profiles, "I own this"):
-//   window.SpoiderAuth.client / .getUser() / .onChange(fn)
+// Hooks: window.SpoiderAuth.client / .getUser() / .onChange(fn)
+//        / .refreshProfile() / .openModal() / .closeModal()
 // ============================================================
 
 (function () {
@@ -55,11 +64,16 @@
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>';
 
+  var USER_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg>';
+
   var client = null;
   var state = { user: null, profile: null, busy: false };
   var subscribers = [];
   var refs = { wrap: null, mobile: null, modalBackdrop: null };
   var toastTimer = null;
+  var lastFocus = null;
 
   // ---------- styles ----------
   function injectStyles() {
@@ -87,6 +101,10 @@
 .auth-pop-text{min-width:0;}
 .auth-pop-name{display:block;font-family:var(--font-display);font-weight:500;font-size:1.05rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .auth-pop-mail{display:block;margin-top:3px;font-size:.76rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.auth-pop-link{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 14px;margin-bottom:8px;border-radius:999px;background:var(--gold-dim);border:1px solid rgba(201,168,118,.3);color:var(--gold-bright);font-family:var(--font-body);font-weight:500;font-size:.85rem;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:background .25s var(--ease),border-color .25s var(--ease),transform .2s var(--ease);}
+.auth-pop-link svg{width:15px;height:15px;display:block;}
+.auth-pop-link:hover{background:rgba(201,168,118,.24);border-color:var(--gold);}
+.auth-pop-link:active{transform:scale(.96);}
 .auth-out{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 14px;border-radius:999px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:var(--font-body);font-weight:500;font-size:.85rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .25s var(--ease),color .25s var(--ease),background .25s var(--ease),transform .2s var(--ease);}
 .auth-out svg{width:15px;height:15px;display:block;}
 .auth-out:hover{border-color:var(--gold-dim);color:var(--gold-bright);background:var(--surface-hover);}
@@ -96,9 +114,11 @@
 .auth-mobile-btn:active{transform:scale(.97);box-shadow:0 0 24px -2px rgba(201,168,118,.7);}
 .auth-mobile-btn .auth-spin{border-color:rgba(10,10,11,.2);border-top-color:#0a0a0b;}
 .auth-mobile-user{display:flex;align-items:center;gap:12px;}
+.auth-mobile-link{display:flex;align-items:center;gap:12px;flex:1;min-width:0;color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent;}
+.auth-mobile-link:active .auth-mobile-name{color:var(--gold-bright);}
 .auth-mobile-av{width:42px;height:42px;border-radius:50%;overflow:hidden;flex-shrink:0;border:1px solid var(--gold-dim);}
 .auth-mobile-text{flex:1;min-width:0;}
-.auth-mobile-name{display:block;font-family:var(--font-display);font-weight:500;font-size:1rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.auth-mobile-name{display:block;font-family:var(--font-display);font-weight:500;font-size:1rem;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s var(--ease);}
 .auth-mobile-mail{display:block;margin-top:2px;font-size:.74rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .auth-mobile-out{flex-shrink:0;padding:8px 16px;border-radius:999px;background:transparent;border:1px solid var(--border);color:var(--text-secondary);font-family:var(--font-body);font-weight:500;font-size:.8rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .25s var(--ease),color .25s var(--ease),transform .2s var(--ease);}
 .auth-mobile-out:active{transform:scale(.95);border-color:var(--gold);color:var(--gold);}
@@ -113,15 +133,9 @@
    above the real Google sign-in action. Every color/font here
    is a design-token var from style.css, so it can never drift
    out of sync with the rest of the site. The scene panel itself
-   is intentionally NOT theme-reactive (see note above) — it's a
-   fixed night illustration, like a piece of brand art, while the
-   card shell around it (text/border) still follows light/dark.
-
-   One orchestrated entrance moment on open: the card tilts in,
-   content reveals in a short stagger, the moon fires a single
-   gold burst ring, and a shooting star crosses a beat later.
-   Everything else (embers off the lantern) is a quiet ambient
-   loop so the scene doesn't feel static while the modal sits open.
+   is intentionally NOT theme-reactive — it's a fixed night
+   illustration, like a piece of brand art, while the card shell
+   around it (text/border) still follows light/dark.
    ========================================================= */
 .auth-modal-backdrop{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:6vh 20px;padding-top:calc(6vh + env(safe-area-inset-top,0px));padding-bottom:calc(6vh + env(safe-area-inset-bottom,0px));background:rgba(4,3,2,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s var(--ease),visibility 0s linear .3s;perspective:1200px;}
 .auth-modal-backdrop.is-open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .3s var(--ease);}
@@ -317,6 +331,7 @@
           '<span class="auth-pop-av">' + avatarMarkup(id) + "</span>" +
           '<span class="auth-pop-text"><span class="auth-pop-name">' + esc(id.name) + '</span><span class="auth-pop-mail">' + esc(id.email) + "</span></span>" +
         "</div>" +
+        '<a class="auth-pop-link" href="profile.html" role="menuitem">' + USER_ICON + "View profile</a>" +
         '<button class="auth-out" type="button" role="menuitem" data-auth="signout">' + OUT_ICON + "Sign out</button>" +
       "</div>";
     wireAvatars(refs.wrap);
@@ -331,8 +346,10 @@
     }
     refs.mobile.innerHTML =
       '<div class="auth-mobile-user">' +
-        '<span class="auth-mobile-av">' + avatarMarkup(id) + "</span>" +
-        '<span class="auth-mobile-text"><span class="auth-mobile-name">' + esc(id.name) + '</span><span class="auth-mobile-mail">' + esc(id.email) + "</span></span>" +
+        '<a class="auth-mobile-link" href="profile.html" aria-label="Open your profile">' +
+          '<span class="auth-mobile-av">' + avatarMarkup(id) + "</span>" +
+          '<span class="auth-mobile-text"><span class="auth-mobile-name">' + esc(id.name) + '</span><span class="auth-mobile-mail">' + esc(id.email) + "</span></span>" +
+        "</a>" +
         '<button class="auth-mobile-out" type="button" data-auth="signout">Sign out</button>' +
       "</div>";
     wireAvatars(refs.mobile);
@@ -357,9 +374,11 @@
   }
 
   function notify() {
-    for (var i = 0; i < subscribers.length; i++) {
+    // iterate over a copy — a subscriber may unsubscribe while we're looping
+    var list = subscribers.slice();
+    for (var i = 0; i < list.length; i++) {
       try {
-        subscribers[i](state.user);
+        list[i](state.user);
       } catch (e) {}
     }
   }
@@ -423,12 +442,23 @@
   function openModal() {
     if (identity()) return; // already signed in — nothing to open
     if (!refs.modalBackdrop) return;
+    lastFocus = document.activeElement;
     renderModalGoogleBtn();
     refs.modalBackdrop.classList.add("is-open");
+    setTimeout(function () {
+      var g = refs.modalBackdrop && refs.modalBackdrop.querySelector(".auth-modal-google");
+      if (g && isModalOpen()) g.focus({ preventScroll: true });
+    }, 350);
   }
   function closeModal() {
     if (!refs.modalBackdrop) return;
     refs.modalBackdrop.classList.remove("is-open");
+    if (lastFocus && typeof lastFocus.focus === "function") {
+      try {
+        lastFocus.focus({ preventScroll: true });
+      } catch (e) {}
+    }
+    lastFocus = null;
   }
 
   // ---------- auth actions ----------
@@ -551,6 +581,14 @@
     }
     var mob = document.getElementById("navMobile") || document.querySelector(".nav-mobile");
     if (mob && !document.getElementById("sfAuthMobile")) {
+      // Older pages carry a hardcoded "👤 My Profile" link in this menu.
+      // The header already has the profile icon, and the account block
+      // added below links to the profile once signed in — so drop it.
+      var dupes = mob.querySelectorAll('a[href$="profile.html"]');
+      for (var d = 0; d < dupes.length; d++) {
+        if (dupes[d].parentNode) dupes[d].parentNode.removeChild(dupes[d]);
+      }
+
       var m = document.createElement("div");
       m.className = "auth-mobile";
       m.id = "sfAuthMobile";
@@ -591,7 +629,9 @@
         else if (action === "toggle") setPop(!isPopOpen());
         return;
       }
-      if (isPopOpen() && !e.target.closest(".auth-pop")) setPop(false);
+      // tapping "View profile" in the popover should close it
+      if (e.target.closest(".auth-pop-link")) setPop(false);
+      else if (isPopOpen() && !e.target.closest(".auth-pop")) setPop(false);
     });
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
@@ -614,8 +654,19 @@
     getUser: function () {
       return state.user;
     },
+    // returns an unsubscribe function
     onChange: function (fn) {
-      if (typeof fn === "function") subscribers.push(fn);
+      if (typeof fn !== "function") return function () {};
+      subscribers.push(fn);
+      return function () {
+        var i = subscribers.indexOf(fn);
+        if (i > -1) subscribers.splice(i, 1);
+      };
+    },
+    // re-read the profile row (e.g. after the person edits it) so the
+    // header name/avatar update immediately
+    refreshProfile: function () {
+      if (client && state.user) loadProfile(state.user.id);
     },
     signIn: signIn,
     signOut: signOut,
