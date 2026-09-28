@@ -666,7 +666,7 @@
       var timers = [];
       var authSub = null;
       var bootSeq = 0;           // latest boot() wins
-      var state = { sb: null, profile: null, isOwn: false, shown: false, owned: [], wish: [], ownedErr: false, wishErr: false };
+      var state = { sb: null, uid: null, profile: null, isOwn: false, shown: false, owned: [], wish: [], ownedErr: false, wishErr: false };
       var seq = { owned: 0, wish: 0, addOwned: 0, addWish: 0 };
       var found = { owned: {}, wish: {} };
 
@@ -742,27 +742,22 @@
         })(t0);
       }
 
-      // ---- one shared Supabase client for the whole session. Creating a new
-      // one on every visit (old behaviour) meant several clients fighting
-      // over the same 'sf-user-auth' storage key.
-      function getClient() {
-        if (!window.__sfProfileSb) {
-          window.__sfProfileSb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            auth: { storageKey: 'sf-user-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-          });
-        }
-        return window.__sfProfileSb;
-      }
-
-      function ensureSupabaseLib(cb) {
-        if (window.supabase && typeof window.supabase.createClient === 'function') { cb(); return; }
-        var existing = document.querySelector('script[data-supabase-lib]');
-        if (existing) { existing.addEventListener('load', cb, { once: true }); return; }
-        var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-        s.setAttribute('data-supabase-lib', 'true');
-        s.onload = cb;
-        document.head.appendChild(s);
+      // ---- This page does NOT create its own Supabase client any more.
+      // auth.js already owns the one real client (PKCE, auto-refresh, OAuth
+      // redirect handling). A second client on the same 'sf-user-auth' key
+      // means two things refreshing the same rotating refresh token, which
+      // can randomly sign the person out. So we wait for auth.js's client
+      // and reuse it. Its getSession() also resolves only AFTER a Google
+      // redirect has been processed, so the old "flash of sign-in card"
+      // race can't happen either.
+      function waitForAuthClient(cb) {
+        var tries = 0;
+        (function check() {
+          if (!alive) return;
+          if (window.SpoiderAuth && window.SpoiderAuth.client) { cb(window.SpoiderAuth.client); return; }
+          if (++tries > 80) { cb(null); return; }
+          later(check, 100);
+        })();
       }
 
       // =============== views ===============
@@ -828,6 +823,7 @@
         var sessionRes = await sb.auth.getSession();
         if (!alive || my !== bootSeq) return;
         var user = sessionRes.data && sessionRes.data.session ? sessionRes.data.session.user : null;
+        state.uid = user ? user.id : null;
 
         var profile = null;
         if (target) {
@@ -851,17 +847,15 @@
       // Google OAuth redirect is consumed by auth.js, which can finish AFTER
       // this page already checked the session and (wrongly) showed the
       // sign-in card. Listen for it and simply boot again.
+      // Follow the header's auth state (sign in / sign out / account switch)
+      // through auth.js instead of a second auth listener of our own.
       function watchAuth() {
-        var r = state.sb.auth.onAuthStateChange(function (event) {
+        if (!window.SpoiderAuth || typeof window.SpoiderAuth.onChange !== 'function') return;
+        authSub = window.SpoiderAuth.onChange(function (user) {
           if (!alive) return;
-          if (event === 'SIGNED_IN' && !state.shown) {
-            setTimeout(function () { if (alive) boot(); }, 0);
-          } else if (event === 'SIGNED_OUT' && state.isOwn) {
-            state.isOwn = false; state.profile = null;
-            setTimeout(function () { if (alive) boot(); }, 0);
-          }
+          var uid = user ? user.id : null;
+          if (uid !== state.uid) setTimeout(function () { if (alive) boot(); }, 0);
         });
-        authSub = r && r.data && r.data.subscription;
       }
 
       // =============== header ===============
@@ -980,6 +974,7 @@
         renderHeader();
         closeEdit();
         say('Saved ✓', 2000);
+        if (window.SpoiderAuth && window.SpoiderAuth.refreshProfile) window.SpoiderAuth.refreshProfile();
       }
 
       // =============== share ===============
@@ -1175,7 +1170,7 @@
 
       function init() {
         el('pfGoogleBtn').addEventListener('click', function () {
-          state.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href.split('#')[0] } });
+          if (window.SpoiderAuth && window.SpoiderAuth.openModal) window.SpoiderAuth.openModal();
         });
 
         el('pfEditBtn').addEventListener('click', openEdit);
@@ -1231,7 +1226,7 @@
         alive = false;
         timers.forEach(clearTimeout);
         window.removeEventListener('resize', onResize);
-        if (authSub) { try { authSub.unsubscribe(); } catch (e) {} }
+        if (typeof authSub === 'function') { try { authSub(); } catch (e) {} }
       }
       function register() {
         if (window.SpoiderPage && window.SpoiderPage.onCleanup) { window.SpoiderPage.onCleanup(cleanup); return true; }
@@ -1239,12 +1234,18 @@
       }
       if (!register()) window.addEventListener('load', register, { once: true });
 
-      ensureSupabaseLib(function () {
+      init();
+      waitForAuthClient(function (client) {
         if (!alive || !root.isConnected) return;
-        state.sb = getClient();
-        init();
-        watchAuth();
-        boot();
+        if (!client) {
+          showSignin('signedout');
+          el('pfSigninMsg').textContent = "Couldn't load sign-in. Refresh the page and try again.";
+          el('pfGoogleBtn').hidden = true;
+          el('pfHomeBtn').hidden = false;
+          return;
+        }
+        state.sb = client;
+        boot().then(function () { if (alive) watchAuth(); });
       });
     })();
     </script>
