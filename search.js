@@ -10,6 +10,15 @@
 //
 // Bound once globally (nav lives outside #page-wrap and is never
 // swapped), so no per-page re-init needed.
+//
+// v2: added a "Products / People" segmented toggle inside the same
+// overlay — same search icon, same field, same results list. People
+// mode searches public.profiles (username/display_name) and links
+// straight to profile.html?u=... . This is the whole profile
+// discovery surface: no second search icon, no new page, no clutter
+// on product cards. Always resets to Products on open, since that's
+// the primary intent of the icon. Its styles are self-contained
+// (injected here) so this file doesn't depend on style.css changes.
 // ============================================================
 (function () {
   "use strict";
@@ -51,8 +60,9 @@
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var supportsHoverFine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
-  var overlay, input, resultsEl, regionTag, closeBtn, toggleBtn;
+  var overlay, input, resultsEl, regionTag, closeBtn, toggleBtn, modeToggleEl;
   var isOpen = false;
+  var searchMode = "products"; // "products" | "people" — always reset to products on open
   var searchToken = 0;
   var debounceTimer = null;
   var keynavIndex = -1;
@@ -127,8 +137,33 @@
     document.head.appendChild(s);
   }
 
+  // ---------- self-contained styles for the People tab ----------
+  // Kept separate from style.css on purpose: this file should work
+  // by itself. Every color/font is a var() already defined globally
+  // by style.css, so it stays perfectly on-theme (dark/light both).
+  function injectPeopleStyles() {
+    if (document.getElementById("sf-search-people-styles")) return;
+    var css =
+      ".search-mode-toggle{position:relative;display:inline-flex;align-self:center;margin-top:14px;padding:3px;background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:999px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}" +
+      "html[data-theme=\"light\"] .search-mode-toggle{background:rgba(0,0,0,.02);}" +
+      ".search-mode-btn{position:relative;z-index:1;padding:8px 20px;border:none;background:none;font-family:var(--font-body);font-weight:500;font-size:.82rem;color:var(--text-secondary);cursor:pointer;border-radius:999px;-webkit-tap-highlight-color:transparent;transition:color .35s var(--ease,ease);}" +
+      ".search-mode-btn.is-active{color:#0a0a0b;}" +
+      ".search-mode-btn:active{transform:scale(.96);}" +
+      ".search-mode-ind{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:999px;background:linear-gradient(120deg,var(--gold-bright),var(--gold));box-shadow:0 6px 16px -6px rgba(201,168,118,.65);transition:transform .45s var(--ease-spring,ease),width .45s var(--ease-spring,ease);z-index:0;}" +
+      ".search-person-avatar{border-radius:50%!important;}" +
+      ".search-person-avatar img{border-radius:50%;}" +
+      ".search-person-initial{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:1rem;color:var(--gold-bright);background:var(--gold-dim);position:relative;z-index:2;}" +
+      ".search-person-handle{text-transform:none!important;}" +
+      ".search-suggest-desc{font-size:.82rem;color:var(--text-muted);margin-top:4px;}";
+    var el = document.createElement("style");
+    el.id = "sf-search-people-styles";
+    el.textContent = css;
+    document.head.appendChild(el);
+  }
+
   function buildOverlay() {
     if (document.getElementById("searchOverlay")) return;
+    injectPeopleStyles();
 
     var wrap = document.createElement("div");
     wrap.innerHTML =
@@ -144,6 +179,11 @@
             '<input type="text" class="search-input" id="searchInput" placeholder="Search for a find…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list" aria-haspopup="listbox">' +
             '<span class="search-region-tag" id="searchRegionTag"></span>' +
           '</div>' +
+          '<div class="search-mode-toggle" id="searchModeToggle" role="tablist" aria-label="Search type">' +
+            '<button type="button" class="search-mode-btn is-active" data-mode="products" role="tab" aria-selected="true">Products</button>' +
+            '<button type="button" class="search-mode-btn" data-mode="people" role="tab" aria-selected="false">People</button>' +
+            '<span class="search-mode-ind" aria-hidden="true"></span>' +
+          '</div>' +
         '</div>' +
         '<div class="search-results" id="searchResults" role="listbox" aria-live="polite" aria-label="Search results"></div>' +
       '</div>';
@@ -154,12 +194,50 @@
     resultsEl = document.getElementById("searchResults");
     regionTag = document.getElementById("searchRegionTag");
     closeBtn = document.getElementById("searchClose");
+    modeToggleEl = document.getElementById("searchModeToggle");
 
     closeBtn.addEventListener("click", function () { closeSearch(); });
     overlay.addEventListener("click", function (e) {
       if (e.target === overlay) closeSearch();
     });
     input.addEventListener("input", onInput);
+    modeToggleEl.addEventListener("click", function (e) {
+      var b = e.target.closest(".search-mode-btn");
+      if (!b) return;
+      setSearchMode(b.getAttribute("data-mode"));
+    });
+  }
+
+  // ---------- mode toggle ----------
+  function updateModeUI(mode, instant) {
+    if (!modeToggleEl) return;
+    var btns = modeToggleEl.querySelectorAll(".search-mode-btn");
+    var ind = modeToggleEl.querySelector(".search-mode-ind");
+    var active = null;
+    btns.forEach(function (b) {
+      var on = b.getAttribute("data-mode") === mode;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      if (on) active = b;
+    });
+    if (!ind || !active) return;
+    if (instant) ind.style.transition = "none";
+    ind.style.width = active.offsetWidth + "px";
+    ind.style.transform = "translateX(" + active.offsetLeft + "px)";
+    if (instant) { void ind.offsetWidth; ind.style.transition = ""; }
+  }
+
+  function setSearchMode(mode) {
+    if (mode === searchMode) return;
+    searchMode = mode;
+    updateModeUI(mode, false);
+    input.value = "";
+    input.placeholder = mode === "people" ? "Search by name or @username…" : "Search for a find…";
+    input.setAttribute("aria-label", mode === "people" ? "Search for a member" : "Search for a find");
+    if (regionTag) regionTag.hidden = mode === "people";
+    if (mode === "people") renderPeopleIdle();
+    else renderSuggestions();
+    if (supportsHoverFine) input.focus({ preventScroll: true });
   }
 
   // Sparse, slow-drifting gold particles behind the search bar —
@@ -207,13 +285,22 @@
     isOpen = true;
     document.body.style.overflow = "hidden";
     regionTag.textContent = currentRegion() === "india" ? "🇮🇳 IN" : "🇺🇸 US";
+    regionTag.hidden = false;
     overlay.style.visibility = "visible";
     input.setAttribute("aria-expanded", "true");
     buildParticles();
 
+    // The icon always opens into product search — People is a
+    // deliberate switch, not something that should linger from a
+    // previous visit and surprise someone the next time they tap it.
+    searchMode = "products";
+    input.placeholder = "Search for a find…";
+    input.setAttribute("aria-label", "Search for a find");
+
     if (prefersReducedMotion) {
       setClip(150, ox, oy);
       overlay.classList.add("is-open");
+      updateModeUI("products", true);
       renderSuggestions();
       // Auto-focus only on fine-pointer (desktop/mouse) devices. On
       // touch, focusing immediately pops the keyboard mid-render,
@@ -231,6 +318,7 @@
 
     setTimeout(function () {
       overlay.classList.add("is-open");
+      updateModeUI("products", true);
       renderSuggestions();
       if (supportsHoverFine) input.focus();
     }, 320);
@@ -320,6 +408,18 @@
     prepareNavItems();
   }
 
+  // Idle state for the People tab — same visual language as the
+  // category chips (centered label), just no chips since there's no
+  // "trending profiles" concept yet.
+  function renderPeopleIdle() {
+    resultsEl.innerHTML =
+      '<div class="search-suggest">' +
+        '<p class="search-suggest-label">Find a Spoider member</p>' +
+        '<p class="search-suggest-desc">Type a name or @username to see their shelf.</p>' +
+      "</div>";
+    prepareNavItems();
+  }
+
   // Same lazy-shimmer pattern used on the main product grids
   // (watchImagesForLoad in index.html / category pages) — keeps
   // the search results visually consistent with the rest of the site.
@@ -333,6 +433,22 @@
         img.addEventListener("load", function () { wrapper.classList.add("img-loaded"); });
         img.addEventListener("error", function () { wrapper.classList.add("img-loaded"); });
       }
+    });
+  }
+
+  function animateResultRowsIn() {
+    var rows = resultsEl.querySelectorAll(".search-result");
+    rows.forEach(function (row, i) {
+      if (prefersReducedMotion) {
+        row.classList.add("is-in");
+        return;
+      }
+      // Staggered "burst into place" reveal — see .search-result /
+      // .is-in / @keyframes searchResultBurst in style.css.
+      row.style.animationDelay = (i * 0.06).toFixed(2) + "s";
+      requestAnimationFrame(function () {
+        row.classList.add("is-in");
+      });
     });
   }
 
@@ -369,19 +485,92 @@
 
     watchResultImages();
     prepareNavItems();
+    animateResultRowsIn();
+  }
 
-    var rows = resultsEl.querySelectorAll(".search-result");
-    rows.forEach(function (row, i) {
-      if (prefersReducedMotion) {
-        row.classList.add("is-in");
-        return;
-      }
-      // Staggered "burst into place" reveal — see .search-result /
-      // .is-in / @keyframes searchResultBurst in style.css.
-      row.style.animationDelay = (i * 0.06).toFixed(2) + "s";
-      requestAnimationFrame(function () {
-        row.classList.add("is-in");
-      });
+  // ---------- People search (profile discovery) ----------
+  // Same overlay, same field, same result row shape as products —
+  // just a different Supabase table and a real internal link
+  // (profile.html?u=...) instead of an affiliate href.
+  function personAvatarMarkup(p) {
+    var name = p.display_name || p.username || "?";
+    var initial = escapeHtml(String(name).trim().charAt(0).toUpperCase() || "?");
+    if (!p.avatar_url) return '<span class="search-person-initial">' + initial + "</span>";
+    return (
+      '<img src="' + escapeHtml(p.avatar_url) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback-initial="' + initial + '">'
+    );
+  }
+
+  // Google avatar URLs can fail to load — fall back to the initial,
+  // same pattern auth.js uses for the header avatar.
+  function wirePersonAvatars() {
+    resultsEl.querySelectorAll(".search-person-avatar img").forEach(function (img) {
+      img.addEventListener(
+        "error",
+        function () {
+          var span = document.createElement("span");
+          span.className = "search-person-initial";
+          span.textContent = img.getAttribute("data-fallback-initial") || "?";
+          if (img.parentNode) img.parentNode.replaceChild(span, img);
+        },
+        { once: true }
+      );
+    });
+  }
+
+  function renderPeopleResults(data, query) {
+    lastResultsData = data;
+    lastQuery = query;
+    if (!data.length) {
+      resultsEl.innerHTML = '<p class="search-state">No members match "' + escapeHtml(query) + '".</p>';
+      prepareNavItems();
+      return;
+    }
+
+    resultsEl.innerHTML = data
+      .map(function (p) {
+        var name = escapeHtml(p.display_name || p.username);
+        return (
+          '<a href="profile.html?u=' + encodeURIComponent(p.username) + '" class="search-result search-result--person">' +
+            '<span class="search-result-image search-person-avatar">' + personAvatarMarkup(p) + "</span>" +
+            '<span class="search-result-body">' +
+              '<span class="search-result-title">' + name + "</span>" +
+              '<span class="search-result-tag search-person-handle">@' + escapeHtml(p.username) + "</span>" +
+            "</span>" +
+            '<span class="search-result-arrow">→</span>' +
+          "</a>"
+        );
+      })
+      .join("");
+
+    watchResultImages();
+    wirePersonAvatars();
+    prepareNavItems();
+    animateResultRowsIn();
+  }
+
+  function runPeopleSearch(query) {
+    var myToken = ++searchToken;
+    lastQuery = query;
+    renderState("Searching…");
+
+    ensureSupabaseLib(function () {
+      if (myToken !== searchToken) return;
+      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      var safeQ = query.replace(/[\\%_]/g, "\\$&");
+      sb.from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .not("username", "is", null)
+        .or("username.ilike.%" + safeQ + "%,display_name.ilike.%" + safeQ + "%")
+        .limit(12)
+        .then(function (res) {
+          if (myToken !== searchToken) return;
+          if (res.error) {
+            renderError(query);
+            return;
+          }
+          renderPeopleResults(res.data || [], query);
+        });
     });
   }
 
@@ -393,6 +582,8 @@
   // Category pages / Featured elsewhere on the site still go
   // straight to Amazon on tap — this pattern is search-only, by
   // design, since search is where someone is still deciding.
+  // People-mode results are plain links to profile.html and never
+  // go through Quick View.
   // =========================================================
   function scoreBarRow(label, val) {
     var v = Number(val) || 0;
@@ -550,7 +741,10 @@
     var btn = document.getElementById("searchRetryBtn");
     if (btn) {
       btn.addEventListener("click", function () {
-        if (lastQuery) runSearch(lastQuery);
+        if (lastQuery) {
+          if (searchMode === "people") runPeopleSearch(lastQuery);
+          else runSearch(lastQuery);
+        }
       });
     }
   }
@@ -586,14 +780,18 @@
     clearTimeout(debounceTimer);
     if (q.length < 2) {
       if (q.length === 0) {
-        renderSuggestions();
+        if (searchMode === "people") renderPeopleIdle();
+        else renderSuggestions();
       } else {
         resultsEl.innerHTML = "";
         prepareNavItems();
       }
       return;
     }
-    debounceTimer = setTimeout(function () { runSearch(q); }, 300);
+    debounceTimer = setTimeout(function () {
+      if (searchMode === "people") runPeopleSearch(q);
+      else runSearch(q);
+    }, 300);
   }
 
   function bindMagnetic(btn) {
@@ -651,13 +849,13 @@
       }
     });
 
-    // A result tap opens Quick View instead of leaving the site —
-    // only a genuine "open in new tab" gesture (middle-click, or a
-    // modifier held down) is left to the browser's default handling
-    // of the real affiliate href underneath.
+    // A product result tap opens Quick View instead of leaving the
+    // site. A person result (no data-product-id — it's a real link
+    // to profile.html) is left completely alone here so its normal
+    // navigation goes through.
     document.addEventListener("click", function (e) {
       var result = e.target.closest(".search-result");
-      if (result && resultsEl && resultsEl.contains(result)) {
+      if (result && resultsEl && resultsEl.contains(result) && result.dataset.productId) {
         if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
         openQuickView(productCache[result.dataset.productId]);
@@ -669,18 +867,19 @@
       }
     });
 
-    // Category chips and the Quick View's "View on Amazon" button are
-    // the only things left that actually navigate away from the page
-    // without the overlay being closed first — so if the browser
-    // bfcaches this page (or the back button restores it), the
-    // snapshot would otherwise be frozen mid-open (body scroll
-    // locked, overlay expanded), which is what looked "broken" on
-    // return. Force an instant, unanimated close the moment either
-    // is tapped, and again on pagehide as a second safety net.
+    // Category chips, the Quick View's "View on Amazon" button, and
+    // a person result (a real navigation to profile.html) are the
+    // things left that actually leave/transition the page without
+    // the overlay being closed first — so if the browser bfcaches
+    // this page (or the back button restores it), the snapshot would
+    // otherwise be frozen mid-open (body scroll locked, overlay
+    // expanded), which is what looked "broken" on return. Force an
+    // instant, unanimated close the moment any of these is tapped,
+    // and again on pagehide as a second safety net.
     document.addEventListener(
       "click",
       function (e) {
-        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn, .qv-body")) {
+        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn, .qv-body, .search-result--person")) {
           hardResetOverlay();
         }
       },
