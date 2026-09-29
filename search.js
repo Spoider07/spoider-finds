@@ -19,6 +19,16 @@
 // on product cards. Always resets to Products on open, since that's
 // the primary intent of the icon. Its styles are self-contained
 // (injected here) so this file doesn't depend on style.css changes.
+//
+// v3 (this version): tapping a person result now forces a REAL
+// page load (window.location.assign) instead of going through the
+// site's AJAX page-transition. The AJAX swap was landing people on
+// their OWN profile instead of the one they tapped (the ?u=
+// username was lost by the time profile.html's script read the
+// URL). A full load always starts with the correct URL, so
+// profile.html always sees ?u=... . The listener is attached on
+// window in the CAPTURE phase so it runs before any other click
+// handler (including transitions.js) can hijack the link.
 // ============================================================
 (function () {
   "use strict";
@@ -230,6 +240,7 @@
   function setSearchMode(mode) {
     if (mode === searchMode) return;
     searchMode = mode;
+    quickViewOpen = false;
     updateModeUI(mode, false);
     input.value = "";
     input.placeholder = mode === "people" ? "Search by name or @username…" : "Search for a find…";
@@ -556,8 +567,10 @@
 
     ensureSupabaseLib(function () {
       if (myToken !== searchToken) return;
-      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      var safeQ = query.replace(/[\\%_]/g, "\\$&");
+      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      });
+      var safeQ = query.replace(/[\\%_,()]/g, "\\$&");
       sb.from("profiles")
         .select("id, username, display_name, avatar_url")
         .not("username", "is", null)
@@ -689,7 +702,9 @@
     if (!host) return;
     ensureSupabaseLib(function () {
       if (!quickViewOpen) return; // user already navigated away
-      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      });
       sb.from("products")
         .select("*")
         .eq("region", p.region)
@@ -757,7 +772,9 @@
 
     ensureSupabaseLib(function () {
       if (myToken !== searchToken) return;
-      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+      });
       sb.from("products")
         .select("id, title, description, image_url, affiliate_link, category, region, spoider_score, editor_note, score_design, score_value, score_usefulness, score_aesthetic")
         .eq("region", region)
@@ -778,6 +795,7 @@
   function onInput(e) {
     var q = e.target.value.trim();
     clearTimeout(debounceTimer);
+    quickViewOpen = false;
     if (q.length < 2) {
       if (q.length === 0) {
         if (searchMode === "people") renderPeopleIdle();
@@ -851,8 +869,8 @@
 
     // A product result tap opens Quick View instead of leaving the
     // site. A person result (no data-product-id — it's a real link
-    // to profile.html) is left completely alone here so its normal
-    // navigation goes through.
+    // to profile.html) is left completely alone here; it is handled
+    // by the window-capture listener below.
     document.addEventListener("click", function (e) {
       var result = e.target.closest(".search-result");
       if (result && resultsEl && resultsEl.contains(result) && result.dataset.productId) {
@@ -867,9 +885,31 @@
       }
     });
 
-    // Category chips, the Quick View's "View on Amazon" button, and
-    // a person result (a real navigation to profile.html) are the
-    // things left that actually leave/transition the page without
+    // PERSON RESULT -> always a real page load.
+    // Attached on window in the capture phase so it runs before any
+    // other click handler (including the AJAX page-transition
+    // script). stopImmediatePropagation keeps that handler from
+    // ever seeing this click, and location.assign() loads
+    // profile.html?u=<username> fresh, so the profile page always
+    // reads the correct username from the URL.
+    window.addEventListener(
+      "click",
+      function (e) {
+        var a = e.target && e.target.closest ? e.target.closest(".search-result--person") : null;
+        if (!a || !resultsEl || !resultsEl.contains(a)) return;
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var url = a.href;
+        if (!url) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        hardResetOverlay();
+        window.location.assign(url);
+      },
+      true
+    );
+
+    // Category chips and the Quick View's "View on Amazon" button
+    // are the things left that leave/transition the page without
     // the overlay being closed first — so if the browser bfcaches
     // this page (or the back button restores it), the snapshot would
     // otherwise be frozen mid-open (body scroll locked, overlay
@@ -879,7 +919,7 @@
     document.addEventListener(
       "click",
       function (e) {
-        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn, .qv-body, .search-result--person")) {
+        if (e.target.closest(".search-suggest-chip, .qv-amazon-btn, .qv-body")) {
           hardResetOverlay();
         }
       },
