@@ -96,6 +96,7 @@
 
       .pf-signin{text-align:center;max-width:460px;margin:110px auto;padding:48px 30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
       .pf-signin p{color:var(--text-secondary);margin-bottom:22px}
+      .pf-signin .btn + .btn{margin-left:8px}
 
       /* ---------- cover + living web ---------- */
       .pf-cover{position:relative;margin:22px 0 0;height:128px;border-radius:var(--radius-lg);overflow:hidden;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b));border:1px solid var(--border)}
@@ -334,6 +335,7 @@
       <div class="pf-signin" id="pfSignin" hidden>
         <p id="pfSigninMsg">Sign in to see and customize your profile.</p>
         <button class="btn btn-primary" id="pfGoogleBtn" type="button">Continue with Google</button>
+        <button class="btn btn-primary" id="pfRetryBtn" type="button" hidden>Try again</button>
         <a class="btn btn-ghost" id="pfHomeBtn" href="index.html" hidden>Back to home</a>
       </div>
 
@@ -385,8 +387,8 @@
         <div class="pf-edit-form" id="pfEditForm" hidden>
           <label for="pfEditName">Display name</label>
           <input type="text" id="pfEditName" maxlength="60" placeholder="Your name" autocomplete="off">
-          <label for="pfEditUsername">Username <em>letters, numbers, _ (min 3)</em></label>
-          <input type="text" id="pfEditUsername" maxlength="24" placeholder="e.g. spoider_faraz" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <label for="pfEditUsername">Username <em>a-z, 0-9, _ (3-20)</em></label>
+          <input type="text" id="pfEditUsername" maxlength="20" placeholder="e.g. spoider_faraz" autocomplete="off" autocapitalize="none" spellcheck="false">
           <label for="pfEditBio">Bio <em id="pfBioCount">0/160</em></label>
           <textarea id="pfEditBio" rows="3" maxlength="160" placeholder="A short line about you"></textarea>
           <label for="pfEditLocation">Location</label>
@@ -677,10 +679,11 @@
       }
       function showSignin(kind) {
         el('pfSkeleton').hidden = true; el('pfProfile').hidden = true;
-        var box = el('pfSignin'), msg = el('pfSigninMsg'), g = el('pfGoogleBtn'), home = el('pfHomeBtn');
+        var box = el('pfSignin'), msg = el('pfSigninMsg'), g = el('pfGoogleBtn'), home = el('pfHomeBtn'), retry = el('pfRetryBtn');
+        retry.hidden = true;
         if (kind === 'signedout') { msg.textContent = 'Sign in to see and customize your profile.'; g.hidden = false; home.hidden = true; }
         else if (kind === 'missing') { msg.textContent = "That profile doesn't exist. Check the link and try again."; g.hidden = true; home.hidden = false; }
-        else { msg.textContent = "We're still setting up your profile. Give it a few seconds, then refresh."; g.hidden = true; home.hidden = false; }
+        else { msg.textContent = "We're still setting up your profile. Tap Try again in a moment."; g.hidden = true; home.hidden = false; retry.hidden = false; retry.disabled = false; }
         box.hidden = false;
         box.classList.remove('pf-rise'); void box.offsetWidth; box.classList.add('pf-rise');
       }
@@ -701,9 +704,16 @@
       }
 
       // =============== boot ===============
+      // Own profile: read the row; if it isn't there yet, ask the database to
+      // create it (ensure_profile RPC), then fall back to one delayed re-read
+      // in case a signup trigger is still finishing.
       async function fetchOwnProfile(uid) {
         var r = await state.sb.from('profiles').select('*').eq('id', uid).maybeSingle();
         if (r.data) return r.data;
+        if (!alive) return null;
+        var rpc = await state.sb.rpc('ensure_profile');
+        if (!alive) return null;
+        if (rpc.data && rpc.data.id) return rpc.data;
         await new Promise(function (res) { later(res, 900); });
         if (!alive) return null;
         var r2 = await state.sb.from('profiles').select('*').eq('id', uid).maybeSingle();
@@ -793,12 +803,12 @@
       async function saveEdit() {
         var p = state.profile, msg = el('pfEditMsg'), saveBtn = el('pfSaveBtn');
         var display_name = el('pfEditName').value.trim().slice(0, 60);
-        var username = el('pfEditUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24);
+        var username = el('pfEditUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
         var bio = el('pfEditBio').value.trim().slice(0, 160);
         var location = el('pfEditLocation').value.trim().slice(0, 60);
         var socialRaw = el('pfEditSocial').value.trim().slice(0, 120);
         var social_url = socialRaw ? safeHref(socialRaw) : null;
-        if (username && username.length < 3) { msg.textContent = 'Username needs at least 3 characters.'; return; }
+        if (username && username.length < 3) { msg.textContent = 'Username needs 3 to 20 characters.'; return; }
         if (socialRaw && !social_url) { msg.textContent = "That link doesn't look valid — try again."; return; }
         msg.textContent = 'Saving…';
         saveBtn.disabled = true;
@@ -809,7 +819,8 @@
         saveBtn.disabled = false;
         if (res.error) {
           var dup = res.error.code === '23505' || /duplicate|unique/i.test(res.error.message || '');
-          msg.textContent = dup ? 'That username is already taken.' : 'Could not save — try again.';
+          var fmt = res.error.code === '23514' || /username_format|check constraint/i.test(res.error.message || '');
+          msg.textContent = dup ? 'That username is already taken.' : (fmt ? 'Username must be 3 to 20 characters: a-z, 0-9 or _.' : 'Could not save — try again.');
           return;
         }
         if (!res.data || !res.data.length) { msg.textContent = 'Could not save — please sign in again.'; return; }
@@ -981,6 +992,7 @@
 
       function init() {
         el('pfGoogleBtn').addEventListener('click', function () { if (window.SpoiderAuth && window.SpoiderAuth.openModal) window.SpoiderAuth.openModal(); });
+        el('pfRetryBtn').addEventListener('click', function () { this.disabled = true; boot(); });
         el('pfEditBtn').addEventListener('click', openEdit);
         el('pfCancelBtn').addEventListener('click', closeEdit);
         el('pfSaveBtn').addEventListener('click', saveEdit);
