@@ -193,7 +193,33 @@
       .pf-stat-label{font-size:.68rem;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
       .pf-stat-divider{width:1px;height:28px;background:var(--border)}
 
-      /* ---------- badges ---------- */
+/* ---------- grail (pinned showcase) ---------- */
+      .pf-grail{margin:0 4px 26px;opacity:0;transform:translateY(8px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+      .pf-wrap.rk-ready .pf-grail{opacity:1;transform:none}
+      .pf-grail-label{display:block;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+      .pf-grail-card{position:relative;display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,var(--gold-dim),transparent 70%),var(--surface);border:1px solid rgba(201,168,118,.4);border-radius:var(--radius-lg);padding:14px;text-decoration:none;overflow:hidden;box-shadow:0 0 36px -18px rgba(232,199,102,.5);transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease)}
+      .pf-grail-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 0 48px -14px rgba(232,199,102,.6)}
+      .pf-grail-img{flex-shrink:0;width:78px;height:78px;border-radius:var(--radius-md);overflow:hidden;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b))}
+      .pf-grail-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
+      .pf-grail-card:hover .pf-grail-img img{transform:scale(1.08)}
+      .pf-grail-card h3{font-family:var(--font-display);font-weight:500;font-size:1.02rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+      /* ---------- pin + taste-match tag (sit on owned card image, opposite the OWNED ribbon) ---------- */
+      .pf-pin-btn{position:absolute;top:9px;right:9px;z-index:5;width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(10,10,11,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(201,168,118,.35);cursor:pointer;color:var(--gold);-webkit-tap-highlight-color:transparent;transition:transform .3s var(--ease-spring),background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
+      html[data-theme="light"] .pf-pin-btn{background:rgba(255,255,255,.65)}
+      .pf-pin-btn svg{width:13px;height:13px;display:block}
+      .pf-pin-btn:hover{border-color:var(--gold)}
+      .pf-pin-btn:active{transform:scale(.86)}
+      .pf-pin-btn.is-pinned{background:var(--gold);color:#0a0a0b;border-color:var(--gold)}
+      .pf-pin-btn.is-pinned svg{fill:currentColor}
+      .pf-also-tag{position:absolute;top:9px;right:9px;z-index:5;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.03em;font-weight:700;color:#0a0a0b;background:linear-gradient(120deg,var(--gold-bright),var(--gold));padding:3px 8px;border-radius:999px;box-shadow:0 0 10px -2px rgba(232,199,102,.7)}
+
+      /* ---------- taste match chip ---------- */
+      .pf-match{display:none;align-items:center;gap:7px;margin:10px 0 2px;padding:6px 13px;border-radius:999px;background:var(--gold-dim);border:1px solid rgba(201,168,118,.35);color:var(--gold-bright);font-size:.78rem;font-weight:500;opacity:0;transform:translateY(4px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+      .pf-match.is-in{display:inline-flex;opacity:1;transform:none}
+      .pf-match svg{width:13px;height:13px;flex-shrink:0}
+
+            /* ---------- badges ---------- */
       .pf-badges{display:flex;gap:8px;margin:0 4px 26px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
       .pf-badges::-webkit-scrollbar{display:none}
       .pf-badge{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;font-size:.74rem;font-weight:500;white-space:nowrap;border:1px solid var(--border);color:var(--text-muted);background:var(--surface);transition:border-color .4s var(--ease),color .4s var(--ease),background .4s var(--ease)}
@@ -352,7 +378,8 @@
               <div class="pf-ladder" id="pfLadder" aria-hidden="true"></div>
             </div>
           </div>
-          <span class="pf-share-msg" id="pfShareMsg"<span class="pf-share-msg" id="pfShareMsg" role="status" aria-live="polite"></span>
+          <span class="pf-share-msg" id="pfShareMsg" role="status" aria-live="polite"></span>
+          <div class="pf-match" id="pfMatch"></div>
         </div>
 
         <div class="pf-edit-form" id="pfEditForm" hidden>
@@ -379,6 +406,14 @@
           <div class="pf-stat"><span class="pf-stat-num" id="pfStatWishlist">0</span><span class="pf-stat-label">Wishlist</span></div>
           <div class="pf-stat-divider"></div>
           <div class="pf-stat"><span class="pf-stat-num is-txt" id="pfStatRank">—</span><span class="pf-stat-label">Rank</span></div>
+        </div>
+
+        <div class="pf-grail" id="pfGrail" hidden>
+          <span class="pf-grail-label">The grail</span>
+          <a class="pf-grail-card" id="pfGrailCard" target="_blank" rel="sponsored noopener nofollow">
+            <div class="pf-grail-img"><img id="pfGrailImg" src="" alt="" loading="lazy" decoding="async"></div>
+            <h3 id="pfGrailTitle"></h3>
+          </a>
         </div>
 
         <div class="pf-badges pf-rise" style="--i:4" id="pfBadges" aria-label="Badges"></div>
@@ -441,7 +476,7 @@
       var found = { owned: {}, wish: {} };
 
       var KINDS = {
-        owned: { table: 'owned_products', ts: 'owned_at', grid: 'pfOwnedGrid', stat: 'pfStatOwned', card: 'pf-owned-card', img: 'pf-owned-card-image', body: 'pf-owned-card-body', ribbon: true, search: 'pfAddOwnedSearch', results: 'pfAddOwnedResults', widget: 'pfAddOwnedWidget', addSeq: 'addOwned', emptyOwn: 'Your shelf is empty. Tap a slot to add your first find.', emptyOther: 'Nothing owned yet.' },
+        owned: { table: 'owned_products', ts: 'owned_at', grid: 'pfOwnedGrid', stat: 'pfStatOwned', card: 'pf-owned-card', img: 'pf-owned-card-image', body: 'pf-owned-card-body', ribbon: true, pin: true, search: 'pfAddOwnedSearch', results: 'pfAddOwnedResults', widget: 'pfAddOwnedWidget', addSeq: 'addOwned', emptyOwn: 'Your shelf is empty. Tap a slot to add your first find.', emptyOther: 'Nothing owned yet.' },
         wish: { table: 'wishlist', ts: 'added_at', grid: 'pfWishlistGrid', stat: 'pfStatWishlist', card: 'pf-wishlist-card', img: 'pf-wishlist-card-image', body: 'pf-wishlist-card-body', ribbon: false, search: 'pfAddWishlistSearch', results: 'pfAddWishlistResults', widget: 'pfAddWishlistWidget', addSeq: 'addWish', emptyOwn: 'Your wishlist is empty. Tap a slot or the heart on any find.', emptyOther: 'No wishlist items yet.' }
       };
 
@@ -581,7 +616,59 @@
         }).join('');
       }
 
-      function derived() { renderRank(); renderWeb(); renderBadges(); renderSuggest(); }
+      function renderGrail() {
+        var box = el('pfGrail');
+        var g = state.owned.filter(function (p) { return p._pinned; })[0];
+        if (!g) { box.hidden = true; return; }
+        box.hidden = false;
+        var href = safeHref(g.affiliate_link) || '#';
+        el('pfGrailCard').href = href;
+        el('pfGrailImg').src = g.image_url || '';
+        el('pfGrailImg').alt = g.title || '';
+        el('pfGrailTitle').textContent = g.title || '';
+      }
+
+      async function togglePin(pid) {
+        if (!state.isOwn) return;
+        var cur = state.owned.filter(function (p) { return String(p.id) === String(pid); })[0];
+        if (!cur) return;
+        var makePinned = !cur._pinned;
+        state.owned.forEach(function (p) { p._pinned = false; });
+        if (makePinned) cur._pinned = true;
+        render('owned'); renderGrail();
+        await state.sb.from('owned_products').update({ pinned: false }).eq('user_id', state.profile.id);
+        if (!alive) return;
+        if (makePinned) {
+          var r = await state.sb.from('owned_products').update({ pinned: true }).eq('user_id', state.profile.id).eq('product_id', pid);
+          if (!alive) return;
+          if (r.error) say('Couldn\u2019t pin that — try again.', 2600);
+        }
+      }
+
+      function renderMatch() {
+        var box = el('pfMatch');
+        if (state.isOwn || !state.visitorOwned || !state.owned.length) { box.classList.remove('is-in'); return; }
+        var shared = state.owned.filter(function (p) { return state.visitorOwned[String(p.id)]; });
+        if (!shared.length) { box.classList.remove('is-in'); return; }
+        var pct = Math.round(shared.length / state.owned.length * 100);
+        box.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8.5c0 4.5-8 10-8 10s-8-5.5-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 8.5z"/></svg><span>You both own ' + shared.length + ' \u00b7 ' + pct + '% match</span>';
+        box.classList.add('is-in');
+      }
+
+      async function loadTasteMatch() {
+        if (state.isOwn) { state.visitorOwned = null; renderMatch(); return; }
+        var me = window.SpoiderAuth && window.SpoiderAuth.getUser ? window.SpoiderAuth.getUser() : null;
+        if (!me) { state.visitorOwned = null; renderMatch(); return; }
+        var r = await state.sb.from('owned_products').select('product_id').eq('user_id', me.id);
+        if (!alive) return;
+        var mine = {};
+        (r.data || []).forEach(function (row) { mine[String(row.product_id)] = true; });
+        state.visitorOwned = mine;
+        renderMatch();
+        render('owned');
+      }
+
+      function derived() { renderRank(); renderWeb(); renderBadges(); renderSuggest(); renderGrail(); renderMatch(); }
 
       // =============== views ===============
       function showLoading() {
@@ -609,6 +696,7 @@
           derived();
           later(function () { root.classList.add('rk-ready'); renderRank(); }, 60);
           loadSuggest();
+          loadTasteMatch();
         });
       }
 
@@ -638,7 +726,7 @@
         if (!profile) { showSignin(target ? 'missing' : (user ? 'pending' : 'signedout')); return; }
         state.profile = profile;
         state.isOwn = !!(user && profile.id === user.id);
-        state.owned = []; state.wish = []; state.pool = null; state.bOn = null;
+        state.owned = []; state.wish = []; state.pool = null; state.bOn = null; state.visitorOwned = null;
         showProfile();
       }
 
@@ -740,9 +828,13 @@
         var p = state.profile;
         if (!p || !p.username) { say('Set a username first to get a shareable link.', 3000); return; }
         var url = window.location.origin + window.location.pathname + '?u=' + encodeURIComponent(p.username);
+        var rankName = el('pfRankName') ? el('pfRankName').textContent : '';
+        var shareTitle = state.isOwn
+          ? ((p.display_name || p.username) + ' \u00b7 ' + rankName + ' on Spoider Finds \u2014 ' + state.owned.length + ' owned')
+          : ((p.display_name || p.username) + ' on Spoider Finds');
         var touch = window.matchMedia('(pointer: coarse)').matches;
         if (navigator.share && touch) {
-          try { await navigator.share({ title: (p.display_name || p.username) + ' on Spoider Finds', url: url }); return; }
+          try { await navigator.share({ title: shareTitle, url: url }); return; }
           catch (e) { if (e && e.name === 'AbortError') return; }
         }
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -774,11 +866,14 @@
       }
 
       // =============== cards ===============
+      var PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a5 5 0 0 0-5 5c0 3.6 5 11.3 5 11.3s5-7.7 5-11.3a5 5 0 0 0-5-5z"/><circle cx="12" cy="7" r="1.8"/></svg>';
       function cardHTML(p, k, i) {
         var href = safeHref(p.affiliate_link) || '#', pid = escapeHtml(p.id), title = escapeHtml(p.title);
         var rm = state.isOwn ? '<button type="button" class="pf-remove-btn" data-remove-id="' + pid + '" aria-label="Remove ' + title + '">Remove</button>' : '';
+        var pin = (k.pin && state.isOwn) ? '<button type="button" class="pf-pin-btn' + (p._pinned ? ' is-pinned' : '') + '" data-pin-id="' + pid + '" aria-label="' + (p._pinned ? 'Remove as grail' : 'Set as grail') + '">' + PIN_SVG + '</button>' : '';
+        var also = (k.pin && !state.isOwn && state.visitorOwned && state.visitorOwned[String(p.id)]) ? '<span class="pf-also-tag">You own this</span>' : '';
         return '<div class="' + k.card + ' pf-card-in" style="--i:' + Math.min(i, 10) + '" data-pid="' + pid + '">' +
-          (k.ribbon ? '<span class="pf-ribbon">OWNED</span>' : '') +
+          (k.ribbon ? '<span class="pf-ribbon">OWNED</span>' : '') + pin + also +
           '<a href="' + escapeHtml(href) + '" class="' + k.img + '" target="_blank" rel="sponsored noopener nofollow"><img src="' + escapeHtml(p.image_url || '') + '" alt="' + title + '" loading="lazy" decoding="async"></a>' +
           '<div class="' + k.body + '"><h3>' + title + '</h3>' + rm + '</div></div>';
       }
@@ -807,10 +902,11 @@
       async function loadKind(kind) {
         var k = KINDS[kind], my = ++seq[kind];
         el(k.grid).innerHTML = skeletonCards();
-        var res = await state.sb.from(k.table).select('product_id, ' + k.ts + ', products(*)').eq('user_id', state.profile.id).order(k.ts, { ascending: false });
+        var sel = 'product_id, ' + k.ts + (k.pin ? ', pinned' : '') + ', products(*)';
+        var res = await state.sb.from(k.table).select(sel).eq('user_id', state.profile.id).order(k.ts, { ascending: false });
         if (!alive || my !== seq[kind]) return;
         state[kind + 'Err'] = !!res.error;
-        state[kind] = (res.data || []).filter(function (r) { return r.products && r.products.active !== false; }).map(function (r) { return r.products; });
+        state[kind] = (res.data || []).filter(function (r) { return r.products && r.products.active !== false; }).map(function (r) { var pr = r.products; if (k.pin) pr._pinned = !!r.pinned; return pr; });
         render(kind);
       }
 
@@ -918,6 +1014,8 @@
         Object.keys(KINDS).forEach(function (kind) {
           var grid = el(KINDS[kind].grid);
           grid.addEventListener('click', function (e) {
+            var pin = e.target.closest('[data-pin-id]');
+            if (pin) { togglePin(pin.getAttribute('data-pin-id')); return; }
             var rm = e.target.closest('[data-remove-id]');
             if (rm) { removeItem(kind, rm); return; }
             var retry = e.target.closest('[data-retry]');
