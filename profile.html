@@ -169,6 +169,26 @@
       .pf-web-cap{position:absolute;z-index:2;right:12px;top:10px;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.03em;color:var(--gold-bright);padding:4px 10px;border-radius:999px;background:rgba(10,10,11,.55);border:1px solid var(--gold-dim)}
       html[data-theme="light"] .pf-web-cap{background:rgba(23,23,23,.62)}
 
+      /* ---------- rank chip opens the certificate ---------- */
+      .pf-rank{cursor:pointer;-webkit-tap-highlight-color:transparent}
+      .pf-rank:hover{border-color:var(--gold-dim)}
+      .pf-rank-go{flex-shrink:0;width:15px;height:15px;color:var(--gold);opacity:.75;transition:transform .3s var(--ease),opacity .3s var(--ease)}
+      .pf-rank:hover .pf-rank-go{transform:translateX(3px);opacity:1}
+
+      /* ---------- certificate modal (appended to <body> by JS, not inside #page-wrap:
+                    #page-wrap has will-change:transform, which would trap position:fixed) ---------- */
+      .pf-cert{position:fixed;inset:0;z-index:9990;background:#08080a;opacity:0;transition:opacity .28s var(--ease);overscroll-behavior:contain;touch-action:none}
+      .pf-cert.is-open{opacity:1}
+      .pf-cert-stage{position:absolute;inset:0}
+      .pf-cert-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#08080a;opacity:0;transition:opacity .5s var(--ease)}
+      .pf-cert.is-loaded .pf-cert-frame{opacity:1}
+      .pf-cert-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);transition:opacity .4s var(--ease)}
+      .pf-cert.is-loaded .pf-cert-load{opacity:0}
+      .pf-cert-close{position:absolute;z-index:2;top:calc(env(safe-area-inset-top,0px) + 16px);right:16px;width:42px;height:42px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gold-bright);background:rgba(10,10,11,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(201,168,118,.4);-webkit-tap-highlight-color:transparent;transition:transform .25s var(--ease),border-color .25s var(--ease)}
+      .pf-cert-close svg{width:16px;height:16px;display:block}
+      .pf-cert-close:hover{border-color:var(--gold);transform:rotate(90deg)}
+      .pf-cert-close:active{transform:scale(.9)}
+
       /* ---------- micro-animations ---------- */
       @keyframes pfBump{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
       @keyframes pfBadgePop{0%{transform:scale(.8)}45%{transform:scale(1.14);box-shadow:0 0 18px rgba(232,199,102,.6)}100%{transform:scale(1)}}
@@ -318,6 +338,7 @@
         .pf-sk,.pf-cover-glow,.pf-avatar-ring,.pf-ghost::before,.pf-web .lit-node .w-halo{animation:none}
         .pf-medal-glow,.pf-stat-num.bump,.pf-badge.pop{animation:none}
         .pf-tab-ind,.pf-rank-bar,.pf-web .w-thread,.pf-web .w-dot{transition:none}
+        .pf-cert,.pf-cert-frame,.pf-cert-load,.pf-cert-close{transition:none}
       }
     </style>
 
@@ -364,7 +385,7 @@
           <p class="pf-bio" id="pfBio"></p>
           <div class="pf-meta" id="pfMeta"></div>
           <div class="pf-rank" id="pfRank">
-            <button class="pf-medal" id="pfMedal" type="button" aria-label="Your Spoider rank">
+            <button class="pf-medal" id="pfMedal" type="button" aria-label="View Spoider rank certificate">
               <span class="pf-medal-glow"></span>
               <span class="pf-medal-burst" id="pfMedalBurst"></span>
               <svg viewBox="0 0 40 40" aria-hidden="true">
@@ -379,6 +400,7 @@
               <p class="pf-rank-sub" id="pfRankSub"></p>
               <div class="pf-ladder" id="pfLadder" aria-hidden="true"></div>
             </div>
+            <svg class="pf-rank-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
           </div>
           <span class="pf-share-msg" id="pfShareMsg" role="status" aria-live="polite"></span>
           <div class="pf-match" id="pfMatch"></div>
@@ -722,6 +744,7 @@
 
       async function boot() {
         var my = ++bootSeq;
+        closeCert(true);
         showLoading();
         var sb = state.sb;
         var target = (new URLSearchParams(window.location.search).get('u') || '').trim().toLowerCase();
@@ -852,6 +875,74 @@
           try { await navigator.clipboard.writeText(url); say('Link copied ✓', 2200); return; } catch (e) {}
         }
         say(url);
+      }
+
+      // =============== rank certificate (full-screen, 3D) ===============
+      // The modal lives on <body>, not inside #page-wrap: #page-wrap has
+      // will-change:transform, which would trap a position:fixed child inside it.
+      // The certificate itself is certificate.html in an iframe (sandboxed, scripts only).
+      // Closing blanks the iframe and removes it, so the WebGL context is released.
+      var certEl = null, certFocusBack = null;
+      var CLOSE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+      function onCertKey(e) {
+        if (e.key === 'Escape') { e.preventDefault(); closeCert(); }
+      }
+
+      function openCert() {
+        if (certEl || !alive || !state.profile) return;
+        var p = state.profile, count = state.owned.length, ri = rankIndex(count);
+        var q = new URLSearchParams();
+        q.set('n', p.display_name || p.username || 'Spoider');
+        q.set('r', RANKS[ri].n);
+        q.set('i', String(ri));
+        q.set('o', String(count));
+        if (p.username) q.set('u', p.username);
+        var joined = formatJoined(p.created_at);
+        if (joined) q.set('s', joined);
+
+        var box = document.createElement('div');
+        box.className = 'pf-cert';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        box.setAttribute('aria-label', 'Spoider rank certificate');
+        box.innerHTML = '<button type="button" class="pf-cert-close" aria-label="Close certificate">' + CLOSE_SVG + '</button>' +
+          '<div class="pf-cert-stage"><div class="pf-cert-load">Printing certificate</div></div>';
+
+        var fr = document.createElement('iframe');
+        fr.className = 'pf-cert-frame';
+        fr.title = 'Spoider rank certificate';
+        fr.setAttribute('sandbox', 'allow-scripts');
+        fr.addEventListener('load', function () { box.classList.add('is-loaded'); });
+        fr.src = 'certificate.html?' + q.toString();
+        box.querySelector('.pf-cert-stage').appendChild(fr);
+
+        box.querySelector('.pf-cert-close').addEventListener('click', function () { closeCert(); });
+
+        certFocusBack = document.activeElement && document.activeElement.focus ? document.activeElement : el('pfMedal');
+        document.body.appendChild(box);
+        certEl = box;
+        document.documentElement.style.overflow = 'hidden';
+        document.addEventListener('keydown', onCertKey);
+        requestAnimationFrame(function () { box.classList.add('is-open'); });
+        try { box.querySelector('.pf-cert-close').focus({ preventScroll: true }); } catch (e) {}
+      }
+
+      function closeCert(instant) {
+        if (!certEl) return;
+        var node = certEl;
+        certEl = null;
+        document.removeEventListener('keydown', onCertKey);
+        document.documentElement.style.overflow = '';
+        var fr = node.querySelector('iframe');
+        function kill() {
+          if (fr) fr.src = 'about:blank';
+          if (node.parentNode) node.parentNode.removeChild(node);
+        }
+        if (instant || reduce) kill();
+        else { node.classList.remove('is-open'); setTimeout(kill, 300); }
+        if (!instant && certFocusBack) { try { certFocusBack.focus({ preventScroll: true }); } catch (e) {} }
+        certFocusBack = null;
       }
 
       // =============== tabs ===============
@@ -1008,8 +1099,11 @@
         });
         window.addEventListener('resize', onResize);
 
-        el('pfMedal').addEventListener('click', function () {
+        // tap anywhere on the rank chip: medal pulse, then the certificate opens
+        el('pfRank').addEventListener('click', function () {
           var b = el('pfMedalBurst'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+          if (!root.classList.contains('rk-ready')) return;
+          later(openCert, reduce ? 0 : 180);
         });
         el('pfSuggestGrid').addEventListener('click', async function (e) {
           var b = e.target.closest('[data-sg-kind]');
@@ -1054,6 +1148,7 @@
 
       function cleanup() {
         alive = false;
+        closeCert(true);
         timers.forEach(clearTimeout);
         window.removeEventListener('resize', onResize);
         if (typeof authSub === 'function') { try { authSub(); } catch (e) {} }
