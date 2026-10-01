@@ -3,68 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Spoider Rank Certificate</title>
+<title>Spoider Finds — Rank Certificate</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0b'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23e8c766'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-:root{ --bg:#08080a; --ink:#f2f2f0; --dim:rgba(242,242,240,.38); }
+:root{ --bg:#0a0a0b; }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;background:var(--bg);overflow:hidden;
   touch-action:none;overscroll-behavior:none}
 body{
-  color:var(--ink);
+  color:#f6efe0;
   font-family:"Inter",-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 
-/* ---------- background: one giant word, nothing else ---------- */
-#bg{position:fixed;inset:0;z-index:1;overflow:hidden}
+/* ---------- warm gold light behind the card ---------- */
+#glow{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(46% 40% at 68% 34%, rgba(232,190,110,.10), transparent 70%),
+    radial-gradient(56% 50% at 50% 50%, rgba(232,206,150,.07), transparent 74%)}
+
+/* ---------- background wordmark ---------- */
+#bg{position:fixed;inset:0;z-index:1;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;pointer-events:none}
 #bg h1{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  font-family:"Inter Tight",sans-serif;font-weight:600;letter-spacing:-.055em;
-  font-size:clamp(96px,20vw,420px);line-height:.8;white-space:nowrap;
-  color:rgba(240,226,190,.125);
+  margin-top:-2vh;text-align:center;text-transform:uppercase;white-space:nowrap;
+  font-family:"Fraunces",Georgia,serif;font-weight:600;letter-spacing:-.03em;line-height:.9;
+  font-size:clamp(64px,min(19vw,27vh),360px);
+  color:transparent;-webkit-text-stroke:1px rgba(236,214,164,.15);
+  background:linear-gradient(180deg,rgba(236,208,150,.13) 0%,rgba(236,208,150,.04) 70%,rgba(236,208,150,0) 100%);
+  -webkit-background-clip:text;background-clip:text;
   -webkit-user-select:none;user-select:none;
+  opacity:0;transition:opacity 1.6s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
 }
+html.ready #bg h1{opacity:1}
 
 /* ---------- layers over it ---------- */
-#dof{position:fixed;inset:-30px;z-index:2;pointer-events:none;
-     backdrop-filter:blur(2.4px);-webkit-backdrop-filter:blur(2.4px);
-     background:rgba(8,8,10,.05)}
 #gl{position:fixed;top:0;left:0;width:100%;height:100%;z-index:3;
     pointer-events:none;display:block}
-#grain,#grain2{position:fixed;inset:0;z-index:4;pointer-events:none;
-    background-repeat:repeat;background-size:160px 160px}
-#grain{opacity:.05;mix-blend-mode:overlay}
-#grain2{opacity:.02}
+#grain{position:fixed;inset:0;z-index:4;pointer-events:none;
+    background-repeat:repeat;background-size:160px 160px;opacity:.03}
+@media (hover:hover){ #grain{opacity:.045;mix-blend-mode:overlay} }
 #vig{position:fixed;inset:0;z-index:5;pointer-events:none;
-     background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 42%,rgba(0,0,0,.52) 100%)}
-#hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);z-index:6;pointer-events:none;
-      text-align:center;font-size:10px;letter-spacing:.22em;text-transform:uppercase;
-      color:rgba(242,242,240,.30);opacity:0;transition:opacity .8s ease}
-#hint b{font-weight:500;color:rgba(242,242,240,.58)}
+     background:radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 44%,rgba(0,0,0,.55) 100%)}
+#hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 56px);z-index:6;pointer-events:none;
+      text-align:center;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+      color:rgba(246,236,214,.34);opacity:0;transition:opacity .9s ease}
+#hint b{font-weight:400;color:rgba(232,200,130,.75)}
 @media(hover:none){ #hint .ptr{display:none} }
 #nogl{position:fixed;inset:0;z-index:7;display:none;align-items:center;justify-content:center;
-      text-align:center;padding:24px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-      color:rgba(242,242,240,.6)}
+      text-align:center;padding:24px;font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+      color:rgba(246,236,214,.6)}
+@media (prefers-reduced-motion:reduce){ #bg h1{transition:none} }
 </style>
 </head>
 <body>
 
-<div id="bg"><h1>SPOIDER</h1></div>
-
-<div id="dof"></div>
+<div id="glow"></div>
+<div id="bg" aria-hidden="true"><h1 id="wm">Spoider<br>Finds</h1></div>
 <canvas id="gl"></canvas>
 <div id="grain"></div>
-<div id="grain2"></div>
 <div id="vig"></div>
 <div id="hint"><b>Drag</b> to turn it<span class="ptr"> &nbsp;·&nbsp; <b>Hover</b> to light it</span></div>
 <div id="nogl" role="alert">This browser can't show the 3D certificate.</div>
 
-<!-- Three.js r149 (same build the original ThreeUI file bundles).
-     Optional: save it as three-r149.min.js next to this file to self-host — the fallback below picks it up. -->
+<!-- Three.js r149. Optional: save as three-r149.min.js next to this file to self-host. -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
 <script>window.THREE||document.write('<script src="three-r149.min.js"><\/script>')</script>
 
@@ -72,7 +78,6 @@ body{
 (function(){
 "use strict";
 
-/* ---- bail out cleanly if WebGL / Three isn't available ---- */
 try{
   if(!window.THREE) throw 0;
   const probe = document.createElement('canvas');
@@ -87,7 +92,6 @@ const T = THREE;
 /* ======================================================================
    0. WHO IS THIS CERTIFICATE FOR — comes from the URL (profile.html)
       certificate.html?n=Name&r=Curator&i=2&o=7&u=username&s=September 2026
-   Everything is drawn with fillText, so nothing here can inject markup.
    ====================================================================== */
 const Q = new URLSearchParams(window.location.search);
 const clean = (s,n)=> String(s||'').replace(/[\u0000-\u001f<>]/g,'').trim().slice(0,n);
@@ -98,36 +102,43 @@ const RIDX  = Math.max(0, Math.min(4,    parseInt(Q.get('i'),10) || 0));
 const USER  = clean(Q.get('u'),24).replace(/[^a-z0-9_]/gi,'');
 const SINCE = clean(Q.get('s'),24);
 let SEED = 7; for(const ch of NAME) SEED = (SEED*31 + ch.charCodeAt(0)) % 9973;
+const SERIAL = 'SF-' + String(((SEED*97 + OWNED*13 + RIDX*7) % 9000) + 1000);
 SEED = SEED % 97 + 3;
 
-const GOLD    = '#e8c766';
 const DISPLAY = '"Fraunces","Inter Tight",Georgia,serif';
 const SANS    = '"Inter Tight",Inter,sans-serif';
+const MONO    = '"Space Mono",ui-monospace,monospace';
 
-const TW = 1400, TH = 1932;               // 0.7246, same proportion as the original
-const clamp = (v,a,b)=> v<a?a:(v>b?b:v);
-const rng = (s)=>()=>{ s=(s*1103515245+12345)&0x7fffffff; return (s>>>8)/8388608; };
 const REDUCED = window.matchMedia &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+const COARSE  = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+const NSTEPS = COARSE ? 14 : 20;
+const SEG    = COARSE ? [48,64] : [72,96];
+const TW = COARSE ? 1120 : 1400;
+const TH = Math.round(TW*1656/1200);
+const FW = Math.round(TW*0.66), FH = Math.round(TH*0.66);
+
+const clamp = (v,a,b)=> v<a?a:(v>b?b:v);
+const rng = (s)=>()=>{ s=(s*1103515245+12345)&0x7fffffff; return (s>>>8)/8388608; };
 
 /* ======================================================================
-   1. THE CERTIFICATE — printed on glass
+   1. THE CERTIFICATE — warm ivory print on glass, gold as a lit accent.
+      print = what you see, foil = mask of gold parts so a light band glints on them
    ====================================================================== */
 function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
   ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r);     ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
-function wrapL(ctx,text,x,y,maxW,lh){
+function wrapL(ctx,text,x,y,maxW,lh,draw){
   const words=text.split(' '); let line='', yy=y;
   for(const w of words){ const t=line?line+' '+w:w;
-    if(ctx.measureText(t).width>maxW && line){ ctx.fillText(line,x,yy); line=w; yy+=lh; }
+    if(ctx.measureText(t).width>maxW && line){ if(draw) ctx.fillText(line,x,yy); line=w; yy+=lh; }
     else line=t; }
-  if(line) ctx.fillText(line,x,yy);
+  if(line && draw) ctx.fillText(line,x,yy);
   return yy+lh;
 }
 
-// shrink a line until it fits the card width (names can be long)
 function fit(ctx,text,weight,family,maxPx,minPx,maxW){
   let px=maxPx;
   for(; px>minPx; px-=2){
@@ -138,9 +149,9 @@ function fit(ctx,text,weight,family,maxPx,minPx,maxW){
   return px;
 }
 
-function signature(ctx,x,y,s,seed,color){
+function signature(ctx,x,y,s,seed){
   ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
-  ctx.strokeStyle=color; ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round';
   const rnd = rng(seed*7919+13);
   ctx.beginPath(); ctx.moveTo(0,15);
   ctx.bezierCurveTo(-3+rnd()*4,-7, 9,-20-rnd()*6, 15,-5);
@@ -159,86 +170,203 @@ function signature(ctx,x,y,s,seed,color){
   ctx.stroke(); ctx.restore();
 }
 
-function drawGlass(ctx){
-  // authored on a 1200x1656 grid, scaled up for a crisp render
-  ctx.scale(TW/1200, TH/1656);
+// ink palette. f = how strongly the ink shows in the foil mask (0 = never).
+const PAL = {
+  ink:       { c:'#f7f0e1', f:0 },
+  dim:       { c:'rgba(246,236,214,.50)', f:0 },
+  detail:    { c:'rgba(246,236,214,.88)', f:0 },
+  body:      { c:'rgba(246,236,214,.66)', f:0 },
+  sig:       { c:'rgba(240,222,184,.62)', f:0 },
+  frame:     { c:'rgba(246,236,214,.28)', f:0 },
+  gold:      { stops:[[0,'#f3e2b0'],[1,'#c9a55c']], f:1 },
+  goldLine:  { c:'rgba(222,194,126,.92)', f:.9 },
+  goldSoft:  { c:'rgba(222,194,126,.34)', f:.4 }
+};
+function ink(ctx,foil,kind,y0,y1){
+  const p = PAL[kind];
+  if(foil){
+    if(!p.f) return false;
+    const s='rgba(255,255,255,'+p.f+')'; ctx.fillStyle=s; ctx.strokeStyle=s; return true;
+  }
+  let s;
+  if(p.stops){
+    const g=ctx.createLinearGradient(0,y0,0,y1);
+    p.stops.forEach(function(st){ g.addColorStop(st[0],st[1]); });
+    s=g;
+  } else s=p.c;
+  ctx.fillStyle=s; ctx.strokeStyle=s; return true;
+}
 
-  ctx.fillStyle='rgba(255,255,255,.030)'; ctx.fillRect(0,0,1200,1656);
-  // a whisper of frost behind the headline so it holds over the type below
-  const fr=ctx.createLinearGradient(0,240,0,920);
-  fr.addColorStop(0,'rgba(255,255,255,0)');   fr.addColorStop(.26,'rgba(255,255,255,.060)');
-  fr.addColorStop(.74,'rgba(255,255,255,.060)'); fr.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=fr; ctx.fillRect(40,240,1120,680);
+function bracket(ctx,x,y,dx,dy,len){
+  ctx.beginPath(); ctx.moveTo(x+dx*len,y); ctx.lineTo(x,y); ctx.lineTo(x,y+dy*len); ctx.stroke();
+}
+function hexPath(ctx,cx,cy,r){
+  ctx.beginPath();
+  for(let k=0;k<6;k++){
+    const a=(-90+60*k)*Math.PI/180, px=cx+r*Math.cos(a), py=cy+r*Math.sin(a);
+    if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
 
-  ctx.strokeStyle='rgba(232,199,102,.38)'; ctx.lineWidth=2;
-  rr(ctx,20,20,1160,1616,14); ctx.stroke();
-  ctx.strokeStyle='rgba(255,255,255,.12)'; ctx.lineWidth=1;
-  rr(ctx,36,36,1128,1584,10); ctx.stroke();
-
+function drawCert(ctx,foil,cw,ch){
+  ctx.scale(cw/1200, ch/1656);
+  const I=function(k,a,b){ return ink(ctx,foil,k,a,b); };
   const M=74, W=1200-2*M;
 
-  ctx.fillStyle='#ffffff'; ctx.font='700 104px '+SANS;
-  ctx.fillText('sf.', M, 190);
+  /* --- glass body: warm frost + soft gold light pools (like the green glow in the reference) --- */
+  if(!foil){
+    ctx.fillStyle='rgba(255,244,220,.032)'; ctx.fillRect(0,0,1200,1656);
+    const fr=ctx.createLinearGradient(0,240,0,920);
+    fr.addColorStop(0,'rgba(255,240,205,0)');    fr.addColorStop(.26,'rgba(255,240,205,.060)');
+    fr.addColorStop(.74,'rgba(255,240,205,.060)'); fr.addColorStop(1,'rgba(255,240,205,0)');
+    ctx.fillStyle=fr; ctx.fillRect(40,240,1120,680);
 
-  ctx.font='500 106px '+SANS; ctx.fillStyle='rgba(255,255,255,.52)';
-  ctx.fillText('Spoider Rank.', M, 392);
+    const g1=ctx.createRadialGradient(1010,170,0,1010,170,640);
+    g1.addColorStop(0,'rgba(232,192,104,.20)'); g1.addColorStop(.5,'rgba(232,192,104,.06)'); g1.addColorStop(1,'rgba(232,192,104,0)');
+    ctx.fillStyle=g1; ctx.fillRect(0,0,1200,1100);
+    const g2=ctx.createRadialGradient(130,1560,0,130,1560,520);
+    g2.addColorStop(0,'rgba(210,166,84,.12)'); g2.addColorStop(1,'rgba(210,166,84,0)');
+    ctx.fillStyle=g2; ctx.fillRect(0,1050,1200,606);
 
-  // the rank, in gold
-  ctx.fillStyle=GOLD;
-  fit(ctx, RANK+'.', '600', DISPLAY, 124, 60, W);
-  ctx.fillText(RANK+'.', M, 540);
+    // faint technical grid, same language as the reference
+    ctx.strokeStyle='rgba(232,200,130,.028)'; ctx.lineWidth=1;
+    for(let gx=60; gx<1200; gx+=60){ ctx.beginPath(); ctx.moveTo(gx,60); ctx.lineTo(gx,1596); ctx.stroke(); }
+    for(let gy=60; gy<1656; gy+=60){ ctx.beginPath(); ctx.moveTo(60,gy); ctx.lineTo(1140,gy); ctx.stroke(); }
+  }
 
-  // the person
-  ctx.fillStyle='#ffffff';
-  fit(ctx, NAME+'.', '600', DISPLAY, 112, 52, W);
-  ctx.fillText(NAME+'.', M, 690);
+  /* --- frame: ivory hairline outside, gold corner brackets inside --- */
+  if(I('frame')){ ctx.lineWidth=2; rr(ctx,20,20,1160,1616,14); ctx.stroke(); }
+  if(I('goldLine')){
+    ctx.lineWidth=3; ctx.lineCap='square'; ctx.lineJoin='miter';
+    const bi=54, bl=62;
+    bracket(ctx,bi,bi,1,1,bl);
+    bracket(ctx,1200-bi,bi,-1,1,bl);
+    bracket(ctx,bi,1656-bi,1,-1,bl);
+    bracket(ctx,1200-bi,1656-bi,-1,-1,bl);
+    ctx.lineCap='round';
+  }
 
-  // details
+  /* --- mark: "sf" ivory, the full stop gold --- */
+  ctx.font='700 104px '+SANS;
+  const wsf = ctx.measureText('sf').width;
+  if(I('ink')) ctx.fillText('sf', M, 190);
+  if(I('gold',110,190)) ctx.fillText('.', M+wsf, 190);
+
+  /* --- rank badge (hexagon), top right --- */
+  const HX=1018, HY=172;
+  if(!foil){
+    hexPath(ctx,HX,HY,62);
+    const hg=ctx.createRadialGradient(HX,HY,0,HX,HY,70);
+    hg.addColorStop(0,'rgba(232,192,104,.22)'); hg.addColorStop(1,'rgba(232,192,104,.04)');
+    ctx.fillStyle=hg; ctx.fill();
+  }
+  if(I('goldLine')){ ctx.lineWidth=3; ctx.lineJoin='round'; hexPath(ctx,HX,HY,62); ctx.stroke(); }
+  if(I('goldSoft')){ ctx.lineWidth=1.4; hexPath(ctx,HX,HY,76); ctx.stroke(); }
+  if(I('gold',HY-34,HY+34)){
+    ctx.font='600 66px '+DISPLAY; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(RANK.charAt(0).toUpperCase(), HX, HY+4);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  }
+
+  /* --- eyebrow: gold play-mark + mono label + fading hairline --- */
+  if(I('goldLine')){
+    ctx.beginPath(); ctx.moveTo(M,248); ctx.lineTo(M,266); ctx.lineTo(M+15,257); ctx.closePath(); ctx.fill();
+  }
+  ctx.font='400 22px '+MONO;
+  const hasLS = ('letterSpacing' in ctx);
+  if(hasLS) ctx.letterSpacing='5px';
+  const LBL='RANK ACHIEVED';
+  const lw = ctx.measureText(LBL).width;
+  if(I('goldLine')) ctx.fillText(LBL, M+30, 265);
+  if(hasLS) ctx.letterSpacing='0px';
+  if(I('goldLine')){
+    const lx0=M+30+lw+22, lx1=1200-M;
+    if(!foil){
+      const lg=ctx.createLinearGradient(lx0,0,lx1,0);
+      lg.addColorStop(0,'rgba(222,194,126,.65)'); lg.addColorStop(1,'rgba(222,194,126,0)');
+      ctx.strokeStyle=lg;
+    }
+    ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(lx0,257); ctx.lineTo(lx1,257); ctx.stroke();
+  }
+
+  /* --- label, rank, person --- */
+  if(I('dim')){ ctx.font='500 106px '+SANS; ctx.fillText('Spoider Rank.', M, 392); }
+  if(I('gold',440,540)){ fit(ctx,RANK+'.','600',DISPLAY,124,60,W); ctx.fillText(RANK+'.', M, 540); }
+  if(I('ink')){ fit(ctx,NAME+'.','600',DISPLAY,112,52,W); ctx.fillText(NAME+'.', M, 690); }
+
+  // short gold rule
+  if(I('goldLine')){ ctx.lineWidth=3; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(M+2,740); ctx.lineTo(M+78,740); ctx.stroke(); }
+
+  /* --- details --- */
   const lines=[];
   if(USER) lines.push('@'+USER);
   lines.push(OWNED===1 ? '1 find owned' : OWNED+' finds owned');
   if(SINCE) lines.push('Member since '+SINCE);
-  ctx.font='600 34px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.90)';
-  lines.forEach((s,i)=> ctx.fillText(s, M+4, 780+i*45));
-
-  // rank ladder: five dots, filled up to the current rank
-  for(let i=0;i<5;i++){
-    const cx=M+12+i*36, cy=960;
-    ctx.beginPath(); ctx.arc(cx,cy,9,0,Math.PI*2);
-    if(i<=RIDX){ ctx.fillStyle=GOLD; ctx.fill(); }
-    else { ctx.strokeStyle='rgba(255,255,255,.34)'; ctx.lineWidth=2; ctx.stroke(); }
+  if(I('detail')){
+    ctx.font='600 34px Inter, sans-serif';
+    lines.forEach(function(s,i){ ctx.fillText(s, M+4, 800+i*45); });
   }
 
-  // citation
+  /* --- tier meter: 5 segments, filled up to the current rank --- */
+  const MY=1176, SG=82, GP=10;
+  if(I('goldLine')){
+    ctx.font='400 20px '+MONO;
+    if(hasLS) ctx.letterSpacing='4px';
+    ctx.fillText('TIER 0'+(RIDX+1)+' / 05', M, 1158);
+    if(hasLS) ctx.letterSpacing='0px';
+  }
+  for(let k=0;k<5;k++){
+    const on = k<=RIDX, sx = M + k*(SG+GP);
+    if(on){
+      if(I('gold',MY,MY+14)){ rr(ctx,sx,MY,SG,14,3); ctx.fill(); }
+    } else if(!foil){
+      ctx.fillStyle='rgba(246,236,214,.14)'; rr(ctx,sx,MY,SG,14,3); ctx.fill();
+    }
+  }
+
+  /* --- citation --- */
   const px=592, py=1158;
-  ctx.font='700 24px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.92)';
-  ctx.fillText('Official Rank Certificate.', px, py);
-  ctx.font='500 22px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.68)';
+  if(I('ink')){ ctx.font='700 24px Inter, sans-serif'; ctx.fillText('Official Rank Certificate.', px, py); }
   const cite = OWNED>0
     ? 'Spoider Finds is proud to name '+NAME+' a '+RANK+', in recognition of the taste and the finds on their shelf.'
     : 'Every great shelf starts with a single find. This is where '+NAME+'\u2019s begins.';
-  const endY = wrapL(ctx,cite,px,py+36,296,28);
-  signature(ctx, px+6, endY+24, 0.86, SEED, 'rgba(255,255,255,.62)');
+  ctx.font='500 22px Inter, sans-serif';
+  const endY = wrapL(ctx,cite,px,py+36,296,28, I('body'));
+  if(I('sig')) signature(ctx, px+6, endY+24, 0.86, SEED);
 
-  ctx.save(); ctx.translate(1200-M-24, 1236); ctx.rotate(Math.PI/2);
-  ctx.font='500 23px Inter, sans-serif'; ctx.fillStyle='rgba(255,255,255,.62)';
-  ctx.fillText('\u2014', 0, 0); ctx.fillText('SPOIDER', 48, 0);
-  ctx.restore();
+  // vertical mark on the right edge
+  if(I('dim')){
+    ctx.save(); ctx.translate(1200-M-24, 1236); ctx.rotate(Math.PI/2);
+    ctx.font='500 23px Inter, sans-serif';
+    ctx.fillText('\u2014', 0, 0); ctx.fillText('SPOIDER', 48, 0);
+    ctx.restore();
+  }
 
-  ctx.font='700 34px '+SANS; ctx.fillStyle='#ffffff';
-  ctx.fillText('spoider.', M, 1516);
-  const w = ctx.measureText('spoider.').width;
-  ctx.font='500 34px '+SANS;
-  ctx.fillStyle='rgba(255,255,255,.62)'; ctx.fillText(' finds', M+w, 1516);
+  /* --- footer --- */
+  ctx.font='700 34px '+SANS;
+  const wsp = ctx.measureText('spoider').width, wdot = ctx.measureText('.').width;
+  if(I('ink')) ctx.fillText('spoider', M, 1516);
+  if(I('gold',1486,1516)) ctx.fillText('.', M+wsp, 1516);
+  if(I('dim')){
+    ctx.font='500 34px '+SANS; ctx.fillText(' finds', M+wsp+wdot, 1516);
+    ctx.font='400 21px '+MONO; ctx.textAlign='right'; ctx.fillText('N\u00BA '+SERIAL, 1200-M, 1514); ctx.textAlign='left';
+  }
 }
 
-function makeCertTexture(){
-  const c = document.createElement('canvas'); c.width=TW; c.height=TH;
+function makeTex(foil){
+  const w = foil?FW:TW, h = foil?FH:TH;
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
   const ctx = c.getContext('2d');
-  ctx.clearRect(0,0,TW,TH);
-  ctx.save(); rr(ctx,0,0,TW,TH,30); ctx.clip(); drawGlass(ctx); ctx.restore();
+  ctx.clearRect(0,0,w,h);
+  ctx.save(); rr(ctx,0,0,w,h,foil?20:30); ctx.clip(); drawCert(ctx,foil,w,h); ctx.restore();
   const t = new T.CanvasTexture(c);
-  t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.needsUpdate = true;
+  if(foil){ t.anisotropy = 1; }
+  else {
+    t.encoding = T.sRGBEncoding;
+    t.anisotropy = Math.min(COARSE?4:8, renderer.capabilities.getMaxAnisotropy());
+  }
+  t.needsUpdate = true;
   return t;
 }
 
@@ -253,16 +381,15 @@ function makeCertTexture(){
     d.data[i*4]=d.data[i*4+1]=d.data[i*4+2]=v; d.data[i*4+3]=255;
   }
   x.putImageData(d,0,0);
-  const url='url('+c.toDataURL()+')';
-  document.getElementById('grain').style.backgroundImage=url;
-  document.getElementById('grain2').style.backgroundImage=url;
+  document.getElementById('grain').style.backgroundImage='url('+c.toDataURL()+')';
 })();
 
 /* ======================================================================
-   3. SCENE
+   3. SCENE — all the "white" light is now a warm gold
    ====================================================================== */
+let dprNow = Math.min(window.devicePixelRatio||1, COARSE ? 1.5 : 2);
 const canvas = document.getElementById('gl');
-const renderer = new T.WebGLRenderer({canvas, antialias:true, alpha:true,
+const renderer = new T.WebGLRenderer({canvas, antialias: dprNow < 2, alpha:true, stencil:false,
                                       powerPreference:'high-performance'});
 renderer.outputEncoding = T.sRGBEncoding;
 renderer.toneMapping = T.NoToneMapping;
@@ -275,7 +402,7 @@ function envTexture(){
   const w=1024,h=512,c=document.createElement('canvas');
   c.width=w;c.height=h; const x=c.getContext('2d');
   const g=x.createLinearGradient(0,0,0,h);
-  g.addColorStop(0,'#3a3d47'); g.addColorStop(.46,'#171820'); g.addColorStop(1,'#08080a');
+  g.addColorStop(0,'#403a2e'); g.addColorStop(.46,'#1a1812'); g.addColorStop(1,'#09080a');
   x.fillStyle=g; x.fillRect(0,0,w,h);
   const blob=(cx,cy,rx,ry,col,a)=>{
     const rg=x.createRadialGradient(cx,cy,0,cx,cy,Math.max(rx,ry));
@@ -283,9 +410,9 @@ function envTexture(){
     x.save(); x.translate(cx,cy); x.scale(1,ry/rx); x.translate(-cx,-cy);
     x.fillStyle=rg; x.beginPath(); x.arc(cx,cy,rx,0,7); x.fill(); x.restore();
   };
-  blob(w*0.30,h*0.24,330,240,'rgba(255,252,246,A)','1');
-  blob(w*0.74,h*0.34,240,200,'rgba(232,199,102,A)','.34');   // warm gold instead of the original blue
-  blob(w*0.52,h*0.86,420,190,'rgba(255,170,120,A)','.10');
+  blob(w*0.30,h*0.24,330,240,'rgba(255,230,168,A)','1');     // main softbox: warm gold
+  blob(w*0.74,h*0.34,240,200,'rgba(226,194,128,A)','.46');   // secondary: champagne
+  blob(w*0.52,h*0.86,420,190,'rgba(255,160,80,A)','.10');    // low amber bounce
   const t=new T.CanvasTexture(c);
   t.mapping=T.EquirectangularReflectionMapping; t.encoding=T.sRGBEncoding;
   return t;
@@ -294,30 +421,31 @@ const pmrem = new T.PMREMGenerator(renderer);
 pmrem.compileEquirectangularShader();
 scene.environment = pmrem.fromEquirectangular(envTexture()).texture;
 
-const key  = new T.DirectionalLight(0xfff6ec, 1.42); key.position.set(-3.3,2.1,2.0);
-const fill = new T.DirectionalLight(0xf0d9a0, 0.13); fill.position.set(3.6,-1.8,1.6);
-const rim  = new T.DirectionalLight(0xffffff, 0.10); rim.position.set(1.6,1.2,-2.6);
-scene.add(key,fill,rim,new T.AmbientLight(0xffffff,0.16));
+const key  = new T.DirectionalLight(0xffe0a6, 1.45); key.position.set(-3.3,2.1,2.0);
+const fill = new T.DirectionalLight(0xe6cc98, 0.14); fill.position.set(3.6,-1.8,1.6);
+const rim  = new T.DirectionalLight(0xffd68a, 0.16); rim.position.set(1.6,1.2,-2.6);
+scene.add(key,fill,rim,new T.AmbientLight(0xffeccc,0.16));
 
-const touchLight = new T.PointLight(0xf3e6c4, 0, 7.5, 1.35);
+const touchLight = new T.PointLight(0xf2d28a, 0, 7.5, 1.35);
 touchLight.position.set(0,0,1.7); scene.add(touchLight);
 
 /* ---- geometry + the bend ------------------------------------------- */
 const SW = 2.30, SH = 2.72;
-const geo = new T.PlaneGeometry(SW,SH,72,96);
+const geo = new T.PlaneGeometry(SW,SH,SEG[0],SEG[1]);
 
+const foilTexInit = makeTex(true);
 const uni = {
   uTime:{value:0}, uAmp:{value:1.18}, uFreq:{value:4.70}, uTwist:{value:1.30},
   uSize:{value:new T.Vector2(SW,SH)}, uFlutter:{value:0}, uPhase:{value:0},
   uRim:{value:0.62}, uRimA:{value:0.88}, uSpecA:{value:0.14},
-  uRimCol:{value:new T.Color(0xf3e6c4)}
+  uRimCol:{value:new T.Color(0xf0d596)},
+  uFoil:{value:foilTexInit}, uFoilPhase:{value:0}, uFoilAmt:{value:1}
 };
 
 const WAVE = `
 uniform float uTime, uAmp, uFlutter, uPhase, uFreq, uTwist;
 uniform vec2  uSize;
 
-// the sheet hangs: it curls harder at the top than along the bottom edge
 float sAmp(float u, float v){ return uAmp*(0.10 + pow(u,1.35))*(0.50 + 0.64*v); }
 float sAmpV(float u){        return uAmp*(0.10 + pow(u,1.35))*0.64; }
 
@@ -348,12 +476,10 @@ float sYdV(float u, float v){
   return 0.013*uSize.y*(-1.55*cos(ph)*(1.0-0.55*v) - 0.55*sin(ph));
 }
 
-// paper conserves arc length: integrate the bend instead of pushing Z,
-// so the silhouette really pulls in where the sheet turns away
 void sheetPoint(vec2 q, out vec3 P, out vec3 NN){
   float u = q.x, v = q.y;
   float x=0.0, z=0.0, xe=0.0, ze=0.0, dxv=0.0, dzv=0.0, dxe=0.0, dze=0.0;
-  const int NS = 20;
+  const int NS = ${NSTEPS};
   float h = 1.0/float(NS);
   for(int i=0;i<NS;i++){
     float uu = (float(i)+0.5)*h;
@@ -374,9 +500,9 @@ void sheetPoint(vec2 q, out vec3 P, out vec3 NN){
   NN = normalize(cross(Tu, Tv));
 }`;
 
-const tex = makeCertTexture();
+const tex = makeTex(false);
 const mat = new T.MeshPhysicalMaterial({
-  map: tex, color: new T.Color(0xd8d3c6), side: T.DoubleSide, metalness: 0.0,
+  map: tex, color: new T.Color(0xe4dac4), side: T.DoubleSide, metalness: 0.0,
   roughness: 0.06, clearcoat: 1.0, clearcoatRoughness: 0.03,
   iridescence: 0.10, iridescenceIOR: 1.35, iridescenceThicknessRange:[120,420],
   envMapIntensity: 1.15, specularIntensity: 1.0, ior: 1.5,
@@ -396,11 +522,19 @@ mat.onBeforeCompile = (sh)=>{
     .replace('#include <begin_vertex>', 'vec3 transformed = sheetP;');
   sh.fragmentShader = sh.fragmentShader
     .replace('#include <common>',
-      '#include <common>\nuniform float uRim, uRimA, uSpecA;\nuniform vec3 uRimCol;')
-    // judge the cut against the artwork's own alpha, not alpha*opacity
+      '#include <common>\nuniform float uRim, uRimA, uSpecA;\nuniform vec3 uRimCol;\n' +
+      'uniform sampler2D uFoil;\nuniform float uFoilPhase, uFoilAmt;')
     .replace('#include <alphatest_fragment>',
       'if ( diffuseColor.a / max(opacity,1e-4) < alphaTest ) discard;')
     .replace('#include <output_fragment>', `
+      float fd  = vUv.x*1.15 + vUv.y*0.65;
+      float fb  = pow(max(0.0, sin((fd - uFoilPhase)*3.45)), 14.0);
+      float fb2 = pow(max(0.0, sin(fd*5.9 + uFoilPhase*2.1)), 9.0)*0.25;
+      float fv  = clamp(fb + fb2, 0.0, 1.0);
+      float fmask = texture2D(uFoil, vUv).a;
+      vec3 fgold = mix(vec3(0.84,0.66,0.30), vec3(1.0,0.94,0.76), fv);
+      outgoingLight += fgold * fmask * (0.04 + 0.85*fv) * uFoilAmt;
+
       float fres = pow(1.0 - clamp(abs(dot(geometry.normal, geometry.viewDir)),0.0,1.0), 3.2);
       outgoingLight += fres * uRim * uRimCol;
       float baseA = diffuseColor.a / max(opacity, 1e-4);
@@ -413,7 +547,6 @@ mat.onBeforeCompile = (sh)=>{
 const mesh  = new T.Mesh(geo, mat);
 const group = new T.Group(); group.add(mesh); scene.add(group);
 
-// a faint dark cloud so the sheet sits in front of the wordmark
 const haloTex = (()=>{
   const s=256,c=document.createElement('canvas'); c.width=c.height=s;
   const x=c.getContext('2d');
@@ -431,17 +564,14 @@ halo.position.z = -0.62; group.add(halo);
    4. POINTER — drag to turn, hover to light
    ====================================================================== */
 let dragging=false, dragYaw=0, dragPitch=0, release=0;
-// spin carried after release, in rad/second — integrated with dt so the
-// fling travels the same distance at 60Hz and at 120Hz
 let velYaw=0, velPitch=0, prevYaw=0, prevPitch=0;
 let lastPX=0, lastPY=0, moved=0, overSheet=false, hover=0, hoverTarget=0;
 let quad=null, cursorNow='';
 const mouse = {x:0,y:0,tx:0,ty:0};
 const hintEl = document.getElementById('hint');
+const wmEl   = document.getElementById('wm');
 let hintUsed=false;
 
-// JS mirror of the GLSL bend, corners only — enough to know whether the
-// pointer is on the paper
 const _v = new T.Vector3();
 function cornerPoint(qx,qy){
   const t = uni.uTime.value, ph = uni.uPhase.value;
@@ -449,7 +579,7 @@ function cornerPoint(qx,qy){
   const u = qx, v = qy;
   const theta = (uu)=> A*(0.10+Math.pow(uu,1.35))*(0.50+0.64*v)
                       * Math.sin(F*uu + TWs*v + t*0.40 + ph);
-  let x=0,z=0,xe=0,ze=0; const N=20, h=1/N;
+  let x=0,z=0,xe=0,ze=0; const N=NSTEPS, h=1/N;
   for(let i=0;i<N;i++){
     const uu=(i+0.5)*h, w=clamp((u-(uu-0.5*h))/h,0,1);
     const th=theta(uu), c=Math.cos(th), s=Math.sin(th);
@@ -487,8 +617,8 @@ window.addEventListener('pointermove', e=>{
   if(dragging){
     const dx=e.clientX-lastPX, dy=e.clientY-lastPY;
     lastPX=e.clientX; lastPY=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
-    dragYaw   += dx*0.0060;                   // glass prints through, so a
-    dragPitch  = clamp(dragPitch - dy*0.0045, -0.60, 0.60);  // full turn is honest
+    dragYaw   += dx*0.0060;
+    dragPitch  = clamp(dragPitch - dy*0.0045, -0.60, 0.60);
     if(moved>40) useHint();
     return;
   }
@@ -502,12 +632,9 @@ window.addEventListener('pointerdown', e=>{
     velYaw=velPitch=0; prevYaw=dragYaw; prevPitch=dragPitch;
   }
 });
-window.addEventListener('pointerup', ()=>{
-  if(dragging){ dragging=false; release=0.6; }
-});
-window.addEventListener('pointercancel', ()=>{
-  if(dragging){ dragging=false; release=0.6; }
-});
+function endDrag(){ if(dragging){ dragging=false; release=0.6; } }
+window.addEventListener('pointerup', endDrag);
+window.addEventListener('pointercancel', endDrag);
 window.addEventListener('pointerleave', ()=>{ hoverTarget=0; });
 
 /* ======================================================================
@@ -516,8 +643,7 @@ window.addEventListener('pointerleave', ()=>{ hoverTarget=0; });
 let vw=0, vh=0;
 function resize(){
   vw = window.innerWidth; vh = window.innerHeight;
-  // phones: cap at 1.5x — the bend shader is per-vertex heavy, this keeps it smooth
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, COARSE ? 1.5 : 2));
+  renderer.setPixelRatio(dprNow);
   renderer.setSize(vw,vh,false);
   camera.aspect = vw/vh; camera.updateProjectionMatrix();
   const visH = 2*camera.position.z*Math.tan(T.MathUtils.degToRad(camera.fov)/2);
@@ -532,12 +658,13 @@ window.addEventListener('resize', resize);
    ====================================================================== */
 const clock = new T.Clock();
 const lightPos = new T.Vector3();
-let intro = 0;
+let intro = 0, perfAcc = 0, perfN = 0;
 
 function frame(){
   requestAnimationFrame(frame);
-  const dt = Math.min(clock.getDelta(), 0.05);
-  const t  = clock.elapsedTime;
+  const raw = clock.getDelta();
+  const dt  = Math.min(raw, 0.05);
+  const t   = clock.elapsedTime;
   uni.uTime.value = REDUCED ? 2.4 : t;
 
   intro += (1 - intro) * Math.min(1, dt*1.9);
@@ -546,7 +673,6 @@ function frame(){
   if(intro > 0.7 && !hintUsed) hintEl.style.opacity='1';
 
   if(dragging){
-    // measure the throw as an angular velocity, smoothed over a few frames
     const k = Math.min(1, dt*14);
     velYaw   += ((dragYaw   - prevYaw  )/Math.max(dt,1e-3) - velYaw  ) * k;
     velPitch += ((dragPitch - prevPitch)/Math.max(dt,1e-3) - velPitch) * k;
@@ -559,7 +685,6 @@ function frame(){
     velYaw *= decay; velPitch *= decay;
     release = Math.max(0, release - dt);
     if(release <= 0){
-      // settle on the nearest whole turn rather than unwinding a full spin
       const home = Math.round(dragYaw/(Math.PI*2))*Math.PI*2;
       const k = Math.min(1, dt*0.55);
       dragYaw   += (home - dragYaw)*k;
@@ -579,6 +704,9 @@ function frame(){
   group.position.x = Math.sin(t*0.21)*0.05*idle + mouse.x*0.10;
   group.updateMatrixWorld();
 
+  uni.uFoilPhase.value = (REDUCED ? 0.3 : t*0.14) + group.rotation.y*0.55 + mouse.x*0.22 - rise*0.9;
+  uni.uFoilAmt.value   = 1.0 + hover*0.4;
+
   hover += (hoverTarget - hover) * Math.min(1, dt*4.5);
   touchLight.intensity = hover * 2.6 * intro;
   if(hover > 0.002){
@@ -587,32 +715,43 @@ function frame(){
       .addScaledVector(lightPos, (1.75 - camera.position.z)/lightPos.z);
   }
 
+  if(!REDUCED) wmEl.style.transform = 'translate3d('+(-mouse.x*16).toFixed(2)+'px,'+(-mouse.y*9).toFixed(2)+'px,0)';
+
   buildQuad();
   const wantCursor = dragging ? 'grabbing' : (overSheet ? 'grab' : '');
   if(wantCursor !== cursorNow){ cursorNow = wantCursor; document.body.style.cursor = wantCursor; }
 
   renderer.render(scene,camera);
+
+  if(intro > 0.97 && raw < 0.25){
+    perfAcc += raw; perfN++;
+    if(perfN >= 50){
+      if(perfAcc/perfN > 0.024 && dprNow > 1){ dprNow = Math.max(1, dprNow - 0.25); resize(); }
+      perfAcc = 0; perfN = 0;
+    }
+  }
 }
 
 function boot(){
-  const t2 = makeCertTexture();
+  const t2 = makeTex(false), f2 = makeTex(true);
   tex.dispose(); mat.map = t2; mat.needsUpdate = true;
+  uni.uFoil.value.dispose(); uni.uFoil.value = f2;
   resize();
   mesh.visible = true; mat.opacity = 0.002;
   renderer.compile(scene,camera); renderer.render(scene,camera);
   mat.opacity = 1;
+  document.documentElement.classList.add('ready');
   frame();
 }
 
-// wait for the fonts so the print is never drawn in a fallback face
 if(document.fonts && document.fonts.ready){
   Promise.race([
     Promise.all([
       document.fonts.load('700 104px "Inter Tight"'),
-      document.fonts.load('600 110px "Inter Tight"'),
       document.fonts.load('600 110px "Fraunces"'),
       document.fonts.load('600 34px "Inter"'),
-      document.fonts.load('500 22px "Inter"')
+      document.fonts.load('500 22px "Inter"'),
+      document.fonts.load('400 22px "Space Mono"')
     ]).then(()=>document.fonts.ready),
     new Promise(r=>setTimeout(r,2500))
   ]).then(boot);
