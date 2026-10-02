@@ -1427,4 +1427,56 @@
         if (typeof authSub === 'function') { try { authSub(); } catch (e) {} }
       }
       function register() {
-        if (window.SpoiderPage && window.SpoiderPage.onCleanup) { window.SpoiderPa
+        if (window.SpoiderPage && window.SpoiderPage.onCleanup) { window.SpoiderPage.onCleanup(cleanup); return true; }
+        return false;
+      }
+      if (!register()) window.addEventListener('load', register, { once: true });
+
+      init();
+      waitForAuthClient(function (client) {
+        if (!alive || !root.isConnected) return;
+        if (!client) {
+          showSignin('signedout');
+          el('pfSigninMsg').textContent = "Couldn't load sign-in. Refresh the page and try again.";
+          el('pfGoogleBtn').hidden = true; el('pfHomeBtn').hidden = false;
+          return;
+        }
+        state.sb = client;
+        boot().then(function () { if (alive) watchAuth(); });
+      });
+    })();
+    </script>
+
+  </main>
+
+  <footer class="footer footer--cinematic" id="footerWeb">
+    <div class="footer-glow" aria-hidden="true"></div>
+    <div class="footer-bg-text" aria-hidden="true">SPOIDER</div>
+    <div class="footer-content">
+      <p class="eyebrow center reveal">A THREAD OF GOOD TASTE</p>
+      <h2 class="footer-heading">Every find, one thread — hand-picked, never mass-produced.</h2>
+      <div class="footer-pills reveal" style="--reveal-delay:0.1s;">
+        <a href="about.html" class="footer-pill">About</a>
+        <a href="contact.html" class="footer-pill">Contact</a>
+        <a href="privacy.html" class="footer-pill">Privacy Policy</a>
+        <a href="affiliate-disclosure.html" class="footer-pill">Affiliate Disclosure</a>
+        <a href="india.html" class="footer-pill">🇮🇳 India Edition</a>
+      </div>
+    </div>
+    <div class="footer-bottom-bar reveal" style="--reveal-delay:0.2s;">
+      <div class="footer-legal">
+        <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+        <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+      </div>
+      <button class="footer-top-btn" id="footerTopBtn" type="button" aria-label="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script src="footer-web.js"></script>
+  <script src="transitions.js"></script>
+  <script src="search.js"></script>
+</body>
+</html>
