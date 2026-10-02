@@ -71,12 +71,25 @@
 
     <!-- CSS lives inside #page-wrap so it travels with AJAX page swaps -->
     <style>
-      .pf-wrap{max-width:820px;margin:0 auto;padding:0 20px 100px;min-height:92vh;min-height:92svh;--rg:.2;--rs:16s}
+      .pf-wrap{max-width:820px;margin:0 auto;padding:0 20px 100px;min-height:92vh;min-height:92svh;--rg:.2;--rs:16s;--ac:201,168,118;--ac2:232,199,102}
       .pf-wrap[data-rank="1"]{--rg:.4;--rs:14s}
       .pf-wrap[data-rank="2"]{--rg:.6;--rs:12s}
       .pf-wrap[data-rank="3"]{--rg:.8;--rs:10s}
       .pf-wrap[data-rank="4"]{--rg:1;--rs:8s}
       .pf-wrap [hidden]{display:none!important}
+
+      /* ---------- accent metals (gold = the site default, no override) ---------- */
+      .pf-wrap[data-accent="silver"]{--ac:176,184,198;--ac2:226,232,242}
+      .pf-wrap[data-accent="bone"]{--ac:214,206,190;--ac2:244,238,224}
+      .pf-wrap[data-accent="copper"]{--ac:201,128,96;--ac2:238,168,128}
+      .pf-wrap[data-accent="emerald"]{--ac:92,176,140;--ac2:138,222,182}
+      .pf-wrap[data-accent="ink"]{--ac:112,150,214;--ac2:160,192,244}
+      html[data-theme="light"] .pf-wrap[data-accent="silver"]{--ac:104,114,132;--ac2:76,86,104}
+      html[data-theme="light"] .pf-wrap[data-accent="bone"]{--ac:140,128,104;--ac2:110,98,76}
+      html[data-theme="light"] .pf-wrap[data-accent="copper"]{--ac:168,96,64;--ac2:140,74,44}
+      html[data-theme="light"] .pf-wrap[data-accent="emerald"]{--ac:44,130,96;--ac2:30,104,74}
+      html[data-theme="light"] .pf-wrap[data-accent="ink"]{--ac:62,98,170;--ac2:44,76,146}
+      .pf-wrap[data-accent="silver"],.pf-wrap[data-accent="bone"],.pf-wrap[data-accent="copper"],.pf-wrap[data-accent="emerald"],.pf-wrap[data-accent="ink"]{--gold:rgb(var(--ac));--gold-bright:rgb(var(--ac2));--gold-dim:rgba(var(--ac),.14);--web-line:var(--ac)}
 
       /* motion: transform + opacity only (no blur) so it stays smooth on phones */
       @keyframes pfRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -87,7 +100,7 @@
       .pf-card-in{animation:pfCardIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*50ms)}
       .pf-panel-in{animation:pfPanelIn .35s var(--ease)}
 
-      .pf-sk{background:linear-gradient(100deg,var(--shimmer-a) 20%,rgba(201,168,118,.14) 50%,var(--shimmer-a) 80%);background-size:200% 100%;animation:pfShimmer 1.5s linear infinite;border:1px solid var(--border)}
+      .pf-sk{background:linear-gradient(100deg,var(--shimmer-a) 20%,rgba(var(--ac),.14) 50%,var(--shimmer-a) 80%);background-size:200% 100%;animation:pfShimmer 1.5s linear infinite;border:1px solid var(--border)}
       .pf-sk-cover{margin-top:22px;height:128px;border-radius:var(--radius-lg)}
       .pf-sk-avatar{width:92px;height:92px;border-radius:50%;margin:-46px 0 0 4px;border:4px solid var(--bg)}
       .pf-sk-line{height:14px;border-radius:99px;margin:14px 4px 0}
@@ -100,11 +113,11 @@
 
       /* ---------- cover + living web ---------- */
       .pf-cover{position:relative;margin:22px 0 0;height:128px;border-radius:var(--radius-lg);overflow:hidden;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b));border:1px solid var(--border)}
-      .pf-cover-glow{position:absolute;inset:-40% -10%;background:radial-gradient(circle at 20% 30%,rgba(201,168,118,.3),transparent 60%),radial-gradient(circle at 80% 60%,rgba(232,199,102,.26),transparent 60%);animation:pfDrift 14s ease-in-out infinite alternate;will-change:transform}
+      .pf-cover-glow{position:absolute;inset:-40% -10%;background:radial-gradient(circle at 20% 30%,rgba(var(--ac),.3),transparent 60%),radial-gradient(circle at 80% 60%,rgba(var(--ac2),.26),transparent 60%);animation:pfDrift 14s ease-in-out infinite alternate;will-change:transform;transition:background .6s var(--ease)}
       @keyframes pfDrift{to{transform:translate(3%,-4%) scale(1.06)}}
       .pf-web{position:absolute;inset:0;width:100%;height:100%;display:block}
       .pf-web .w-ring,.pf-web .w-spoke{fill:none;stroke:rgb(var(--web-line));stroke-opacity:.16;stroke-width:.6}
-      .pf-web .w-thread{stroke:var(--gold-bright);stroke-width:.9;stroke-linecap:round;opacity:0;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .9s var(--ease),opacity .4s var(--ease);transition-delay:var(--d,0s)}
+      .pf-web .w-thread{fill:none;stroke:var(--gold-bright);stroke-width:.9;stroke-linecap:round;opacity:0;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .9s var(--ease),opacity .4s var(--ease);transition-delay:var(--d,0s)}
       .pf-web .w-thread.lit{opacity:.7;stroke-dashoffset:0}
       .pf-web .w-slot{fill:none;stroke:rgb(var(--web-line));stroke-opacity:.4;stroke-width:.8;stroke-dasharray:2 2.4;transition:opacity .4s var(--ease)}
       .pf-web .w-dot{fill:var(--gold-bright);opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(.3);transition:opacity .5s var(--ease),transform .7s var(--ease-spring);transition-delay:calc(var(--d,0s) + .5s)}
@@ -118,62 +131,80 @@
       /* ---------- header ---------- */
       .pf-header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:-46px;padding:0 4px;position:relative}
       .pf-avatar-wrap{position:relative;width:92px;height:92px;flex-shrink:0}
-      .pf-avatar-ring{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),var(--gold-bright),var(--gold) 70%);animation:pfSpin var(--rs) linear infinite;box-shadow:0 0 calc(var(--rg)*26px) rgba(232,199,102,calc(var(--rg)*.45));transition:box-shadow .8s var(--ease)}
+      .pf-avatar-ring{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),var(--gold-bright),var(--gold) 70%);animation:pfSpin var(--rs) linear infinite;box-shadow:0 0 calc(var(--rg)*26px) rgba(var(--ac2),calc(var(--rg)*.45));transition:box-shadow .8s var(--ease)}
       @keyframes pfSpin{to{transform:rotate(360deg)}}
       .pf-avatar{position:relative;z-index:1;width:92px;height:92px;border-radius:50%;object-fit:cover;display:block;border:4px solid var(--bg);background:var(--surface)}
-      .pf-header-actions{display:flex;gap:10px;padding-bottom:6px;flex-wrap:wrap;justify-content:flex-end}
-      /* explicit colors: fixes the grey/washed Edit + Share buttons */
-      .pf-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 17px;font-size:.82rem;font-weight:600;font-family:var(--font-body);cursor:pointer;color:var(--gold-bright);background:linear-gradient(180deg,rgba(201,168,118,.18),rgba(201,168,118,.06));border:1px solid rgba(201,168,118,.42);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;transition:transform .2s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease),background .25s var(--ease)}
+      /* avatar frames */
+      .pf-wrap[data-frame="double"] .pf-avatar-wrap::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(var(--ac),.5);pointer-events:none}
+      .pf-wrap[data-frame="hex"] .pf-avatar,.pf-wrap[data-frame="hex"] .pf-avatar-ring{border-radius:0;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+      .pf-wrap[data-frame="hex"] .pf-avatar-ring{inset:-6px;animation:none;box-shadow:none;background:linear-gradient(160deg,var(--gold-bright),var(--gold) 60%,var(--gold-bright))}
+      .pf-header-actions{display:flex;gap:10px;padding-bottom:6px;justify-content:flex-end}
+      /* explicit colors: fixes the grey/washed buttons */
+      .pf-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 17px;font-size:.82rem;font-weight:600;font-family:var(--font-body);cursor:pointer;color:var(--gold-bright);background:linear-gradient(180deg,rgba(var(--ac),.18),rgba(var(--ac),.06));border:1px solid rgba(var(--ac),.42);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;transition:transform .2s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease),background .25s var(--ease)}
       .pf-btn svg{width:14px;height:14px;flex-shrink:0;transition:transform .35s var(--ease-spring)}
-      .pf-btn:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 10px 24px -14px rgba(201,168,118,.75),inset 0 1px 0 rgba(255,255,255,.1)}
+      .pf-btn:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 10px 24px -14px rgba(var(--ac),.75),inset 0 1px 0 rgba(255,255,255,.1)}
       .pf-btn:hover svg{transform:rotate(-12deg) scale(1.15)}
       .pf-btn:active{transform:scale(.95)}
+      @media (max-width:519px){
+        .pf-btn-iconm{padding:0;width:40px;height:40px}
+        .pf-btn-iconm .pf-btn-label{display:none}
+      }
 
       .pf-identity{margin-top:18px;padding:0 4px}
       .pf-name{font-family:var(--font-display);font-weight:500;font-size:clamp(1.5rem,4.5vw,1.9rem);letter-spacing:-.01em;margin-bottom:3px}
-      .pf-username{font-family:var(--font-mono);font-size:.8rem;color:var(--gold);margin-bottom:12px}
-      .pf-bio{color:var(--text-secondary);font-size:.94rem;max-width:520px;margin-bottom:12px}
+      .pf-wrap[data-font="sans"] .pf-name{font-family:var(--font-body);font-weight:600;letter-spacing:-.03em}
+      .pf-wrap[data-font="mono"] .pf-name{font-family:var(--font-mono);font-weight:700;letter-spacing:-.04em;font-size:clamp(1.3rem,4vw,1.6rem)}
+      .pf-username{font-family:var(--font-mono);font-size:.82rem;color:var(--gold);margin-bottom:12px}
+      .pf-bio{color:var(--text-secondary);font-size:.95rem;line-height:1.55;max-width:520px;margin-bottom:12px}
       .pf-bio:empty{display:none}
-      .pf-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--text-muted);margin-bottom:6px}
-      .pf-meta .pf-meta-item{display:inline-flex;align-items:center;gap:5px}
+      .pf-eyeing{font-family:var(--font-display);font-style:italic;font-size:.92rem;color:var(--text-secondary);margin-bottom:12px}
+      .pf-eyeing span{font-family:var(--font-mono);font-style:normal;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-right:6px}
+      .pf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+      .pf-tags:empty{display:none}
+      .pf-tag{font-family:var(--font-mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-bright);padding:4px 10px;border-radius:999px;border:1px solid rgba(var(--ac),.35)}
+      .pf-meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.82rem;color:var(--text-secondary);margin-bottom:6px}
+      .pf-meta .pf-meta-item{display:inline-flex;align-items:center;gap:6px}
       .pf-meta svg{width:13px;height:13px;flex-shrink:0;color:var(--gold)}
       .pf-meta a{color:var(--gold);transition:color .2s var(--ease)}
       .pf-meta a:hover{color:var(--gold-bright)}
       .pf-share-msg{display:block;margin-top:6px;font-family:var(--font-mono);font-size:.72rem;color:var(--gold-bright);min-height:1.1em;word-break:break-all}
 
-      /* ---------- rank chip (subtle) ---------- */
+      /* ---------- standing card: rank + stats in one surface ---------- */
       .pf-wrap{--mc1:#c98a4b;--mc2:#7a4a22}
       .pf-wrap[data-rank="1"]{--mc1:#eef0f4;--mc2:#8b93a1}
       .pf-wrap[data-rank="2"]{--mc1:#f3d98a;--mc2:#a97e2c}
       .pf-wrap[data-rank="3"]{--mc1:#c9ecff;--mc2:#4f9bd0}
       .pf-wrap[data-rank="4"]{--mc1:#fff1c2;--mc2:#d19a2e}
-      .pf-rank{display:flex;align-items:center;gap:11px;margin:14px 0 4px;padding:8px 16px 8px 8px;max-width:400px;background:var(--surface);border:1px solid var(--border);border-radius:999px;opacity:0;transform:translateY(6px);transition:opacity .6s var(--ease),transform .6s var(--ease),border-color .5s var(--ease)}
+      .pf-standing{margin:22px 4px 24px;background:linear-gradient(135deg,rgba(var(--ac),.07),transparent 60%),var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color .4s var(--ease)}
+      .pf-standing:hover{border-color:rgba(var(--ac),.4)}
+      .pf-rank{display:flex;align-items:center;gap:14px;padding:14px 18px 14px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:0;transform:translateY(6px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
       .pf-wrap.rk-ready .pf-rank{opacity:1;transform:none}
-      .pf-medal{position:relative;flex-shrink:0;width:34px;height:34px;padding:0;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .3s var(--ease-spring)}
+      .pf-medal{position:relative;flex-shrink:0;width:40px;height:40px;padding:0;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .3s var(--ease-spring)}
       .pf-medal:active{transform:scale(.86)}
-      .pf-medal svg{position:relative;z-index:1;width:34px;height:34px;display:block}
+      .pf-medal svg{position:relative;z-index:1;width:40px;height:40px;display:block}
       .pf-medal .m-face{fill:url(#pfMg)}
       .pf-medal .m-rim{fill:none;stroke:rgba(255,255,255,.45);stroke-width:1}
       .pf-medal .m-star{fill:#0a0a0b;opacity:.8}
-      .pf-medal-glow{position:absolute;left:-5px;top:-5px;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,var(--mc1),transparent 68%);opacity:calc(var(--rg)*.22);pointer-events:none}
+      .pf-medal-glow{position:absolute;left:-6px;top:-6px;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle,var(--mc1),transparent 68%);opacity:calc(var(--rg)*.22);pointer-events:none}
       .pf-medal-burst{position:absolute;z-index:0;inset:-4px;border-radius:50%;border:1.2px solid var(--mc1);opacity:0;pointer-events:none}
       .pf-medal-burst.go{animation:pfBurst .7s var(--ease)}
       @keyframes pfBurst{0%{opacity:.85;transform:scale(.7)}100%{opacity:0;transform:scale(2.1)}}
-      .pf-rank-info{flex:1;min-width:0;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
-      .pf-rank-title{font-family:var(--font-display);font-weight:500;font-size:.95rem;color:var(--gold-bright);letter-spacing:-.005em}
-      .pf-rank-sub{font-size:.7rem;color:var(--text-muted)}
-      .pf-ladder{display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0}
+      .pf-rank-info{flex:1;min-width:0}
+      .pf-rank-title{font-family:var(--font-display);font-weight:500;font-size:1.08rem;color:var(--gold-bright);letter-spacing:-.005em;line-height:1.2}
+      .pf-rank-sub{font-size:.76rem;color:var(--text-secondary);margin-top:2px}
+      .pf-ladder{display:flex;align-items:center;gap:5px;flex-shrink:0}
       .pf-ladder i{width:5px;height:5px;border-radius:50%;border:1px solid var(--border);background:transparent;transition:background .5s var(--ease),border-color .5s var(--ease),transform .5s var(--ease-spring)}
       .pf-ladder i.done{background:var(--gold);border-color:var(--gold)}
       .pf-ladder i.cur{background:var(--gold-bright);border-color:var(--gold-bright);transform:scale(1.4)}
-      .pf-web-cap{position:absolute;z-index:2;right:12px;top:10px;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.03em;color:var(--gold-bright);padding:4px 10px;border-radius:999px;background:rgba(10,10,11,.55);border:1px solid var(--gold-dim)}
-      html[data-theme="light"] .pf-web-cap{background:rgba(23,23,23,.62)}
-
-      /* ---------- rank chip opens the certificate ---------- */
-      .pf-rank{cursor:pointer;-webkit-tap-highlight-color:transparent}
-      .pf-rank:hover{border-color:var(--gold-dim)}
       .pf-rank-go{flex-shrink:0;width:15px;height:15px;color:var(--gold);opacity:.75;transition:transform .3s var(--ease),opacity .3s var(--ease)}
       .pf-rank:hover .pf-rank-go{transform:translateX(3px);opacity:1}
+      .pf-standing-stats{display:flex;align-items:stretch;border-top:1px solid var(--border)}
+      .pf-stat{flex:1;display:flex;flex-direction:column;align-items:flex-start;padding:12px 18px}
+      .pf-stat + .pf-stat{border-left:1px solid var(--border)}
+      .pf-stat-num{font-family:var(--font-display);font-size:1.45rem;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1.2}
+      .pf-stat-label{font-size:.68rem;color:var(--text-secondary);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+      .pf-web-cap{position:absolute;z-index:2;right:12px;top:10px;font-family:var(--font-mono);font-size:.6rem;letter-spacing:.03em;color:var(--gold-bright);padding:4px 10px;border-radius:999px;background:rgba(10,10,11,.55);border:1px solid var(--gold-dim)}
+      html[data-theme="light"] .pf-web-cap{background:rgba(23,23,23,.62)}
 
       /* ---------- certificate modal (appended to <body> by JS, not inside #page-wrap:
                     #page-wrap has will-change:transform, which would trap position:fixed) ---------- */
@@ -191,7 +222,7 @@
 
       /* ---------- micro-animations ---------- */
       @keyframes pfBump{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
-      @keyframes pfBadgePop{0%{transform:scale(.8)}45%{transform:scale(1.14);box-shadow:0 0 18px rgba(232,199,102,.6)}100%{transform:scale(1)}}
+      @keyframes pfBadgePop{0%{transform:scale(.8)}45%{transform:scale(1.14);box-shadow:0 0 18px rgba(var(--ac2),.6)}100%{transform:scale(1)}}
       .pf-stat-num.bump{animation:pfBump .5s var(--ease-spring)}
       .pf-badge{transition:transform .25s var(--ease),border-color .4s var(--ease),color .4s var(--ease),background .4s var(--ease)}
       .pf-badge:hover{transform:translateY(-2px)}
@@ -206,57 +237,70 @@
       .pf-remove-btn:active:not(:disabled){transform:scale(.92)}
       .pf-add-result-item:active:not(:disabled){transform:scale(.98)}
 
-      /* ---------- stats ---------- */
-      .pf-stats-row{display:flex;align-items:center;gap:24px;margin:22px 4px 20px;padding:16px 22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);width:fit-content;max-width:100%}
-      .pf-stat{display:flex;flex-direction:column;align-items:flex-start}
-      .pf-stat-num{font-family:var(--font-display);font-size:1.5rem;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1.2}
-      .pf-stat-num.is-txt{font-size:1.15rem;line-height:1.45}
-      .pf-stat-label{font-size:.68rem;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
-      .pf-stat-divider{width:1px;height:28px;background:var(--border)}
-
-/* ---------- grail (pinned showcase) ---------- */
+      /* ---------- grail (pinned showcase) ---------- */
       .pf-grail{margin:0 4px 26px;opacity:0;transform:translateY(8px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
       .pf-wrap.rk-ready .pf-grail{opacity:1;transform:none}
       .pf-grail-label{display:block;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-      .pf-grail-card{position:relative;display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,var(--gold-dim),transparent 70%),var(--surface);border:1px solid rgba(201,168,118,.4);border-radius:var(--radius-lg);padding:14px;text-decoration:none;overflow:hidden;box-shadow:0 0 36px -18px rgba(232,199,102,.5);transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease)}
-      .pf-grail-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 0 48px -14px rgba(232,199,102,.6)}
+      .pf-grail-card{position:relative;display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,var(--gold-dim),transparent 70%),var(--surface);border:1px solid rgba(var(--ac),.4);border-radius:var(--radius-lg);padding:14px;text-decoration:none;overflow:hidden;box-shadow:0 0 36px -18px rgba(var(--ac2),.5);transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease)}
+      .pf-grail-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 0 48px -14px rgba(var(--ac2),.6)}
       .pf-grail-img{flex-shrink:0;width:78px;height:78px;border-radius:var(--radius-md);overflow:hidden;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b))}
       .pf-grail-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
       .pf-grail-card:hover .pf-grail-img img{transform:scale(1.08)}
       .pf-grail-card h3{font-family:var(--font-display);font-weight:500;font-size:1.02rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-      /* ---------- pin + taste-match tag (sit on owned card image, opposite the OWNED ribbon) ---------- */
-      .pf-pin-btn{position:absolute;top:9px;right:9px;z-index:5;width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(10,10,11,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(201,168,118,.35);cursor:pointer;color:var(--gold);-webkit-tap-highlight-color:transparent;transition:transform .3s var(--ease-spring),background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
+      /* ---------- pin + taste-match tag ---------- */
+      .pf-pin-btn{position:absolute;top:9px;right:9px;z-index:5;width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(10,10,11,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(var(--ac),.35);cursor:pointer;color:var(--gold);-webkit-tap-highlight-color:transparent;transition:transform .3s var(--ease-spring),background .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
       html[data-theme="light"] .pf-pin-btn{background:rgba(255,255,255,.65)}
       .pf-pin-btn svg{width:13px;height:13px;display:block}
       .pf-pin-btn:hover{border-color:var(--gold)}
       .pf-pin-btn:active{transform:scale(.86)}
       .pf-pin-btn.is-pinned{background:var(--gold);color:#0a0a0b;border-color:var(--gold)}
       .pf-pin-btn.is-pinned svg{fill:currentColor}
-      .pf-also-tag{position:absolute;top:9px;right:9px;z-index:5;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.03em;font-weight:700;color:#0a0a0b;background:linear-gradient(120deg,var(--gold-bright),var(--gold));padding:3px 8px;border-radius:999px;box-shadow:0 0 10px -2px rgba(232,199,102,.7)}
+      .pf-also-tag{position:absolute;top:9px;right:9px;z-index:5;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.03em;font-weight:700;color:#0a0a0b;background:linear-gradient(120deg,var(--gold-bright),var(--gold));padding:3px 8px;border-radius:999px;box-shadow:0 0 10px -2px rgba(var(--ac2),.7)}
 
-      /* ---------- taste match chip ---------- */
-      .pf-match{display:none;align-items:center;gap:7px;margin:10px 0 2px;padding:6px 13px;border-radius:999px;background:var(--gold-dim);border:1px solid rgba(201,168,118,.35);color:var(--gold-bright);font-size:.78rem;font-weight:500;opacity:0;transform:translateY(4px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
+      .pf-match{display:none;align-items:center;gap:7px;margin:10px 0 2px;padding:6px 13px;border-radius:999px;background:var(--gold-dim);border:1px solid rgba(var(--ac),.35);color:var(--gold-bright);font-size:.78rem;font-weight:500;opacity:0;transform:translateY(4px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
       .pf-match.is-in{display:inline-flex;opacity:1;transform:none}
       .pf-match svg{width:13px;height:13px;flex-shrink:0}
 
-            /* ---------- badges ---------- */
+      /* ---------- badges ---------- */
       .pf-badges{display:flex;gap:8px;margin:0 4px 26px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
       .pf-badges::-webkit-scrollbar{display:none}
-      .pf-badge{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;font-size:.74rem;font-weight:500;white-space:nowrap;border:1px solid var(--border);color:var(--text-muted);background:var(--surface);transition:border-color .4s var(--ease),color .4s var(--ease),background .4s var(--ease)}
+      .pf-badge{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;font-size:.76rem;font-weight:500;white-space:nowrap;border:1px solid var(--border);color:var(--text-secondary);background:var(--surface)}
       .pf-badge svg{width:12px;height:12px}
-      .pf-badge.on{color:var(--gold-bright);border-color:rgba(201,168,118,.45);background:var(--gold-dim)}
-      .pf-badge:not(.on){opacity:.7}
+      .pf-badge.on{color:var(--gold-bright);border-color:rgba(var(--ac),.45);background:var(--gold-dim)}
+      .pf-badge:not(.on){opacity:.65}
 
-      /* ---------- edit form ---------- */
-      .pf-edit-form{max-width:420px;margin:0 4px 30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:22px;animation:pfPanelIn .4s var(--ease)}
-      .pf-edit-form label{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.06em;color:var(--text-muted);text-transform:uppercase;margin:14px 0 6px}
+      /* ---------- edit form + customize panel ---------- */
+      .pf-edit-form,.pf-theme{max-width:460px;margin:0 4px 30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;animation:pfPanelIn .4s var(--ease)}
+      .pf-theme{max-width:none}
+      .pf-edit-form label{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.06em;color:var(--text-secondary);text-transform:uppercase;margin:14px 0 6px}
       .pf-edit-form label:first-child{margin-top:0}
       .pf-edit-form label em{font-style:normal;text-transform:none;letter-spacing:0}
-      .pf-edit-form input,.pf-edit-form textarea{width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-body);font-size:16px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
-      .pf-edit-form input:focus,.pf-edit-form textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+      .pf-edit-form input,.pf-edit-form textarea,.pf-theme input{width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-body);font-size:16px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+      .pf-edit-form input:focus,.pf-edit-form textarea:focus,.pf-theme input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
       .pf-edit-actions{display:flex;gap:10px;margin-top:18px}
       .pf-edit-msg{margin-top:10px;font-size:.8rem;color:var(--gold-bright);min-height:1.2em}
+
+      .pf-th-title{font-family:var(--font-display);font-weight:500;font-size:1.15rem;margin-bottom:2px}
+      .pf-th-sub{font-size:.8rem;color:var(--text-secondary);margin-bottom:6px}
+      .pf-th-label{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin:20px 0 10px}
+      .pf-th-label em{font-style:normal;letter-spacing:0;text-transform:none;opacity:.8}
+      .pf-th-row{display:flex;flex-wrap:wrap;gap:8px}
+      .pf-opt{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border-radius:999px;font-family:var(--font-body);font-size:.8rem;font-weight:500;color:var(--text-secondary);background:none;border:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .2s var(--ease),color .2s var(--ease),background .2s var(--ease),transform .2s var(--ease)}
+      .pf-opt:hover{border-color:var(--gold-dim);color:var(--text-primary)}
+      .pf-opt:active{transform:scale(.95)}
+      .pf-opt.is-sel{border-color:var(--gold);color:var(--gold-bright);background:var(--gold-dim)}
+      .pf-opt.is-lock{opacity:.5}
+      .pf-opt svg{width:11px;height:11px;flex-shrink:0}
+      .pf-opt.is-mono{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.04em}
+      .pf-opt[data-val="serif"]{font-family:var(--font-display)}
+      .pf-opt[data-val="mono"]{font-family:var(--font-mono);font-size:.74rem}
+      .pf-sw{width:36px;height:36px;padding:0;border-radius:50%;justify-content:center;background:radial-gradient(circle at 30% 28%,rgb(var(--sw2)),rgb(var(--sw)) 70%);border:2px solid transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+      .pf-sw:hover{border-color:rgba(var(--sw),.6)}
+      .pf-sw.is-sel{border-color:var(--bg);box-shadow:0 0 0 2px rgb(var(--sw)),inset 0 1px 0 rgba(255,255,255,.35);background:radial-gradient(circle at 30% 28%,rgb(var(--sw2)),rgb(var(--sw)) 70%)}
+      .pf-sw.is-lock{opacity:.4}
+      .pf-sw svg{width:12px;height:12px;color:#0a0a0b}
+      .pf-th-msg{margin-top:12px;font-size:.8rem;color:var(--gold-bright);min-height:1.2em}
 
       /* ---------- tabs ---------- */
       .pf-tabs{position:relative;display:flex;margin:0 4px 24px;border-bottom:1px solid var(--border)}
@@ -264,52 +308,72 @@
       .pf-tab::after{display:none!important}
       .pf-tab:hover{color:var(--text-primary)}
       .pf-tab.is-active{color:var(--gold)}
-      .pf-tab-ind{position:absolute;left:0;bottom:-1px;height:2px;width:0;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-bright));box-shadow:0 0 12px rgba(201,168,118,.6);transition:transform .45s var(--ease-spring),width .45s var(--ease-spring);pointer-events:none}
+      .pf-tab-ind{position:absolute;left:0;bottom:-1px;height:2px;width:0;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-bright));box-shadow:0 0 12px rgba(var(--ac),.6);transition:transform .45s var(--ease-spring),width .45s var(--ease-spring);pointer-events:none}
       .pf-tab-panel[hidden]{display:none}
 
       /* ---------- grids + cards ---------- */
       .pf-owned-grid,.pf-wishlist-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
       .pf-owned-card,.pf-wishlist-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease),opacity .28s var(--ease)}
-      .pf-owned-card{border-color:rgba(201,168,118,.3);box-shadow:0 0 0 1px var(--gold-dim),0 18px 34px -22px var(--shadow-soft)}
-      .pf-owned-card:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 24px 44px -20px var(--shadow-soft),0 0 30px -10px rgba(201,168,118,.45)}
+      .pf-owned-card{border-color:rgba(var(--ac),.3);box-shadow:0 0 0 1px var(--gold-dim),0 18px 34px -22px var(--shadow-soft)}
+      .pf-owned-card:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 24px 44px -20px var(--shadow-soft),0 0 30px -10px rgba(var(--ac),.45)}
       .pf-wishlist-card:hover{transform:translateY(-3px);border-color:var(--gold-dim)}
-      .pf-owned-card::before,.pf-wishlist-card::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background:radial-gradient(180px circle at var(--mx,50%) var(--my,50%),rgba(232,199,102,.16),transparent 70%);transition:opacity .3s var(--ease)}
+      .pf-owned-card::before,.pf-wishlist-card::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background:radial-gradient(180px circle at var(--mx,50%) var(--my,50%),rgba(var(--ac2),.16),transparent 70%);transition:opacity .3s var(--ease)}
       .pf-owned-card:hover::before,.pf-wishlist-card:hover::before{opacity:1}
       .pf-card-leaving{opacity:0;transform:scale(.92);pointer-events:none}
-      .pf-ribbon{position:absolute;top:9px;left:9px;z-index:3;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.08em;font-weight:700;color:#0a0a0b;background:linear-gradient(120deg,var(--gold-bright),var(--gold));padding:3px 9px;border-radius:999px;box-shadow:0 0 12px -2px rgba(232,199,102,.7)}
+      .pf-ribbon{position:absolute;top:9px;left:9px;z-index:3;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.08em;font-weight:700;color:#0a0a0b;background:linear-gradient(120deg,var(--gold-bright),var(--gold));padding:3px 9px;border-radius:999px;box-shadow:0 0 12px -2px rgba(var(--ac2),.7)}
       .pf-owned-card-image,.pf-wishlist-card-image{display:block;aspect-ratio:1/1;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b));overflow:hidden}
       .pf-owned-card-image img,.pf-wishlist-card-image img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
       .pf-owned-card:hover img,.pf-wishlist-card:hover img{transform:scale(1.06)}
       .pf-owned-card-body,.pf-wishlist-card-body{padding:12px 14px}
       .pf-owned-card-body h3,.pf-wishlist-card-body h3{font-family:var(--font-display);font-weight:500;font-size:.92rem;line-height:1.3;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-      .pf-remove-btn{font-family:var(--font-mono);font-size:.68rem;color:var(--text-muted);background:none;border:1px solid var(--border);border-radius:999px;cursor:pointer;padding:6px 12px;min-height:30px;-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease),border-color .2s var(--ease),background .2s var(--ease)}
+      .pf-remove-btn{font-family:var(--font-mono);font-size:.68rem;color:var(--text-secondary);background:none;border:1px solid var(--border);border-radius:999px;cursor:pointer;padding:6px 12px;min-height:30px;-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease),border-color .2s var(--ease),background .2s var(--ease)}
       .pf-remove-btn:hover{color:var(--gold-bright);border-color:var(--gold-dim);background:var(--gold-dim)}
       .pf-remove-btn:disabled{opacity:.5;cursor:default}
 
-      /* ghost slots: the empty shelf */
-      .pf-ghost{position:relative;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1.5px dashed rgba(201,168,118,.32);border-radius:var(--radius-md);cursor:pointer;color:var(--gold);-webkit-tap-highlight-color:transparent;overflow:hidden;animation:pfCardIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*80ms);transition:border-color .3s var(--ease),background .3s var(--ease),transform .3s var(--ease)}
-      .pf-ghost::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(201,168,118,.09) 50%,transparent 70%);background-size:200% 100%;animation:pfShimmer 3.2s linear infinite;animation-delay:calc(var(--i,0)*.5s)}
-      .pf-ghost svg{position:relative;width:26px;height:26px;opacity:.7;transition:transform .35s var(--ease-spring),opacity .3s var(--ease)}
+      /* shelf layout: wall (staggered columns) */
+      .pf-owned-grid[data-layout="wall"]{display:block;column-count:2;column-gap:16px}
+      .pf-owned-grid[data-layout="wall"] .pf-owned-card{break-inside:avoid;margin-bottom:16px}
+      .pf-owned-grid[data-layout="wall"] .pf-owned-card:nth-child(3n+1) .pf-owned-card-image{aspect-ratio:4/5}
+      .pf-owned-grid[data-layout="wall"] .pf-owned-card:nth-child(3n+2) .pf-owned-card-image{aspect-ratio:1/1}
+      .pf-owned-grid[data-layout="wall"] .pf-owned-card:nth-child(3n) .pf-owned-card-image{aspect-ratio:5/6}
+      /* shelf layout: ledger (refined list) */
+      .pf-owned-grid[data-layout="ledger"]{grid-template-columns:1fr;gap:10px}
+      .pf-owned-grid[data-layout="ledger"] .pf-owned-card{display:flex;align-items:center;gap:14px;padding:10px 12px 10px 10px}
+      .pf-owned-grid[data-layout="ledger"] .pf-owned-card-image{width:72px;height:72px;aspect-ratio:1/1;border-radius:10px;flex-shrink:0}
+      .pf-owned-grid[data-layout="ledger"] .pf-owned-card-body{flex:1;min-width:0;padding:0 40px 0 0}
+      .pf-owned-grid[data-layout="ledger"] .pf-ribbon{display:none}
+      .pf-owned-grid[data-layout="ledger"] .pf-pin-btn{top:50%;margin-top:-14px;right:12px}
+      .pf-owned-grid[data-layout="ledger"] .pf-also-tag{top:auto;bottom:10px;right:12px}
+
+      /* empty shelf: one hero slot + two quiet ones */
+      .pf-ghost{position:relative;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;color:var(--gold);-webkit-tap-highlight-color:transparent;overflow:hidden;animation:pfCardIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*80ms);transition:border-color .3s var(--ease),background .3s var(--ease),transform .3s var(--ease)}
+      .pf-ghost::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(var(--ac),.07) 50%,transparent 70%);background-size:200% 100%;animation:pfShimmer 3.2s linear infinite;animation-delay:calc(var(--i,0)*.5s)}
+      .pf-ghost svg{position:relative;width:24px;height:24px;opacity:.65;transition:transform .35s var(--ease-spring),opacity .3s var(--ease)}
       .pf-ghost:hover{border-color:var(--gold);background:var(--surface-hover);transform:translateY(-3px)}
       .pf-ghost:hover svg{transform:rotate(90deg) scale(1.15);opacity:1}
       .pf-ghost:active{transform:scale(.97)}
-      .pf-empty-cap{grid-column:1/-1;text-align:center;color:var(--text-secondary);font-size:.9rem;padding:6px 0 0}
+      .pf-ghost-hero{grid-column:span 2;aspect-ratio:auto;min-height:136px;justify-content:flex-start;gap:18px;padding:0 26px;text-align:left;border-color:rgba(var(--ac),.4);background:linear-gradient(135deg,rgba(var(--ac),.1),transparent 70%),var(--surface)}
+      .pf-ghost-hero svg{flex-shrink:0;width:34px;height:34px;padding:8px;border-radius:50%;border:1px solid rgba(var(--ac),.5);opacity:1}
+      .pf-ghost-hero span{position:relative;display:block}
+      .pf-ghost-hero b{display:block;font-family:var(--font-display);font-weight:500;font-size:1.05rem;color:var(--text-primary);margin-bottom:3px}
+      .pf-ghost-hero em{display:block;font-style:normal;font-size:.8rem;color:var(--text-secondary)}
+      .pf-empty-cap{grid-column:1/-1;text-align:center;color:var(--text-secondary);font-size:.88rem;padding:6px 0 0}
       .pf-empty{grid-column:1/-1;text-align:center;padding:44px 20px;border:1px dashed var(--border);border-radius:var(--radius-md);color:var(--text-secondary);font-size:.92rem}
       .pf-empty p{margin-bottom:16px}
       .pf-empty p:last-child{margin-bottom:0}
 
-      /* ---------- suggested picks + add widgets ---------- */
+      /* ---------- add widget + suggestions (one section) ---------- */
       .pf-section{margin-top:34px}
       .pf-section-title{font-family:var(--font-display);font-weight:500;font-size:1.1rem;margin-bottom:4px}
-      .pf-section-sub{font-size:.8rem;color:var(--text-muted);margin-bottom:14px}
+      .pf-section-sub{font-size:.82rem;color:var(--text-secondary);margin-bottom:14px}
       .pf-suggest-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
       .pf-sg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;animation:pfCardIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*60ms)}
       .pf-sg img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--shimmer-a)}
       .pf-sg-body{padding:10px 12px 12px}
       .pf-sg h4{font-family:var(--font-display);font-weight:500;font-size:.84rem;line-height:1.3;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
       .pf-sg-actions{display:flex;gap:6px}
-      .pf-sg-btn{flex:1;font-family:var(--font-mono);font-size:.66rem;padding:7px 4px;min-height:32px;border-radius:999px;cursor:pointer;background:none;color:var(--text-secondary);border:1px solid var(--border);-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease),border-color .2s var(--ease),background .2s var(--ease)}
-      .pf-sg-btn.own{color:var(--gold-bright);border-color:rgba(201,168,118,.4)}
+      .pf-sg-btn{flex:1;font-family:var(--font-mono);font-size:.66rem;padding:7px 4px;min-height:32px;border-radius:999px;cursor:pointer;background:none;color:var(--text-secondary);border:1px solid var(--border);-webkit-tap-highlight-color:transparent}
+      .pf-sg-btn.own{color:var(--gold-bright);border-color:rgba(var(--ac),.4)}
       .pf-sg-btn:hover:not(:disabled){border-color:var(--gold);background:var(--gold-dim)}
       .pf-sg-btn:disabled{opacity:.5}
       .pf-add-widget{position:relative}
@@ -331,18 +395,22 @@
         .pf-sk-avatar{margin-top:-58px}
         .pf-owned-grid,.pf-wishlist-grid,.pf-sk-cards,.pf-suggest-grid{grid-template-columns:repeat(4,1fr)}
         .pf-owned-grid{gap:22px}.pf-wishlist-grid{gap:18px}
-        .pf-edit-form{max-width:440px}
+        .pf-owned-grid[data-layout="wall"]{column-count:3;column-gap:22px}
+        .pf-owned-grid[data-layout="wall"] .pf-owned-card{margin-bottom:22px}
+        .pf-owned-grid[data-layout="ledger"]{grid-template-columns:repeat(2,1fr)}
+        .pf-edit-form{max-width:460px}
+        .pf-standing{max-width:560px}
       }
       @media (prefers-reduced-motion:reduce){
-        .pf-rise,.pf-card-in,.pf-panel-in,.pf-edit-form,.pf-add-result-item,.pf-ghost,.pf-sg{animation:none}
+        .pf-rise,.pf-card-in,.pf-panel-in,.pf-edit-form,.pf-theme,.pf-add-result-item,.pf-ghost,.pf-sg{animation:none}
         .pf-sk,.pf-cover-glow,.pf-avatar-ring,.pf-ghost::before,.pf-web .lit-node .w-halo{animation:none}
         .pf-medal-glow,.pf-stat-num.bump,.pf-badge.pop{animation:none}
-        .pf-tab-ind,.pf-rank-bar,.pf-web .w-thread,.pf-web .w-dot{transition:none}
+        .pf-tab-ind,.pf-web .w-thread,.pf-web .w-dot{transition:none}
         .pf-cert,.pf-cert-frame,.pf-cert-load,.pf-cert-close{transition:none}
       }
     </style>
 
-    <div class="pf-wrap" id="pfRoot" data-rank="0">
+    <div class="pf-wrap" id="pfRoot" data-rank="0" data-accent="gold" data-frame="ring" data-font="serif">
 
       <div class="pf-skeleton" id="pfSkeleton" aria-hidden="true">
         <div class="pf-sk pf-sk-cover"></div>
@@ -374,8 +442,9 @@
             <img class="pf-avatar" id="pfAvatar" src="assets/images/spoider-logo-vector.svg" alt="" referrerpolicy="no-referrer">
           </div>
           <div class="pf-header-actions">
-            <button class="btn pf-btn" id="pfEditBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Edit profile</button>
-            <button class="btn pf-btn" id="pfShareBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share</button>
+            <button class="btn pf-btn" id="pfThemeBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg><span class="pf-btn-label">Customize</span></button>
+            <button class="btn pf-btn pf-btn-iconm" id="pfEditBtn" type="button" aria-label="Edit profile" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span class="pf-btn-label">Edit</span></button>
+            <button class="btn pf-btn pf-btn-iconm" id="pfShareBtn" type="button" aria-label="Share profile" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="pf-btn-label">Share</span></button>
           </div>
         </div>
 
@@ -383,25 +452,9 @@
           <h1 class="pf-name" id="pfName">—</h1>
           <p class="pf-username" id="pfUsername"></p>
           <p class="pf-bio" id="pfBio"></p>
+          <p class="pf-eyeing" id="pfEyeing" hidden></p>
+          <div class="pf-tags" id="pfTags"></div>
           <div class="pf-meta" id="pfMeta"></div>
-          <div class="pf-rank" id="pfRank">
-            <button class="pf-medal" id="pfMedal" type="button" aria-label="View Spoider rank certificate">
-              <span class="pf-medal-glow"></span>
-              <span class="pf-medal-burst" id="pfMedalBurst"></span>
-              <svg viewBox="0 0 40 40" aria-hidden="true">
-                <defs><linearGradient id="pfMg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--mc1)"/><stop offset="1" style="stop-color:var(--mc2)"/></linearGradient></defs>
-                <circle class="m-face" cx="20" cy="20" r="17"/>
-                <circle class="m-rim" cx="20" cy="20" r="16.3"/>
-                <path class="m-star" d="M20 10.5l2.4 6 6.3.5-4.9 4.1 1.6 6.2-5.4-3.5-5.4 3.5 1.6-6.2-4.9-4.1 6.3-.5z"/>
-              </svg>
-            </button>
-            <div class="pf-rank-info">
-              <h2 class="pf-rank-title" id="pfRankName">Newbie</h2>
-              <p class="pf-rank-sub" id="pfRankSub"></p>
-              <div class="pf-ladder" id="pfLadder" aria-hidden="true"></div>
-            </div>
-            <svg class="pf-rank-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-          </div>
           <span class="pf-share-msg" id="pfShareMsg" role="status" aria-live="polite"></span>
           <div class="pf-match" id="pfMatch"></div>
         </div>
@@ -424,12 +477,47 @@
           <p class="pf-edit-msg" id="pfEditMsg" role="status" aria-live="polite"></p>
         </div>
 
-        <div class="pf-stats-row pf-rise" style="--i:3">
-          <div class="pf-stat"><span class="pf-stat-num" id="pfStatOwned">0</span><span class="pf-stat-label">Owned</span></div>
-          <div class="pf-stat-divider"></div>
-          <div class="pf-stat"><span class="pf-stat-num" id="pfStatWishlist">0</span><span class="pf-stat-label">Wishlist</span></div>
-          <div class="pf-stat-divider"></div>
-          <div class="pf-stat"><span class="pf-stat-num is-txt" id="pfStatRank">—</span><span class="pf-stat-label">Rank</span></div>
+        <div class="pf-theme" id="pfTheme" hidden>
+          <h2 class="pf-th-title">Make it yours</h2>
+          <p class="pf-th-sub">Changes preview live. Climb the ranks to unlock more.</p>
+          <span class="pf-th-label">Accent</span><div class="pf-th-row" id="pfThAccent"></div>
+          <span class="pf-th-label">Avatar frame</span><div class="pf-th-row" id="pfThFrame"></div>
+          <span class="pf-th-label">Name style</span><div class="pf-th-row" id="pfThFont"></div>
+          <span class="pf-th-label">Cover web</span><div class="pf-th-row" id="pfThWeb"></div>
+          <span class="pf-th-label">Shelf layout</span><div class="pf-th-row" id="pfThLayout"></div>
+          <span class="pf-th-label">Taste <em>pick up to 3</em></span><div class="pf-th-row" id="pfThTags"></div>
+          <span class="pf-th-label">Currently eyeing</span>
+          <input type="text" id="pfThEyeing" maxlength="60" placeholder="e.g. a mechanical keyboard" autocomplete="off">
+          <div class="pf-edit-actions">
+            <button class="btn btn-primary" id="pfThSave" type="button">Save look</button>
+            <button class="btn pf-btn" id="pfThCancel" type="button">Cancel</button>
+          </div>
+          <p class="pf-th-msg" id="pfThMsg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="pf-standing pf-rise" style="--i:3">
+          <div class="pf-rank" id="pfRank">
+            <button class="pf-medal" id="pfMedal" type="button" aria-label="View Spoider rank certificate">
+              <span class="pf-medal-glow"></span>
+              <span class="pf-medal-burst" id="pfMedalBurst"></span>
+              <svg viewBox="0 0 40 40" aria-hidden="true">
+                <defs><linearGradient id="pfMg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--mc1)"/><stop offset="1" style="stop-color:var(--mc2)"/></linearGradient></defs>
+                <circle class="m-face" cx="20" cy="20" r="17"/>
+                <circle class="m-rim" cx="20" cy="20" r="16.3"/>
+                <path class="m-star" d="M20 10.5l2.4 6 6.3.5-4.9 4.1 1.6 6.2-5.4-3.5-5.4 3.5 1.6-6.2-4.9-4.1 6.3-.5z"/>
+              </svg>
+            </button>
+            <div class="pf-rank-info">
+              <h2 class="pf-rank-title" id="pfRankName">Newbie</h2>
+              <p class="pf-rank-sub" id="pfRankSub"></p>
+            </div>
+            <div class="pf-ladder" id="pfLadder" aria-hidden="true"></div>
+            <svg class="pf-rank-go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div class="pf-standing-stats">
+            <div class="pf-stat"><span class="pf-stat-num" id="pfStatOwned">0</span><span class="pf-stat-label">Owned</span></div>
+            <div class="pf-stat"><span class="pf-stat-num" id="pfStatWishlist">0</span><span class="pf-stat-label">Wishlist</span></div>
+          </div>
         </div>
 
         <div class="pf-grail" id="pfGrail" hidden>
@@ -457,6 +545,10 @@
               <input type="text" id="pfAddOwnedSearch" placeholder="Search products…" autocomplete="off">
               <div class="pf-add-results" id="pfAddOwnedResults"></div>
             </div>
+            <div id="pfSuggest" hidden>
+              <p class="pf-section-sub" style="margin:26px 0 14px;">Or start with a fresh find. Tap Own if you have it, Wish if you want it.</p>
+              <div class="pf-suggest-grid" id="pfSuggestGrid"></div>
+            </div>
           </div>
         </div>
 
@@ -472,12 +564,6 @@
           </div>
         </div>
 
-        <div class="pf-section" id="pfSuggest" hidden>
-          <h3 class="pf-section-title">Start your shelf</h3>
-          <p class="pf-section-sub">Fresh finds. Tap Own if you have it, Wish if you want it.</p>
-          <div class="pf-suggest-grid" id="pfSuggestGrid"></div>
-        </div>
-
       </section>
     </div>
 
@@ -488,20 +574,33 @@
 
       var FALLBACK_AVATAR = 'assets/images/spoider-logo-vector.svg';
       var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var UNLOCK_ALL = /[?&]unlock=1/.test(window.location.search);
       var RANKS = [
         { n: 'Newbie', min: 0 }, { n: 'Weaver', min: 1 }, { n: 'Curator', min: 5 },
         { n: 'Architect', min: 10 }, { n: 'Grandmaster', min: 25 }
       ];
-      var SLOTS = 12, HUB = { x: 268, y: 64 };
+      var SLOTS = 12;
+
+      // customization options: [value, label, min rank index needed]
+      var OPT = {
+        accent: [['gold', 'Gold', 0], ['silver', 'Silver', 0], ['bone', 'Bone', 1], ['copper', 'Copper', 1], ['emerald', 'Emerald', 2], ['ink', 'Ink', 2]],
+        frame: [['ring', 'Ring', 0], ['double', 'Double', 1], ['hex', 'Hex', 2]],
+        font: [['serif', 'Serif', 0], ['sans', 'Sans', 0], ['mono', 'Mono', 1]],
+        web: [['radial', 'Radial', 0], ['orb', 'Orb', 1], ['drift', 'Drift', 3]],
+        layout: [['grid', 'Grid', 0], ['ledger', 'Ledger', 1], ['wall', 'Wall', 2]]
+      };
+      var SWATCH = { gold: ['201,168,118', '232,199,102'], silver: ['176,184,198', '226,232,242'], bone: ['214,206,190', '244,238,224'], copper: ['201,128,96', '238,168,128'], emerald: ['92,176,140', '138,222,182'], ink: ['112,150,214', '160,192,244'] };
+      var TAGS = ['Minimal', 'Tech', 'Desk setup', 'Streetwear', 'Watches', 'Home', 'Gadgets', 'Gifts', 'Fitness', 'Travel', 'Kitchen', 'Retro'];
+      var THEME_GROUPS = [['accent', 'pfThAccent'], ['frame', 'pfThFrame'], ['font', 'pfThFont'], ['web', 'pfThWeb'], ['layout', 'pfThLayout']];
 
       var alive = true, timers = [], authSub = null, bootSeq = 0;
-      var state = { sb: null, uid: null, profile: null, isOwn: false, owned: [], wish: [], ownedErr: false, wishErr: false, pool: null };
+      var state = { sb: null, uid: null, profile: null, isOwn: false, owned: [], wish: [], ownedErr: false, wishErr: false, pool: null, theme: null, draft: null, view: null };
       var seq = { owned: 0, wish: 0, addOwned: 0, addWish: 0 };
       var found = { owned: {}, wish: {} };
 
       var KINDS = {
-        owned: { table: 'owned_products', ts: 'owned_at', grid: 'pfOwnedGrid', stat: 'pfStatOwned', card: 'pf-owned-card', img: 'pf-owned-card-image', body: 'pf-owned-card-body', ribbon: true, pin: true, search: 'pfAddOwnedSearch', results: 'pfAddOwnedResults', widget: 'pfAddOwnedWidget', addSeq: 'addOwned', emptyOwn: 'Your shelf is empty. Tap a slot to add your first find.', emptyOther: 'Nothing owned yet.' },
-        wish: { table: 'wishlist', ts: 'added_at', grid: 'pfWishlistGrid', stat: 'pfStatWishlist', card: 'pf-wishlist-card', img: 'pf-wishlist-card-image', body: 'pf-wishlist-card-body', ribbon: false, search: 'pfAddWishlistSearch', results: 'pfAddWishlistResults', widget: 'pfAddWishlistWidget', addSeq: 'addWish', emptyOwn: 'Your wishlist is empty. Tap a slot or the heart on any find.', emptyOther: 'No wishlist items yet.' }
+        owned: { table: 'owned_products', ts: 'owned_at', grid: 'pfOwnedGrid', stat: 'pfStatOwned', card: 'pf-owned-card', img: 'pf-owned-card-image', body: 'pf-owned-card-body', ribbon: true, pin: true, search: 'pfAddOwnedSearch', results: 'pfAddOwnedResults', widget: 'pfAddOwnedWidget', addSeq: 'addOwned', heroT: 'Start with your grail', heroS: 'The one find that defines your shelf', emptyOwn: 'Your shelf is empty. Tap a slot to add your first find.', emptyOther: 'Nothing owned yet.' },
+        wish: { table: 'wishlist', ts: 'added_at', grid: 'pfWishlistGrid', stat: 'pfStatWishlist', card: 'pf-wishlist-card', img: 'pf-wishlist-card-image', body: 'pf-wishlist-card-body', ribbon: false, search: 'pfAddWishlistSearch', results: 'pfAddWishlistResults', widget: 'pfAddWishlistWidget', addSeq: 'addWish', heroT: 'Save what you want next', heroS: 'Your wishlist starts with one find', emptyOwn: 'Your wishlist is empty. Tap a slot or the heart on any find.', emptyOther: 'No wishlist items yet.' }
       };
 
       function el(id) { return document.getElementById(id); }
@@ -556,27 +655,102 @@
         })();
       }
 
-      // =============== living web ===============
+      // =============== theme data ===============
+      function pick(v, list, d) { for (var i = 0; i < list.length; i++) if (list[i][0] === v) return v; return d; }
+      function normTheme(r) {
+        r = (r && typeof r === 'object') ? r : {};
+        var tags = Array.isArray(r.tags) ? r.tags.filter(function (x) { return TAGS.indexOf(x) > -1; }).slice(0, 3) : [];
+        return {
+          accent: pick(r.accent, OPT.accent, 'gold'), frame: pick(r.frame, OPT.frame, 'ring'), font: pick(r.font, OPT.font, 'serif'),
+          web: pick(r.web, OPT.web, 'radial'), layout: pick(r.layout, OPT.layout, 'grid'),
+          tags: tags, eyeing: String(r.eyeing || '').slice(0, 60)
+        };
+      }
+      function cloneTheme(t) { return normTheme(JSON.parse(JSON.stringify(t))); }
+
+      function applyTheme(t) {
+        state.view = t;
+        root.setAttribute('data-accent', t.accent);
+        root.setAttribute('data-frame', t.frame);
+        root.setAttribute('data-font', t.font);
+        buildWeb();
+        renderWeb();
+        renderTaste(t);
+        applyLayout(t);
+      }
+      function applyLayout(t) {
+        var g = el('pfOwnedGrid');
+        if (g) g.setAttribute('data-layout', state.owned.length ? t.layout : 'grid');
+      }
+      function renderTaste(t) {
+        el('pfTags').innerHTML = t.tags.map(function (x) { return '<span class="pf-tag">' + escapeHtml(x) + '</span>'; }).join('');
+        var e = el('pfEyeing');
+        if (t.eyeing) { e.hidden = false; e.innerHTML = '<span>Currently eyeing</span>' + escapeHtml(t.eyeing); }
+        else e.hidden = true;
+      }
+
+      // =============== living web (seeded: every profile gets its own) ===============
       var slotPts = [];
+      function hashStr(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+      function prng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+      function cl(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
       function buildWeb() {
         var svg = el('pfWeb');
-        if (!svg || svg.firstChild) return;
-        var h = '';
-        [30, 62, 98, 140].forEach(function (r) { h += '<ellipse class="w-ring" cx="' + HUB.x + '" cy="' + HUB.y + '" rx="' + r + '" ry="' + (r * 0.5).toFixed(1) + '"/>'; });
-        for (var a = 0; a < 8; a++) {
-          var ang = a * Math.PI / 4;
-          h += '<line class="w-spoke" x1="' + HUB.x + '" y1="' + HUB.y + '" x2="' + (HUB.x + Math.cos(ang) * 300).toFixed(1) + '" y2="' + (HUB.y + Math.sin(ang) * 150).toFixed(1) + '"/>';
+        if (!svg || !state.profile) return;
+        var pat = (state.view || state.theme || {}).web || 'radial';
+        var seedStr = String(state.profile.username || state.profile.id || 'spoider');
+        var key = pat + '|' + seedStr;
+        if (svg.getAttribute('data-key') === key) return;
+        svg.setAttribute('data-key', key);
+        var sd = hashStr(seedStr), R = prng(sd), h = '', hx, hy, i, ang, r, x, y;
+        slotPts = [];
+
+        if (pat === 'orb') {
+          hx = 292; hy = 64; var rad = 54;
+          h += '<circle class="w-ring" cx="' + hx + '" cy="' + hy + '" r="' + rad + '"/>';
+          for (i = 1; i <= 3; i++) h += '<ellipse class="w-ring" cx="' + hx + '" cy="' + hy + '" rx="' + (rad * i / 4).toFixed(1) + '" ry="' + rad + '"/>';
+          for (i = -1; i <= 1; i++) h += '<ellipse class="w-ring" cx="' + hx + '" cy="' + (hy + i * rad * 0.52).toFixed(1) + '" rx="' + (rad * Math.cos(Math.asin(i * 0.52))).toFixed(1) + '" ry="' + (6 + (i ? 0 : 3)) + '"/>';
+          for (i = 0; i < SLOTS; i++) {
+            var lon = (R() - 0.5) * 2.6, lat = (R() - 0.5) * 2.1;
+            x = hx + rad * 0.92 * Math.cos(lat) * Math.sin(lon); y = hy + rad * 0.92 * Math.sin(lat);
+            slotPts.push([x, y]);
+          }
+        } else if (pat === 'drift') {
+          hx = 150 + R() * 40; hy = 62 + R() * 8;
+          var ph = R() * 6.28;
+          for (i = 0; i < SLOTS; i++) {
+            x = cl(hx + 30 + i * (216 / SLOTS) + (R() - 0.5) * 16, 20, 388);
+            y = cl(64 + Math.sin(i * 0.85 + ph) * 34 + (R() - 0.5) * 14, 14, 114);
+            slotPts.push([x, y]);
+          }
+          for (i = 0; i < SLOTS - 1; i++) h += '<line class="w-spoke" x1="' + slotPts[i][0].toFixed(1) + '" y1="' + slotPts[i][1].toFixed(1) + '" x2="' + slotPts[i + 1][0].toFixed(1) + '" y2="' + slotPts[i + 1][1].toFixed(1) + '"/>';
+        } else {
+          hx = 236 + R() * 56; hy = 54 + R() * 20;
+          var k = 0.9 + R() * 0.25, off = R() * 3.14, spokes = 6 + Math.floor(R() * 4);
+          [30, 62, 98, 140].forEach(function (rr) { h += '<ellipse class="w-ring" cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" rx="' + (rr * k).toFixed(1) + '" ry="' + (rr * k * 0.5).toFixed(1) + '"/>'; });
+          for (i = 0; i < spokes; i++) {
+            ang = off + i * Math.PI * 2 / spokes;
+            h += '<line class="w-spoke" x1="' + hx.toFixed(1) + '" y1="' + hy.toFixed(1) + '" x2="' + (hx + Math.cos(ang) * 300).toFixed(1) + '" y2="' + (hy + Math.sin(ang) * 150).toFixed(1) + '"/>';
+          }
+          var a0 = R() * 6.28;
+          for (i = 0; i < SLOTS; i++) {
+            ang = a0 + i * 2.399; r = 40 + ((i * 37 + sd) % 5) * 18 + R() * 8;
+            x = cl(hx + r * Math.cos(ang), 16, 392); y = cl(hy + r * Math.sin(ang) * 0.44, 14, 114);
+            slotPts.push([x, y]);
+          }
         }
+
         var thr = '', nodes = '';
-        for (var i = 0; i < SLOTS; i++) {
-          var ang2 = i * 2.399, r = 44 + ((i * 37) % 5) * 22;
-          var x = HUB.x + r * Math.cos(ang2), y = HUB.y + r * Math.sin(ang2) * 0.46;
-          slotPts.push([x, y]);
-          var d = (i * 0.07).toFixed(2);
-          thr += '<line class="w-thread" pathLength="1" style="--d:' + d + 's" x1="' + HUB.x + '" y1="' + HUB.y + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"/>';
+        for (i = 0; i < SLOTS; i++) {
+          x = slotPts[i][0]; y = slotPts[i][1];
+          var d = (i * 0.07).toFixed(2), path;
+          if (pat === 'drift') path = 'M' + hx.toFixed(1) + ' ' + hy.toFixed(1) + ' Q' + ((hx + x) / 2).toFixed(1) + ' ' + (hy + (y - hy) * 0.2 - 18 + (i % 2) * 36).toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1);
+          else path = 'M' + hx.toFixed(1) + ' ' + hy.toFixed(1) + ' L' + x.toFixed(1) + ' ' + y.toFixed(1);
+          thr += '<path class="w-thread" pathLength="1" style="--d:' + d + 's" d="' + path + '"/>';
           nodes += '<g class="w-node" style="--d:' + d + 's"><circle class="w-slot" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4"/><circle class="w-halo" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="8"/><circle class="w-dot" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3.2"/></g>';
         }
-        svg.innerHTML = h + thr + nodes + '<circle class="w-hub" cx="' + HUB.x + '" cy="' + HUB.y + '" r="2.4"/>';
+        svg.innerHTML = h + thr + nodes + '<circle class="w-hub" cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="2.4"/>';
       }
 
       function renderWeb() {
@@ -599,10 +773,8 @@
         var c = state.owned.length, i = rankIndex(c), cur = RANKS[i], next = RANKS[i + 1];
         root.setAttribute('data-rank', i);
         el('pfRankName').textContent = cur.n;
-        el('pfStatRank').textContent = cur.n;
         el('pfRankSub').textContent = next ? 'Own ' + (next.min - c) + ' more to reach ' + next.n : 'Top rank reached';
         el('pfLadder').innerHTML = RANKS.map(function (r, j) { return '<i class="' + (j < i ? 'done' : (j === i ? 'cur' : '')) + '"></i>'; }).join('');
-        var p = next ? (c - cur.min) / (next.min - cur.min) : 1;
       }
 
       var BADGE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
@@ -692,7 +864,7 @@
         render('owned');
       }
 
-      function derived() { renderRank(); renderWeb(); renderBadges(); renderSuggest(); renderGrail(); renderMatch(); }
+      function derived() { renderRank(); renderWeb(); renderBadges(); renderSuggest(); renderGrail(); renderMatch(); if (state.view) applyLayout(state.view); }
 
       // =============== views ===============
       function showLoading() {
@@ -711,7 +883,8 @@
       }
       function showProfile() {
         el('pfSkeleton').hidden = true; el('pfSignin').hidden = true; el('pfProfile').hidden = false;
-        buildWeb();
+        el('pfWeb').removeAttribute('data-key');
+        applyTheme(state.theme);
         renderHeader();
         for (var k in KINDS) el(KINDS[k].widget).hidden = !state.isOwn;
         requestAnimationFrame(function () { moveInd(true); });
@@ -726,9 +899,6 @@
       }
 
       // =============== boot ===============
-      // Own profile: read the row; if it isn't there yet, ask the database to
-      // create it (ensure_profile RPC), then fall back to one delayed re-read
-      // in case a signup trigger is still finishing.
       async function fetchOwnProfile(uid) {
         var r = await state.sb.from('profiles').select('*').eq('id', uid).maybeSingle();
         if (r.data) return r.data;
@@ -760,6 +930,7 @@
         state.profile = profile;
         state.isOwn = !!(user && profile.id === user.id);
         state.owned = []; state.wish = []; state.pool = null; state.bOn = null; state.visitorOwned = null;
+        state.theme = normTheme(profile.theme); state.draft = null; state.view = state.theme;
         showProfile();
       }
 
@@ -796,11 +967,13 @@
         if (joined) parts.push('<span class="pf-meta-item">' + metaIcon('<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>') + 'Joined ' + escapeHtml(joined) + '</span>');
         el('pfMeta').innerHTML = parts.join('');
         el('pfEditBtn').hidden = !isOwn || !el('pfEditForm').hidden;
+        el('pfThemeBtn').hidden = !isOwn;
         el('pfShareBtn').hidden = !p.username;
       }
 
       // =============== edit ===============
       function openEdit() {
+        if (!el('pfTheme').hidden) closeTheme(true);
         var p = state.profile;
         el('pfEditName').value = p.display_name || '';
         el('pfEditUsername').value = p.username || '';
@@ -857,6 +1030,86 @@
         if (window.SpoiderAuth && window.SpoiderAuth.refreshProfile) window.SpoiderAuth.refreshProfile();
       }
 
+      // =============== customize (live preview, saved to profiles.theme) ===============
+      var LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+      function isUnlocked(min) { return UNLOCK_ALL || rankIndex(state.owned.length) >= min; }
+
+      function renderThemePanel() {
+        var d = state.draft;
+        THEME_GROUPS.forEach(function (g) {
+          var key = g[0];
+          el(g[1]).innerHTML = OPT[key].map(function (o) {
+            var open = isUnlocked(o[2]), sel = d[key] === o[0];
+            var cls = 'pf-opt' + (key === 'accent' ? ' pf-sw' : '') + (sel ? ' is-sel' : '') + (open ? '' : ' is-lock');
+            var sw = key === 'accent' ? ' style="--sw:' + SWATCH[o[0]][0] + ';--sw2:' + SWATCH[o[0]][1] + '"' : '';
+            var inner = key === 'accent' ? (open ? '' : LOCK_SVG) : (o[1] + (open ? '' : LOCK_SVG));
+            return '<button type="button" class="' + cls + '"' + sw + ' data-group="' + key + '" data-val="' + o[0] + '" data-min="' + o[2] + '" aria-pressed="' + sel + '" aria-label="' + o[1] + (open ? '' : ', locked') + '" title="' + o[1] + '">' + inner + '</button>';
+          }).join('');
+        });
+        el('pfThTags').innerHTML = TAGS.map(function (t) {
+          var sel = d.tags.indexOf(t) > -1;
+          return '<button type="button" class="pf-opt is-mono' + (sel ? ' is-sel' : '') + '" data-tag="' + escapeHtml(t) + '" aria-pressed="' + sel + '">' + escapeHtml(t) + '</button>';
+        }).join('');
+      }
+      function thSay(m) { el('pfThMsg').textContent = m || ''; }
+
+      function openTheme() {
+        if (!state.isOwn) return;
+        if (!el('pfEditForm').hidden) closeEdit();
+        state.draft = cloneTheme(state.theme);
+        el('pfThEyeing').value = state.draft.eyeing;
+        thSay('');
+        renderThemePanel();
+        var f = el('pfTheme');
+        f.hidden = false;
+        f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
+        f.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' });
+      }
+      function closeTheme(revert) {
+        el('pfTheme').hidden = true;
+        state.draft = null;
+        if (revert) applyTheme(state.theme);
+      }
+
+      async function saveTheme() {
+        var b = el('pfThSave'), t = normTheme(state.draft);
+        thSay('Saving…'); b.disabled = true;
+        var res = await state.sb.from('profiles').update({ theme: t }).eq('id', state.profile.id).select('id');
+        if (!alive) return;
+        b.disabled = false;
+        if (res.error) {
+          var miss = res.error.code === '42703' || res.error.code === 'PGRST204' || /theme/i.test(res.error.message || '');
+          thSay(miss ? 'The theme column is missing in the database — add it first.' : 'Could not save — try again.');
+          return;
+        }
+        if (!res.data || !res.data.length) { thSay('Could not save — please sign in again.'); return; }
+        state.profile.theme = t; state.theme = t;
+        closeTheme(false);
+        applyTheme(t);
+        say('Look saved ✓', 2200);
+      }
+
+      function onThemeClick(e) {
+        if (!state.draft) return;
+        var tag = e.target.closest('[data-tag]');
+        if (tag) {
+          var name = tag.getAttribute('data-tag'), i = state.draft.tags.indexOf(name);
+          if (i > -1) state.draft.tags.splice(i, 1);
+          else if (state.draft.tags.length >= 3) { thSay('Three is the limit — remove one first.'); return; }
+          else state.draft.tags.push(name);
+          thSay(''); renderThemePanel(); renderTaste(state.draft);
+          return;
+        }
+        var b = e.target.closest('[data-group]');
+        if (!b) return;
+        var min = parseInt(b.getAttribute('data-min'), 10) || 0;
+        if (!isUnlocked(min)) { thSay('Unlocks at ' + RANKS[min].n + ' rank.'); return; }
+        thSay('');
+        state.draft[b.getAttribute('data-group')] = b.getAttribute('data-val');
+        applyTheme(state.draft);
+        renderThemePanel();
+      }
+
       // =============== share ===============
       async function share() {
         var p = state.profile;
@@ -878,10 +1131,8 @@
       }
 
       // =============== rank certificate (full-screen, 3D) ===============
-      // The modal lives on <body>, not inside #page-wrap: #page-wrap has
-      // will-change:transform, which would trap a position:fixed child inside it.
-      // The certificate itself is certificate.html in an iframe (sandboxed, scripts only).
-      // Closing blanks the iframe and removes it, so the WebGL context is released.
+      // Lives on <body>, not inside #page-wrap (will-change:transform traps position:fixed).
+      // certificate.html loads in a sandboxed iframe; closing blanks it to release WebGL.
       var certEl = null, certFocusBack = null;
       var CLOSE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
@@ -984,8 +1235,8 @@
         var k = KINDS[kind];
         if (!state.isOwn) return '<div class="pf-empty"><p>' + k.emptyOther + '</p></div>';
         var plus = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
-        var g = '';
-        for (var i = 0; i < 4; i++) g += '<button type="button" class="pf-ghost" style="--i:' + i + '" data-focus="' + kind + '" aria-label="Add your first find">' + plus + '</button>';
+        var g = '<button type="button" class="pf-ghost pf-ghost-hero" style="--i:0" data-focus="' + kind + '" aria-label="' + k.heroT + '">' + plus + '<span><b>' + k.heroT + '</b><em>' + k.heroS + '</em></span></button>';
+        for (var i = 1; i < 3; i++) g += '<button type="button" class="pf-ghost" style="--i:' + i + '" data-focus="' + kind + '" aria-label="Add a find">' + plus + '</button>';
         return g + '<p class="pf-empty-cap">' + k.emptyOwn + '</p>';
       }
 
@@ -993,6 +1244,7 @@
 
       function render(kind) {
         var k = KINDS[kind], grid = el(k.grid), items = state[kind];
+        if (kind === 'owned') applyLayout(state.view || state.theme || normTheme({}));
         if (state[kind + 'Err']) {
           grid.innerHTML = '<div class="pf-empty"><p>Couldn\u2019t load this right now.</p><button type="button" class="btn pf-btn" data-retry="' + kind + '">Try again</button></div>';
           return;
@@ -1024,7 +1276,7 @@
         if (card) card.classList.add('pf-card-leaving');
         later(function () {
           if (card && card.parentNode) card.parentNode.removeChild(card);
-          if (!state[kind].length) el(k.grid).innerHTML = emptyHTML(kind);
+          if (!state[kind].length) { el(k.grid).innerHTML = emptyHTML(kind); if (kind === 'owned') applyLayout(state.view || state.theme); }
         }, reduce ? 0 : 290);
       }
 
@@ -1088,6 +1340,12 @@
         el('pfCancelBtn').addEventListener('click', closeEdit);
         el('pfSaveBtn').addEventListener('click', saveEdit);
         el('pfShareBtn').addEventListener('click', share);
+        el('pfThemeBtn').addEventListener('click', openTheme);
+        el('pfThCancel').addEventListener('click', function () { closeTheme(true); });
+        el('pfThSave').addEventListener('click', saveTheme);
+        el('pfTheme').addEventListener('click', onThemeClick);
+        el('pfTheme').addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); closeTheme(true); } });
+        el('pfThEyeing').addEventListener('input', function () { if (!state.draft) return; state.draft.eyeing = this.value.slice(0, 60); renderTaste(state.draft); });
         el('pfEditForm').addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); closeEdit(); } });
         el('pfEditBio').addEventListener('input', function () { el('pfBioCount').textContent = this.value.length + '/160'; });
         el('pfEditUsername').addEventListener('input', function () { var c = this.value.toLowerCase().replace(/[^a-z0-9_]/g, ''); if (c !== this.value) this.value = c; });
@@ -1099,7 +1357,7 @@
         });
         window.addEventListener('resize', onResize);
 
-        // tap anywhere on the rank chip: medal pulse, then the certificate opens
+        // tap anywhere on the rank row: medal pulse, then the certificate opens
         el('pfRank').addEventListener('click', function () {
           var b = el('pfMedalBurst'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
           if (!root.classList.contains('rk-ready')) return;
@@ -1170,40 +1428,4 @@
         }
         state.sb = client;
         boot().then(function () { if (alive) watchAuth(); });
-      });
-    })();
-    </script>
-
-  </main>
-
-  <footer class="footer footer--cinematic" id="footerWeb">
-    <div class="footer-glow" aria-hidden="true"></div>
-    <div class="footer-bg-text" aria-hidden="true">SPOIDER</div>
-    <div class="footer-content">
-      <p class="eyebrow center reveal">A THREAD OF GOOD TASTE</p>
-      <h2 class="footer-heading">Every find, one thread — hand-picked, never mass-produced.</h2>
-      <div class="footer-pills reveal" style="--reveal-delay:0.1s;">
-        <a href="about.html" class="footer-pill">About</a>
-        <a href="contact.html" class="footer-pill">Contact</a>
-        <a href="privacy.html" class="footer-pill">Privacy Policy</a>
-        <a href="affiliate-disclosure.html" class="footer-pill">Affiliate Disclosure</a>
-        <a href="india.html" class="footer-pill">🇮🇳 India Edition</a>
-      </div>
-    </div>
-    <div class="footer-bottom-bar reveal" style="--reveal-delay:0.2s;">
-      <div class="footer-legal">
-        <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
-        <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
-      </div>
-      <button class="footer-top-btn" id="footerTopBtn" type="button" aria-label="Back to top">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-      </button>
-    </div>
-  </footer>
-
-  <script src="script.js"></script>
-  <script src="footer-web.js"></script>
-  <script src="transitions.js"></script>
-  <script src="search.js"></script>
-</body>
-</html>
+      })
