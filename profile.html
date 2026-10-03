@@ -383,33 +383,105 @@
       .pf-add-result-item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .pf-add-result-item em{font-style:normal;font-size:.72rem;font-weight:500;color:var(--gold);flex-shrink:0}
 
-      /* ---------- desktop: standing card sits as one wide row, stats on the right ---------- */
-      @media (min-width:720px){
+      /* ---------- taste dna (gold shades, one slow draw on first view) ---------- */
+      .pf-dna{margin:0 4px 30px;padding:22px 22px 22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+      .pf-dna.is-hint{padding:16px 20px;border-style:dashed;background:transparent}
+      .pf-dna-hint{font-size:.86rem;color:var(--text-secondary)}
+      .pf-dna-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+      .pf-dna-title{font-family:var(--font-display);font-weight:500;font-size:1.05rem;color:var(--gold)}
+      .pf-dna-note{font-size:.76rem;color:var(--text-secondary)}
+      .pf-dna-lead{font-family:var(--font-display);font-weight:500;font-size:1.5rem;line-height:1.2;letter-spacing:-.01em;margin:0 0 20px}
+      .pf-dna-bar{display:flex;gap:3px;height:12px}
+      .pf-dna-seg{flex:var(--w) 1 0;min-width:4px;height:100%;border-radius:4px;background:var(--c);transform:scaleX(0);transform-origin:left center;transition:transform 1.1s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--i)*120ms + 100ms)}
+      .pf-dna.is-in .pf-dna-seg{transform:none}
+      .pf-dna-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px 28px;margin:22px 0 0;padding:0}
+      .pf-dna-row{display:flex;align-items:center;gap:10px;font-size:.86rem;opacity:0;transform:translateY(5px);transition:opacity .7s var(--ease),transform .7s var(--ease);transition-delay:calc(var(--i)*120ms + 450ms)}
+      .pf-dna.is-in .pf-dna-row{opacity:1;transform:none}
+      .pf-dna-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex-shrink:0}
+      .pf-dna-name{flex:1;min-width:0;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .pf-dna-pct{color:var(--text-secondary);font-variant-numeric:tabular-nums}
+
+      /* ---------- tablet: standing card as one wide row ---------- */
+      @media (min-width:720px) and (max-width:899px){
         .pf-standing{flex-direction:row;align-items:stretch}
         .pf-rank{flex:1}
         .pf-standing-stats{border-top:0;border-left:1px solid var(--border);flex:0 0 auto}
-        .pf-stat{padding:14px 34px;min-width:132px}
+        .pf-stat{padding:14px 30px;min-width:120px}
+        .pf-owned-grid,.pf-wishlist-grid,.pf-sk-cards,.pf-suggest-grid{grid-template-columns:repeat(3,1fr)}
+        .pf-owned-grid[data-layout="wall"]{column-count:3}
+        .pf-owned-grid[data-layout="ledger"]{grid-template-columns:repeat(2,1fr)}
       }
-      @media (min-width:960px){
-        .pf-wrap{max-width:940px;padding:0 40px 130px}
-        .pf-cover,.pf-sk-cover{height:200px;margin-top:34px}
-        .pf-header{margin-top:-60px}
-        .pf-avatar-wrap,.pf-avatar,.pf-sk-avatar{width:124px;height:124px}
-        .pf-sk-avatar{margin-top:-60px}
-        .pf-identity{margin-top:22px}
-        .pf-owned-grid,.pf-wishlist-grid,.pf-sk-cards,.pf-suggest-grid{grid-template-columns:repeat(4,1fr)}
-        .pf-owned-grid{gap:22px}.pf-wishlist-grid{gap:18px}
-        .pf-owned-grid[data-layout="wall"]{column-count:3;column-gap:22px}
+
+      /* ---------- desktop: wide cover, sticky profile sidebar, content column ---------- */
+      @media (min-width:900px){
+        .pf-wrap{--side:300px;max-width:1240px;padding:0 40px 140px}
+        .pf-profile{display:grid;grid-template-columns:var(--side) minmax(0,1fr);column-gap:52px;align-items:start}
+        .pf-cover,.pf-sk-cover{height:240px;margin-top:34px;border-radius:20px}
+        .pf-cover{grid-column:1/-1}
+        .pf-web{left:auto;right:0;width:64%;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%);mask-image:linear-gradient(90deg,transparent 0,#000 22%)}
+        .pf-web-cap{top:16px;right:16px;font-size:.74rem;padding:5px 13px}
+
+        .pf-side{position:relative;z-index:2;margin-top:-66px;display:flex;flex-direction:column;align-items:stretch;min-width:0}
+        .pf-header{display:contents}
+        .pf-avatar-wrap,.pf-avatar,.pf-sk-avatar{width:132px;height:132px}
+        .pf-sk-avatar{margin-top:-66px}
+        .pf-avatar-wrap{order:1;animation:pfRise .7s var(--ease) 70ms backwards}
+        .pf-identity{order:2;margin-top:24px;padding:0}
+        .pf-header-actions{order:3;justify-content:flex-start;flex-wrap:wrap;gap:8px;padding:0;margin-top:20px;animation:pfRise .7s var(--ease) 140ms backwards}
+        .pf-standing{order:4;margin:30px 0 0}
+        .pf-grail{order:5;margin:28px 0 0}
+        .pf-badges{order:6;flex-wrap:wrap;overflow:visible;margin:26px 0 0}
+
+        .pf-name{font-size:2.3rem}
+        .pf-username{font-size:.88rem}
+        .pf-bio{font-size:1rem;max-width:none}
+        .pf-tag{font-size:.78rem}
+        .pf-meta{flex-direction:column;gap:9px;font-size:.88rem}
+        .pf-wrap .pf-btn{font-size:.86rem;min-height:40px;padding:9px 18px}
+        .pf-rank-title{font-size:1.3rem}
+        .pf-prog{max-width:none}
+        .pf-stat-num{font-size:1.9rem}
+        .pf-grail-card{flex-direction:column;align-items:stretch;gap:14px;padding:12px}
+        .pf-grail-img{width:100%;height:auto;aspect-ratio:16/11}
+        .pf-grail-card h3{font-size:1.04rem}
+
+        .pf-main{padding-top:36px;min-width:0}
+        .pf-edit-form{max-width:540px;margin:0 0 30px}
+        .pf-theme{margin:0 0 30px}
+        .pf-th-title{font-size:1.35rem}
+        .pf-dna{margin:0 0 32px;padding:28px 30px}
+        .pf-dna-lead{font-size:1.8rem}
+        .pf-dna-bar{height:14px}
+        .pf-dna-title{font-size:1.1rem}
+        .pf-tabs{margin:0 0 26px}
+        .pf-tab{font-size:1rem;margin-right:34px}
+        .pf-sk-cards{grid-template-columns:repeat(4,1fr)}
+        .pf-owned-grid,.pf-wishlist-grid,.pf-suggest-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+        .pf-owned-grid{gap:22px}.pf-wishlist-grid{gap:20px}
+        .pf-owned-grid[data-layout="wall"]{display:block;column-count:auto;column-width:170px;column-gap:22px}
         .pf-owned-grid[data-layout="wall"] .pf-owned-card{margin-bottom:22px}
-        .pf-owned-grid[data-layout="ledger"]{grid-template-columns:repeat(2,1fr);gap:16px}
-        .pf-edit-form{max-width:460px}
-        .pf-grail-img{width:112px;height:112px}
+        .pf-owned-grid[data-layout="ledger"]{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+        .pf-owned-card-body,.pf-wishlist-card-body{padding:14px 16px 16px}
+        .pf-owned-card-body h3,.pf-wishlist-card-body h3{font-size:1rem}
+        .pf-ribbon{font-size:.68rem}
+        .pf-remove-btn{font-size:.76rem}
+        .pf-section-title{font-size:1.3rem}
+        .pf-section-sub{font-size:.88rem}
+      }
+      @media (min-width:900px) and (min-height:760px){
+        .pf-side{position:sticky;top:88px;align-self:start}
+      }
+      @media (min-width:1280px){
+        .pf-wrap{--side:340px;max-width:1320px}
+        .pf-profile{column-gap:64px}
+        .pf-cover,.pf-sk-cover{height:260px}
+        .pf-owned-grid,.pf-wishlist-grid,.pf-suggest-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
       }
       @media (prefers-reduced-motion:reduce){
         .pf-rise,.pf-card-in,.pf-panel-in,.pf-edit-form,.pf-theme,.pf-add-result-item,.pf-ghost,.pf-sg{animation:none}
         .pf-sk,.pf-cover-glow,.pf-avatar-ring,.pf-web .lit-node .w-halo{animation:none}
         .pf-stat-num.bump,.pf-badge.pop{animation:none}
-        .pf-tab-ind,.pf-web .w-thread,.pf-web .w-dot,.pf-prog i{transition:none}
+        .pf-tab-ind,.pf-web .w-thread,.pf-web .w-dot,.pf-prog i,.pf-dna-seg,.pf-dna-row{transition:none}
         .pf-cert,.pf-cert-frame,.pf-cert-load,.pf-cert-close{transition:none}
       }
     </style>
@@ -432,7 +504,7 @@
         <a class="btn btn-ghost" id="pfHomeBtn" href="index.html" hidden>Back to home</a>
       </div>
 
-      <section id="pfProfile" hidden>
+      <section class="pf-profile" id="pfProfile" hidden>
 
         <div class="pf-cover pf-rise" style="--i:0" aria-hidden="true">
           <div class="pf-cover-glow"></div>
@@ -440,6 +512,7 @@
           <span class="pf-web-cap" id="pfWebCap"></span>
         </div>
 
+        <div class="pf-side">
         <div class="pf-header pf-rise" style="--i:1">
           <div class="pf-avatar-wrap">
             <div class="pf-avatar-ring" aria-hidden="true"></div>
@@ -461,42 +534,6 @@
           <div class="pf-meta" id="pfMeta"></div>
           <span class="pf-share-msg" id="pfShareMsg" role="status" aria-live="polite"></span>
           <div class="pf-match" id="pfMatch"></div>
-        </div>
-
-        <div class="pf-edit-form" id="pfEditForm" hidden>
-          <label for="pfEditName">Display name</label>
-          <input type="text" id="pfEditName" maxlength="60" placeholder="Your name" autocomplete="off">
-          <label for="pfEditUsername">Username <em>a-z, 0-9, _ (3-20)</em></label>
-          <input type="text" id="pfEditUsername" maxlength="20" placeholder="e.g. spoider_faraz" autocomplete="off" autocapitalize="none" spellcheck="false">
-          <label for="pfEditBio">Bio <em id="pfBioCount">0/160</em></label>
-          <textarea id="pfEditBio" rows="3" maxlength="160" placeholder="A short line about you"></textarea>
-          <label for="pfEditLocation">Location</label>
-          <input type="text" id="pfEditLocation" maxlength="60" placeholder="e.g. Delhi, India" autocomplete="off">
-          <label for="pfEditSocial">Instagram / website link</label>
-          <input type="text" id="pfEditSocial" maxlength="120" placeholder="instagram.com/yourhandle" autocomplete="off" autocapitalize="none" spellcheck="false">
-          <div class="pf-edit-actions">
-            <button class="btn btn-primary" id="pfSaveBtn" type="button">Save changes</button>
-            <button class="btn pf-btn" id="pfCancelBtn" type="button">Cancel</button>
-          </div>
-          <p class="pf-edit-msg" id="pfEditMsg" role="status" aria-live="polite"></p>
-        </div>
-
-        <div class="pf-theme" id="pfTheme" hidden>
-          <h2 class="pf-th-title">Make it yours</h2>
-          <p class="pf-th-sub">Changes preview live. Climb the ranks to unlock more.</p>
-          <span class="pf-th-label">Accent</span><div class="pf-th-row" id="pfThAccent"></div>
-          <span class="pf-th-label">Avatar frame</span><div class="pf-th-row" id="pfThFrame"></div>
-          <span class="pf-th-label">Name style</span><div class="pf-th-row" id="pfThFont"></div>
-          <span class="pf-th-label">Cover web</span><div class="pf-th-row" id="pfThWeb"></div>
-          <span class="pf-th-label">Shelf layout</span><div class="pf-th-row" id="pfThLayout"></div>
-          <span class="pf-th-label">Taste <em>pick up to 3</em></span><div class="pf-th-row" id="pfThTags"></div>
-          <span class="pf-th-label">Currently eyeing</span>
-          <input type="text" id="pfThEyeing" maxlength="60" placeholder="e.g. a mechanical keyboard" autocomplete="off">
-          <div class="pf-edit-actions">
-            <button class="btn btn-primary" id="pfThSave" type="button">Save look</button>
-            <button class="btn pf-btn" id="pfThCancel" type="button">Cancel</button>
-          </div>
-          <p class="pf-th-msg" id="pfThMsg" role="status" aria-live="polite"></p>
         </div>
 
         <div class="pf-standing pf-rise" style="--i:3">
@@ -536,6 +573,47 @@
 
         <div class="pf-badges pf-rise" style="--i:4" id="pfBadges" aria-label="Badges"></div>
 
+        </div>
+
+        <div class="pf-main">
+        <div class="pf-edit-form" id="pfEditForm" hidden>
+          <label for="pfEditName">Display name</label>
+          <input type="text" id="pfEditName" maxlength="60" placeholder="Your name" autocomplete="off">
+          <label for="pfEditUsername">Username <em>a-z, 0-9, _ (3-20)</em></label>
+          <input type="text" id="pfEditUsername" maxlength="20" placeholder="e.g. spoider_faraz" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <label for="pfEditBio">Bio <em id="pfBioCount">0/160</em></label>
+          <textarea id="pfEditBio" rows="3" maxlength="160" placeholder="A short line about you"></textarea>
+          <label for="pfEditLocation">Location</label>
+          <input type="text" id="pfEditLocation" maxlength="60" placeholder="e.g. Delhi, India" autocomplete="off">
+          <label for="pfEditSocial">Instagram / website link</label>
+          <input type="text" id="pfEditSocial" maxlength="120" placeholder="instagram.com/yourhandle" autocomplete="off" autocapitalize="none" spellcheck="false">
+          <div class="pf-edit-actions">
+            <button class="btn btn-primary" id="pfSaveBtn" type="button">Save changes</button>
+            <button class="btn pf-btn" id="pfCancelBtn" type="button">Cancel</button>
+          </div>
+          <p class="pf-edit-msg" id="pfEditMsg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="pf-theme" id="pfTheme" hidden>
+          <h2 class="pf-th-title">Make it yours</h2>
+          <p class="pf-th-sub">Changes preview live. Climb the ranks to unlock more.</p>
+          <span class="pf-th-label">Accent</span><div class="pf-th-row" id="pfThAccent"></div>
+          <span class="pf-th-label">Avatar frame</span><div class="pf-th-row" id="pfThFrame"></div>
+          <span class="pf-th-label">Name style</span><div class="pf-th-row" id="pfThFont"></div>
+          <span class="pf-th-label">Cover web</span><div class="pf-th-row" id="pfThWeb"></div>
+          <span class="pf-th-label">Shelf layout</span><div class="pf-th-row" id="pfThLayout"></div>
+          <span class="pf-th-label">Taste <em>pick up to 3</em></span><div class="pf-th-row" id="pfThTags"></div>
+          <span class="pf-th-label">Currently eyeing</span>
+          <input type="text" id="pfThEyeing" maxlength="60" placeholder="e.g. a mechanical keyboard" autocomplete="off">
+          <div class="pf-edit-actions">
+            <button class="btn btn-primary" id="pfThSave" type="button">Save look</button>
+            <button class="btn pf-btn" id="pfThCancel" type="button">Cancel</button>
+          </div>
+          <p class="pf-th-msg" id="pfThMsg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="pf-dna" id="pfDna" hidden></div>
+
         <div class="pf-tabs pf-rise" style="--i:5" role="tablist" id="pfTabs">
           <button class="pf-tab is-active" id="pfTabOwned" type="button" role="tab" aria-selected="true" aria-controls="pfPanelOwned">Owned<span class="pf-tab-n" id="pfTabCountO">0</span></button>
           <button class="pf-tab" id="pfTabWishlist" type="button" role="tab" aria-selected="false" aria-controls="pfPanelWishlist" tabindex="-1">Wishlist<span class="pf-tab-n" id="pfTabCountW">0</span></button>
@@ -568,6 +646,7 @@
               <div class="pf-add-results" id="pfAddWishlistResults"></div>
             </div>
           </div>
+        </div>
         </div>
 
       </section>
@@ -807,7 +886,7 @@
 
       async function loadSuggest() {
         if (!state.isOwn || state.pool) return;
-        var r = await state.sb.from('products').select('id,title,image_url,affiliate_link').eq('active', true).order('created_at', { ascending: false }).limit(16);
+        var r = await state.sb.from('products').select('id,title,image_url,affiliate_link,category').eq('active', true).order('created_at', { ascending: false }).limit(16);
         if (!alive) return;
         state.pool = r.data || [];
         renderSuggest();
@@ -878,7 +957,80 @@
         render('owned', true);
       }
 
-      function derived() { renderRank(); renderWeb(); renderBadges(); renderSuggest(); renderGrail(); renderMatch(); if (state.view) applyLayout(state.view); }
+      // =============== taste dna ===============
+      var dnaIO = null;
+      var DNA_SHADES = ['rgb(var(--ac2))', 'rgb(var(--ac))', 'rgba(var(--ac),.72)', 'rgba(var(--ac),.5)', 'rgba(var(--ac),.34)', 'rgba(var(--ac),.2)'];
+      function prettyCat(c) { return String(c).replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/^[a-z]/, function (x) { return x.toUpperCase(); }); }
+
+      function countTo(node, to, delay) {
+        if (reduce) { node.textContent = to + '%'; return; }
+        later(function () {
+          var t0 = performance.now(), dur = 1100;
+          (function tick(t) {
+            if (!alive) return;
+            var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 4);
+            node.textContent = Math.round(to * e) + '%';
+            if (p < 1) requestAnimationFrame(tick);
+          })(t0);
+        }, delay);
+      }
+
+      function renderDna() {
+        var box = el('pfDna');
+        if (!box) return;
+        var n = state.owned.length;
+        if (n < 2) {
+          if (dnaIO) { dnaIO.disconnect(); dnaIO = null; }
+          state.dnaSig = '';
+          if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="pf-dna-hint">Own 2 finds to unlock your Taste DNA.</p>'; box.hidden = false; }
+          else box.hidden = true;
+          return;
+        }
+        var map = {}, unc = 0;
+        state.owned.forEach(function (p) { var c = String(p.category || '').trim(); if (c) map[c] = (map[c] || 0) + 1; else unc++; });
+        var rows = Object.keys(map).map(function (c) { return { label: prettyCat(c), n: map[c], k: c }; })
+          .sort(function (a, b) { return b.n - a.n || a.k.localeCompare(b.k); });
+        var other = unc;
+        if (rows.length > 5) { rows.slice(5).forEach(function (r) { other += r.n; }); rows = rows.slice(0, 5); }
+        if (other > 0) rows.push({ label: 'Other', n: other });
+        var sig = rows.map(function (r) { return r.label + ':' + r.n; }).join('|');
+        if (sig === state.dnaSig && !box.hidden) return;
+        state.dnaSig = sig;
+
+        // percentages that always add up to 100
+        var raw = rows.map(function (r) { return r.n / n * 100; }), fl = raw.map(Math.floor);
+        var left = 100 - fl.reduce(function (a, b) { return a + b; }, 0);
+        raw.map(function (v, i) { return [v - fl[i], i]; }).sort(function (a, b) { return b[0] - a[0]; })
+          .slice(0, left).forEach(function (x) { fl[x[1]]++; });
+
+        var top = rows[0], lead = (fl[0] >= 50 ? 'Mostly ' : 'Leans ') + top.label;
+        var bar = '', list = '';
+        rows.forEach(function (r, i) {
+          var c = DNA_SHADES[Math.min(i, DNA_SHADES.length - 1)];
+          bar += '<i class="pf-dna-seg" style="--i:' + i + ';--w:' + r.n + ';--c:' + c + '" title="' + escapeHtml(r.label) + '"></i>';
+          list += '<li class="pf-dna-row" style="--i:' + i + ';--c:' + c + '"><span class="pf-dna-dot"></span><span class="pf-dna-name">' + escapeHtml(r.label) + '</span><span class="pf-dna-pct" data-count="' + fl[i] + '">' + (reduce ? fl[i] + '%' : '0%') + '</span></li>';
+        });
+        box.className = 'pf-dna';
+        box.innerHTML = '<div class="pf-dna-head"><h3 class="pf-dna-title">Taste DNA</h3><span class="pf-dna-note">' + n + ' owned finds</span></div>' +
+          '<p class="pf-dna-lead">' + escapeHtml(lead) + '</p><div class="pf-dna-bar" role="img" aria-label="' + escapeHtml(rows.map(function (r, i) { return r.label + ' ' + fl[i] + '%'; }).join(', ')) + '">' + bar + '</div><ul class="pf-dna-list">' + list + '</ul>';
+        box.hidden = false;
+
+        function reveal() {
+          box.classList.add('is-in');
+          var nodes = box.querySelectorAll('[data-count]');
+          for (var i = 0; i < nodes.length; i++) countTo(nodes[i], parseInt(nodes[i].getAttribute('data-count'), 10) || 0, 450 + i * 120);
+        }
+        if (dnaIO) { dnaIO.disconnect(); dnaIO = null; }
+        if (reduce || !('IntersectionObserver' in window)) { later(reveal, 60); }
+        else {
+          dnaIO = new IntersectionObserver(function (es) {
+            if (es[0] && es[0].isIntersecting) { dnaIO.disconnect(); dnaIO = null; later(reveal, 160); }
+          }, { threshold: 0.3 });
+          dnaIO.observe(box);
+        }
+      }
+
+      function derived() { renderRank(); renderWeb(); renderBadges(); renderSuggest(); renderGrail(); renderMatch(); renderDna(); if (state.view) applyLayout(state.view); }
 
       // =============== views ===============
       function showLoading() {
@@ -960,7 +1112,7 @@
         if (!profile) { showSignin(target ? 'missing' : (user ? 'pending' : 'signedout')); return; }
         state.profile = profile;
         state.isOwn = !!(user && profile.id === user.id);
-        state.owned = []; state.wish = []; state.pool = null; state.bOn = null; state.visitorOwned = null;
+        state.dnaSig = ''; state.owned = []; state.wish = []; state.pool = null; state.bOn = null; state.visitorOwned = null;
         state.theme = normTheme(profile.theme); state.draft = null; state.view = state.theme;
         showProfile();
       }
@@ -1275,7 +1427,7 @@
 
       // quiet = re-render without replaying the entrance animation on every card
       function render(kind, quiet) {
-        var k = KINDS[kind], grid = el(k.grid), items = state[kind];
+var k = KINDS[kind], grid = el(k.grid), items = state[kind];
         if (kind === 'owned') applyLayout(state.view || state.theme || normTheme({}));
         if (state[kind + 'Err']) {
           grid.innerHTML = '<div class="pf-empty"><p>Couldn\u2019t load this right now.</p><button type="button" class="btn pf-btn" data-retry="' + kind + '">Try again</button></div>';
@@ -1337,7 +1489,7 @@
           if (!q) { results.innerHTML = ''; return; }
           timer = later(async function () {
             var safeQ = q.replace(/[\\%_]/g, '\\$&');
-            var res = await state.sb.from('products').select('id,title,image_url,affiliate_link').ilike('title', '%' + safeQ + '%').eq('active', true).limit(6);
+            var res = await state.sb.from('products').select('id,title,image_url,affiliate_link,category').ilike('title', '%' + safeQ + '%').eq('active', true).limit(6);
             if (!alive || my !== seq[k.addSeq]) return;
             var data = res.data || [];
             if (!data.length) { results.innerHTML = '<p class="state-msg" style="padding:8px 0;">No matches.</p>'; return; }
@@ -1432,6 +1584,7 @@
         alive = false;
         closeCert(true);
         timers.forEach(clearTimeout);
+        if (dnaIO) { try { dnaIO.disconnect(); } catch (e) {} dnaIO = null; }
         window.removeEventListener('resize', onResize);
         if (typeof authSub === 'function') { try { authSub(); } catch (e) {} }
       }
@@ -1439,7 +1592,7 @@
         if (window.SpoiderPage && window.SpoiderPage.onCleanup) { window.SpoiderPage.onCleanup(cleanup); return true; }
         return false;
       }
-if (!register()) window.addEventListener('load', register, { once: true });
+      if (!register()) window.addEventListener('load', register, { once: true });
 
       init();
       waitForAuthClient(function (client) {
