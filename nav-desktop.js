@@ -36,6 +36,12 @@
      CSS
      ---------------------------------------------------------- */
   var CSS = `
+/* chevron is injected by JS on every device, so it must be hidden unless the
+   real-mouse desktop block below turns it on (otherwise the unsized SVG
+   renders huge on phones / Android "desktop site") */
+.sfn-chev { display: none; width: 8px; height: 8px; }
+.sfn-chev svg { width: 8px; height: 8px; }
+
 /* ===== wishlist heart: shared fix ===== */
 .product-card:has(.spoider-score-trigger) .wishlist-heart { top: 10px; left: 10px; right: auto; bottom: auto; }
 
@@ -182,7 +188,7 @@
   .sfn-mega.is-open .sfn-cat-card, .sfn-mega.is-open .sfn-preview { animation: none; }
 }
 @media (max-width: 959px), (hover: none), (pointer: coarse) {
-  .sfn-mega, .sfn-ind, .sfn-progress { display: none !important; }
+  .sfn-mega, .sfn-ind, .sfn-progress, .sfn-chev { display: none !important; }
 }
 `;
 
@@ -266,7 +272,7 @@
     }
   ];
   var ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>';
-  var CHEV = '<span class="sfn-chev" aria-hidden="true"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5 5 6.5 8 3.5"/></svg></span>';
+  var CHEV = '<span class="sfn-chev" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5 5 6.5 8 3.5"/></svg></span>';
 
   function initNav() {
     var nav = document.getElementById("nav") || document.querySelector(".nav");
