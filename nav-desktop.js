@@ -199,26 +199,82 @@
 
   /* ----------------------------------------------------------
      WISHLIST HEART — site-wide
+     Works even when a page's own loader never put data-product-id on its
+     cards: the product id is looked up from Supabase by the card's
+     affiliate link (Amazon ASIN), then image, then title.
      ---------------------------------------------------------- */
   var HEART_SVG =
     '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.6 8.4 2 4.8 5.6 4A5.4 5.4 0 0 1 12 7a5.4 5.4 0 0 1 6.4-3A5.6 5.6 0 0 1 22 11.8C19.5 16.4 12 21 12 21Z"/></svg>';
-  var warnedNoId = false;
 
-  function ensureHearts() {
-    var added = false;
+  var PROD_MAP = null, prodPromise = null, mapFailedAt = 0, warnedUnresolved = false;
+
+  function asinOf(u) {
+    var m = /\/(?:dp|gp\/product|d)\/([A-Z0-9]{10})/i.exec(u || "");
+    return m ? m[1].toUpperCase() : null;
+  }
+  function keyOf(u) {
+    var a = asinOf(u);
+    if (a) return "asin:" + a;
+    return "url:" + String(u || "").split("#")[0].replace(/\/+$/, "");
+  }
+
+  function loadProdMap() {
+    if (PROD_MAP) return Promise.resolve(PROD_MAP);
+    if (prodPromise) return prodPromise;
+    if (Date.now() - mapFailedAt < 30000) return Promise.resolve(null); // back off after a failure
+    try {
+      var raw = sessionStorage.getItem("sfn-prod-map");
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && Date.now() - o.t < 600000) { PROD_MAP = o.m; return Promise.resolve(PROD_MAP); }
+      }
+    } catch (e) { /* storage unavailable — just fetch */ }
+
+    var url = SUPABASE_URL + "/rest/v1/products?select=id,affiliate_link,image_url,title&active=eq.true&limit=1000";
+    prodPromise = fetch(url, { headers: { apikey: SUPABASE_KEY } })
+      .then(function (r) { if (!r.ok) throw new Error("bad status"); return r.json(); })
+      .then(function (rows) {
+        var m = {};
+        rows.forEach(function (p) {
+          if (p.affiliate_link) m[keyOf(p.affiliate_link)] = p.id;
+          if (p.image_url) m["img:" + p.image_url] = p.id;
+          if (p.title) m["t:" + String(p.title).trim().toLowerCase()] = p.id;
+        });
+        PROD_MAP = m;
+        try { sessionStorage.setItem("sfn-prod-map", JSON.stringify({ t: Date.now(), m: m })); } catch (e) { /* ignore */ }
+        return m;
+      })
+      .catch(function () { mapFailedAt = Date.now(); prodPromise = null; return null; });
+    return prodPromise;
+  }
+
+  function findId(card) {
+    var id = card.dataset && (card.dataset.productId || card.dataset.heartId);
+    if (id) return id;
+    if (!PROD_MAP) return null;
+    var href = card.getAttribute("href");
+    if (href && PROD_MAP[keyOf(href)]) return PROD_MAP[keyOf(href)];
+    var img = card.querySelector("img");
+    var src = img && img.getAttribute("src");
+    if (src && PROD_MAP["img:" + src]) return PROD_MAP["img:" + src];
+    var h = card.querySelector("h3");
+    var t = h && h.textContent.trim().toLowerCase();
+    if (t && PROD_MAP["t:" + t]) return PROD_MAP["t:" + t];
+    return null;
+  }
+
+  function addHearts() {
+    var added = false, unresolved = 0;
     document.querySelectorAll(".product-card").forEach(function (card) {
       if (card.querySelector(".wishlist-heart")) return;
-      var host = card.querySelector(".product-image");
-      var id = (card.dataset && (card.dataset.productId || card.dataset.heartId)) || "";
-      if (!host) return;
-      if (!id) {
-        if (!warnedNoId) {
-          warnedNoId = true;
-          console.info("[nav-desktop] a .product-card has no data-product-id — heart skipped. Add data-product-id=\"${p.id}\" in that page's loader.");
-        }
-        return;
-      }
+      var id = findId(card);
+      if (!id) { unresolved++; return; }
       id = String(id).replace(/[^\w-]/g, "");
+
+      var img = card.querySelector("img");
+      var host = card.querySelector(".product-image") || (img && img.parentElement) || card;
+      if (window.getComputedStyle(host).position === "static") host.style.position = "relative";
+
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "wishlist-heart";
@@ -226,9 +282,24 @@
       btn.setAttribute("aria-label", "Add to wishlist");
       btn.innerHTML = HEART_SVG;
       host.appendChild(btn);
+      if (!card.dataset.productId) card.dataset.productId = id; // also makes click tracking record the product id
       added = true;
     });
+    if (unresolved && PROD_MAP && !warnedUnresolved) {
+      warnedUnresolved = true;
+      console.info("[nav-desktop] " + unresolved + " product card(s) could not be matched to a product id — heart skipped.");
+    }
     if (added && typeof window.syncWishlistHearts === "function") window.syncWishlistHearts();
+  }
+
+  function ensureHearts() {
+    var needsLookup = false;
+    document.querySelectorAll(".product-card").forEach(function (card) {
+      if (card.querySelector(".wishlist-heart")) return;
+      if (!(card.dataset && (card.dataset.productId || card.dataset.heartId))) needsLookup = true;
+    });
+    addHearts();
+    if (needsLookup && !PROD_MAP) loadProdMap().then(addHearts);
   }
 
   function initHearts() {
