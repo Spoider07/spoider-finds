@@ -38,11 +38,17 @@
 // its listeners — fn is called (and then discarded) right before
 // the NEXT page swap wipes #page-wrap's content.
 //
-// AUTH LOADER:
+// SHARED LOADERS:
 // This file is loaded on every page and lives outside #page-wrap,
-// so it is also the one place that loads auth.js (Google sign-in).
-// auth.js runs once per real page load and its header button
-// survives every AJAX swap.
+// so it is also the one place that loads the other site-wide
+// scripts, once per real page load:
+//   - auth.js          (Google sign-in)
+//   - nav-desktop.js   (desktop navbar upgrades + wishlist heart on
+//                       every product card). Bump the ?v= number
+//                       below whenever nav-desktop.js changes, so
+//                       browsers don't serve a stale cached copy.
+// Because of this, no HTML page needs its own <script> tag for
+// either of them.
 // ============================================================
 
 (function () {
@@ -55,6 +61,18 @@
     s.src = "auth.js";
     s.async = true;
     s.setAttribute("data-sf-auth", "true");
+    document.body.appendChild(s);
+  })();
+
+  // ---------- nav-desktop loader (navbar upgrades + wishlist hearts) ----------
+  // nav-desktop.js guards itself with window.__sfNavDesktop, so even if some
+  // page still has its own <script src="nav-desktop.js"> tag, it only runs once.
+  (function loadNavDesktop() {
+    if (window.__sfNavDesktop || document.querySelector("script[data-sf-nav]")) return;
+    var s = document.createElement("script");
+    s.src = "nav-desktop.js?v=5";
+    s.async = true;
+    s.setAttribute("data-sf-nav", "true");
     document.body.appendChild(s);
   })();
 
