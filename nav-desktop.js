@@ -291,7 +291,7 @@
       for (var i = 0; i < links.length; i++) if (links[i].classList.contains("active")) return links[i];
       return null;
     }
-    function hideInd() { ind.classList.remove("is-on"); }
+    function hideInd() { if (ind.classList.contains("is-on")) ind.classList.remove("is-on"); }
     function place(a, instant) {
       if (!a) { hideInd(); return; }
       var fresh = !ind.classList.contains("is-on");
@@ -299,7 +299,7 @@
       ind.style.width = a.offsetWidth + "px";
       ind.style.transform = "translateX(" + a.offsetLeft + "px)";
       if (ind.classList.contains("no-anim")) { void ind.offsetWidth; ind.classList.remove("no-anim"); }
-      ind.classList.add("is-on");
+      if (!ind.classList.contains("is-on")) ind.classList.add("is-on");
     }
     function settle() { var r = restLink(); if (r) place(r); else hideInd(); }
     function refresh() { var r = hovered || (isOpen ? catLink : restLink()); if (r) place(r, true); else hideInd(); }
@@ -314,8 +314,11 @@
       hovered = null;
       if (!isOpen) settle();
     });
-    new MutationObserver(function () { if (!hovered && !isOpen) settle(); })
-      .observe(navLinks, { attributes: true, attributeFilter: ["class"], subtree: true });
+    // Watch ONLY the real links (never the indicator itself). Observing the
+    // whole .nav-links subtree made place() -> ind.classList change -> observer
+    // -> place() ... an endless microtask loop that froze the page.
+    var linkObserver = new MutationObserver(function () { if (!hovered && !isOpen) settle(); });
+    links.forEach(function (a) { linkObserver.observe(a, { attributes: true, attributeFilter: ["class"] }); });
 
     settle();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
