@@ -115,7 +115,7 @@
       .pf-cover{position:relative;margin:22px 0 0;height:140px;border-radius:var(--radius-lg);overflow:hidden;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b));border:1px solid var(--border)}
       .pf-cover::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(rgba(var(--ac),.2) 1px,transparent 1.2px);background-size:18px 18px;-webkit-mask-image:linear-gradient(100deg,transparent 5%,#000 75%);mask-image:linear-gradient(100deg,transparent 5%,#000 75%)}
       .pf-cover::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 -46px 50px -34px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.025)}
-      .pf-cover-glow{position:absolute;inset:-40% -10%;background:radial-gradient(circle at 20% 30%,rgba(var(--ac),.16),transparent 60%),radial-gradient(circle at 82% 55%,rgba(var(--ac2),.14),transparent 60%);animation:pfDrift 16s ease-in-out infinite alternate;will-change:transform;transition:background .6s var(--ease)}
+      .pf-cover-glow{position:absolute;filter:none;inset:-40% -10%;background:radial-gradient(circle at 20% 30%,rgba(var(--ac),.16),transparent 60%),radial-gradient(circle at 82% 55%,rgba(var(--ac2),.14),transparent 60%);animation:pfDrift 16s ease-in-out infinite alternate;will-change:transform;transition:background .6s var(--ease)}
       @keyframes pfDrift{to{transform:translate(3%,-4%) scale(1.05)}}
       .pf-web{position:absolute;z-index:1;inset:0;width:100%;height:100%;display:block}
       .pf-web .w-ring,.pf-web .w-spoke{fill:none;stroke:rgb(var(--web-line));stroke-opacity:.15;stroke-width:.6}
@@ -129,6 +129,26 @@
       .pf-web .lit-node .w-halo{animation:pfHalo 3.6s ease-in-out infinite;animation-delay:var(--d,0s)}
       @keyframes pfHalo{0%,100%{opacity:.06;transform:scale(.8)}50%{opacity:.22;transform:scale(1.3)}}
       .pf-web .w-hub{fill:var(--gold);opacity:.85}
+      /* timeline cover web ("Timeline" / drift): a trunk that slowly grows right, forking into branches */
+      .pf-web .t-trunk,.pf-web .t-b{fill:none;stroke:rgb(var(--web-line));stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:1 2;stroke-dashoffset:1}
+      .pf-web .t-trunk{stroke-width:.9;stroke-opacity:.5}
+      .pf-web .t-b{stroke-width:.75;stroke-opacity:.36;transition:stroke .9s var(--ease),stroke-opacity .9s var(--ease),stroke-width .9s var(--ease)}
+      .pf-web .t-b.lit{stroke:var(--gold-bright);stroke-opacity:.9;stroke-width:1.05}
+      .pf-web.grown .t-trunk,.pf-web.grown .t-b{animation:pfGrow var(--gd) var(--ge,cubic-bezier(.45,.05,.35,1)) var(--gl) forwards}
+      @keyframes pfGrow{to{stroke-dashoffset:0}}
+      .pf-web .t-fork{fill:rgb(var(--web-line));opacity:0}
+      .pf-web.grown .t-fork{animation:pfForkIn .9s var(--ease) var(--fl) forwards}
+      @keyframes pfForkIn{to{opacity:.65}}
+      .pf-web .t-pulse,.pf-web .t-tpulse{fill:none;stroke:var(--gold-bright);stroke-width:1.4;stroke-linecap:round;stroke-dasharray:.07 2;stroke-dashoffset:.07;stroke-opacity:0}
+      .pf-web .t-pulse{opacity:0;transition:opacity .8s var(--ease)}
+      .pf-web .t-pulse.lit{opacity:1}
+      .pf-web.grown .t-pulse{animation:pfPulse var(--pd) linear var(--pl) infinite}
+      .pf-web.grown .t-tpulse{animation:pfPulse 9s linear var(--pl) infinite}
+      @keyframes pfPulse{0%{stroke-dashoffset:.07;stroke-opacity:0}10%{stroke-opacity:.85}90%{stroke-opacity:.85}100%{stroke-dashoffset:-1;stroke-opacity:0}}
+      .pf-web.tree .w-slot{opacity:0;transition:opacity .9s var(--ease) calc(var(--d,0s) + .5s)}
+      .pf-web.tree.grown .w-node:not(.lit-node) .w-slot{opacity:1}
+      .pf-web.settled .w-dot{transition-delay:.15s}
+      .pf-web.settled .w-slot{transition-delay:0s}
       .pf-web-cap{position:absolute;z-index:2;right:12px;top:12px;font-size:.68rem;font-weight:500;letter-spacing:.02em;color:var(--gold-bright);padding:4px 10px;border-radius:999px;background:rgba(10,10,11,.6);border:1px solid rgba(var(--ac),.22)}
       html[data-theme="light"] .pf-web-cap{background:rgba(23,23,23,.66)}
 
@@ -271,7 +291,7 @@
       /* ---------- edit form + customize panel ---------- */
       .pf-edit-form,.pf-theme{max-width:460px;margin:0 4px 30px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;animation:pfPanelIn .35s var(--ease)}
       .pf-theme{max-width:none}
-      .pf-edit-form label{display:flex;justify-content:space-between;align-items:baseline;font-size:.76rem;font-weight:500;color:var(--text-secondary);margin:16px 0 6px}
+      .pf-edit-form label{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-body);text-transform:none;letter-spacing:0;font-size:.76rem;font-weight:500;color:var(--text-secondary);margin:16px 0 6px}
       .pf-edit-form label:first-child{margin-top:0}
       .pf-edit-form label em{font-style:normal;font-weight:400;opacity:.8}
       .pf-edit-form input,.pf-edit-form textarea,.pf-theme input{width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:var(--font-body);font-size:16px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
@@ -313,10 +333,10 @@
 
       /* ---------- grids + cards (flat surfaces, hairline borders, border-only hover) ---------- */
       .pf-owned-grid,.pf-wishlist-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-      .pf-owned-card,.pf-wishlist-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;transition:border-color .3s var(--ease),opacity .28s var(--ease),transform .28s var(--ease)}
-      .pf-owned-card:hover,.pf-wishlist-card:hover{border-color:rgba(var(--ac),.5)}
+      .pf-owned-card,.pf-wishlist-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;box-shadow:none;transition:border-color .3s var(--ease),opacity .28s var(--ease),transform .28s var(--ease)}
+      .pf-owned-card:hover,.pf-wishlist-card:hover{border-color:rgba(var(--ac),.5);transform:none;box-shadow:none}
       .pf-card-leaving{opacity:0;transform:scale(.94);pointer-events:none}
-      .pf-ribbon{position:absolute;top:10px;left:10px;z-index:3;font-size:.64rem;font-weight:600;letter-spacing:.03em;color:var(--gold-bright);background:rgba(10,10,11,.66);border:1px solid rgba(var(--ac),.34);padding:3px 9px;border-radius:999px}
+      .pf-ribbon{position:absolute;top:10px;left:10px;z-index:3;font-family:var(--font-body);box-shadow:none;font-size:.64rem;font-weight:600;letter-spacing:.03em;color:var(--gold-bright);background:rgba(10,10,11,.66);border:1px solid rgba(var(--ac),.34);padding:3px 9px;border-radius:999px}
       .pf-owned-card-image,.pf-wishlist-card-image{display:block;aspect-ratio:1/1;background:linear-gradient(135deg,var(--shimmer-a),var(--shimmer-b));overflow:hidden}
       .pf-owned-card-image img,.pf-wishlist-card-image img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s var(--ease)}
       .pf-owned-card:hover img,.pf-wishlist-card:hover img{transform:scale(1.04)}
@@ -528,6 +548,10 @@
         .pf-tab-ind,.pf-web .w-thread,.pf-web .w-dot,.pf-prog i,.pf-mo-cell,.pf-mo-num,.pf-mo-n,.pf-mo-name span,.pf-lead-in{transition:none}
         .pf-dna.is-in .pf-mo-tile.t0::before{animation:none}
         .pf-cert,.pf-cert-frame,.pf-cert-load,.pf-cert-close{transition:none}
+        .pf-web .t-trunk,.pf-web .t-b{stroke-dashoffset:0;animation:none!important}
+        .pf-web .t-pulse,.pf-web .t-tpulse{display:none}
+        .pf-web .t-fork{opacity:.55;animation:none!important}
+        .pf-web.tree .w-slot{transition:none}
       }
     </style>
 
@@ -716,7 +740,7 @@
         accent: [['gold', 'Gold', 0], ['silver', 'Silver', 0], ['bone', 'Bone', 1], ['copper', 'Copper', 1], ['emerald', 'Emerald', 2], ['ink', 'Ink', 2]],
         frame: [['ring', 'Ring', 0], ['double', 'Double', 1], ['hex', 'Hex', 2]],
         font: [['serif', 'Serif', 0], ['sans', 'Sans', 0], ['mono', 'Mono', 1]],
-        web: [['radial', 'Radial', 0], ['orb', 'Orb', 1], ['drift', 'Drift', 3]],
+        web: [['radial', 'Radial', 0], ['orb', 'Orb', 1], ['drift', 'Timeline', 3]],
         layout: [['grid', 'Grid', 0], ['ledger', 'Ledger', 1], ['wall', 'Wall', 2]]
       };
       var SWATCH = { gold: ['201,168,118', '232,199,102'], silver: ['176,184,198', '226,232,242'], bone: ['214,206,190', '244,238,224'], copper: ['201,128,96', '238,168,128'], emerald: ['92,176,140', '138,222,182'], ink: ['112,150,214', '160,192,244'] };
@@ -830,6 +854,54 @@
       function prng(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
       function cl(v, a, b) { return v < a ? a : (v > b ? b : v); }
 
+      // timeline: a trunk grows left to right; branches fork off it (and off each other) and end in your 12 slots
+      function buildTree(svg, R) {
+        var hx = 58 + R() * 16, ph = R() * 6.28, amp = 6 + R() * 5, kk = 0.034 + R() * 0.014, X1 = 388, GT = 6.4;
+        function ty(x) { return 64 + Math.sin((x - hx) * kk + ph) * amp; }
+        function bez(p, t) {
+          var u = 1 - t;
+          return [u * u * u * p[0] + 3 * u * u * t * p[2] + 3 * u * t * t * p[4] + t * t * t * p[6],
+                  u * u * u * p[1] + 3 * u * u * t * p[3] + 3 * u * t * t * p[5] + t * t * t * p[7]];
+        }
+        var hy = ty(hx), tr = 'M' + hx.toFixed(1) + ' ' + hy.toFixed(1), x, i, j;
+        for (x = hx + 8; x < X1; x += 8) tr += ' L' + x.toFixed(1) + ' ' + ty(x).toFixed(1);
+        tr += ' L' + X1 + ' ' + ty(X1).toFixed(1);
+
+        var brs = [], paths = '', pulses = '', forks = '', nodes = '', maxEnd = GT;
+        for (i = 0; i < SLOTS; i++) {
+          var tx = 150 + i * (234 / (SLOTS - 1)) + (R() - 0.5) * 10;
+          var dir = (i % 2 ? 1 : -1) * (R() < 0.2 ? -1 : 1), off = 14 + R() * 32, par = -1;
+          if (i > 1 && R() < 0.45) {
+            var cand = [];
+            for (j = 0; j < brs.length; j++) if (brs[j].tx < tx - 34) cand.push(j);
+            if (cand.length) par = cand[Math.floor(R() * cand.length)];
+          }
+          var fx, fy, fd, tyy;
+          if (par < 0) { fx = Math.max(hx + 18, tx - (46 + R() * 62)); fy = ty(fx); fd = (fx - hx) / (X1 - hx) * GT; tyy = ty(tx) + dir * off; }
+          else { var P = brs[par], t = 0.42 + R() * 0.36, pt = bez(P.p, t); fx = pt[0]; fy = pt[1]; fd = P.delay + P.dur * t; tyy = fy + dir * off * 0.8; }
+          tyy = cl(tyy, 12, 116);
+          var dx = tx - fx, p = [fx, fy, fx + dx * 0.5, fy, tx - dx * 0.38, tyy, tx, tyy];
+          var dur = 2.8 + dx / 120 + R() * 0.5, dl = fd + 0.1, end = dl + dur, pd = 6.5 + R() * 3.5;
+          brs.push({ p: p, tx: tx, delay: dl, dur: dur });
+          var d = 'M' + fx.toFixed(1) + ' ' + fy.toFixed(1) + ' C' + p[2].toFixed(1) + ' ' + p[3].toFixed(1) + ' ' + p[4].toFixed(1) + ' ' + p[5].toFixed(1) + ' ' + tx.toFixed(1) + ' ' + tyy.toFixed(1);
+          paths += '<path class="t-b" pathLength="1" style="--gd:' + dur.toFixed(2) + 's;--gl:' + dl.toFixed(2) + 's" d="' + d + '"/>';
+          pulses += '<path class="t-pulse" pathLength="1" style="--pd:' + pd.toFixed(2) + 's;--pl:' + (end + R() * pd).toFixed(2) + 's" d="' + d + '"/>';
+          forks += '<circle class="t-fork" cx="' + fx.toFixed(1) + '" cy="' + fy.toFixed(1) + '" r="1.35" style="--fl:' + fd.toFixed(2) + 's"/>';
+          if (end > maxEnd) maxEnd = end;
+          slotPts.push([tx, tyy]);
+          nodes += '<g class="w-node" style="--d:' + Math.max(0, end - 0.12).toFixed(2) + 's"><circle class="w-slot" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="4"/><circle class="w-halo" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="8"/><circle class="w-dot" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="3"/></g>';
+        }
+        svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--gl:0s;--ge:linear" d="' + tr + '"/>' + paths + forks + pulses +
+          '<path class="t-tpulse" pathLength="1" style="--pl:' + (GT + 0.4) + 's" d="' + tr + '"/>' + nodes +
+          '<circle class="w-hub" cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="2.4"/>';
+
+        // start growing a beat after the cover is on screen; mark it settled once everything has been drawn
+        var tok = svg._wt;
+        if (reduce) { svg.classList.add('grown', 'settled'); return; }
+        later(function () { if (svg._wt === tok) svg.classList.add('grown'); }, 380);
+        later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.round((maxEnd + 0.9) * 1000) + 380);
+      }
+
       function buildWeb() {
         var svg = el('pfWeb');
         if (!svg || !state.profile) return;
@@ -838,6 +910,9 @@
         var key = pat + '|' + seedStr;
         if (svg.getAttribute('data-key') === key) return;
         svg.setAttribute('data-key', key);
+        svg._wt = (svg._wt || 0) + 1;
+        svg.classList.remove('grown', 'settled');
+        svg.classList.toggle('tree', pat === 'drift');
         var sd = hashStr(seedStr), R = prng(sd), h = '', hx, hy, i, ang, r, x, y;
         slotPts = [];
 
@@ -852,14 +927,8 @@
             slotPts.push([x, y]);
           }
         } else if (pat === 'drift') {
-          hx = 150 + R() * 40; hy = 62 + R() * 8;
-          var ph = R() * 6.28;
-          for (i = 0; i < SLOTS; i++) {
-            x = cl(hx + 30 + i * (216 / SLOTS) + (R() - 0.5) * 16, 20, 388);
-            y = cl(64 + Math.sin(i * 0.85 + ph) * 34 + (R() - 0.5) * 14, 14, 114);
-            slotPts.push([x, y]);
-          }
-          for (i = 0; i < SLOTS - 1; i++) h += '<line class="w-spoke" x1="' + slotPts[i][0].toFixed(1) + '" y1="' + slotPts[i][1].toFixed(1) + '" x2="' + slotPts[i + 1][0].toFixed(1) + '" y2="' + slotPts[i + 1][1].toFixed(1) + '"/>';
+          buildTree(svg, R);
+          return;
         } else {
           hx = 236 + R() * 56; hy = 54 + R() * 20;
           var k = 0.9 + R() * 0.25, off = R() * 3.14, spokes = 6 + Math.floor(R() * 4);
@@ -898,6 +967,11 @@
         for (var i = 0; i < SLOTS; i++) {
           if (th[i]) th[i].classList.toggle('lit', i < lit);
           if (nd[i]) nd[i].classList.toggle('lit-node', i < lit);
+        }
+        var tb = svg.querySelectorAll('.t-b'), tpl = svg.querySelectorAll('.t-pulse');
+        for (var q = 0; q < SLOTS; q++) {
+          if (tb[q]) tb[q].classList.toggle('lit', q < lit);
+          if (tpl[q]) tpl[q].classList.toggle('lit', q < lit);
         }
       }
 
@@ -1307,7 +1381,7 @@
         el('pfShareBtn').hidden = !p.username;
       }
 
-      // =============== edit ===============
+   // =============== edit ===============
       function openEdit() {
         if (!el('pfTheme').hidden) closeTheme(true);
         var p = state.profile;
