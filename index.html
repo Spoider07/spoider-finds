@@ -165,8 +165,42 @@
         .hero--home .hero-mark-inner, .hero--home .hero-mark-img { width: 92px; height: 92px; }
         .hero--home .hero-mark::before { width: 132px; height: 132px; }
         .hero--home .hero-mark { margin-bottom: 26px; }
+        /* tighter top so more of the hero (both CTAs) sits above the fold */
+        .hero--home { padding-top: 76px; }
+        .hero--home .hero-sub { margin-bottom: 28px; }
+        .hero--home .hero-text-glow { top: 60%; height: 78%; }
       }
       @media (prefers-reduced-motion: reduce) { .hero--home .hero-mark-inner { opacity: 1; } }
+
+      /* the gold words catch the lantern light (--gl is set on the h1 by JS, 0..1) */
+      .hero--home .hero-title { --gl: 0; }
+      .hero--home .hero-title .gold-text {
+        text-shadow: 0 0 calc(var(--gl) * 22px) rgba(var(--web-node), calc(var(--gl) * .5));
+      }
+      @supports (color: color-mix(in srgb, red 50%, blue)) {
+        .hero--home .hero-title .gold-text {
+          color: color-mix(in srgb, var(--gold-bright) calc(var(--gl) * 100%), var(--gold));
+        }
+      }
+
+      /* spider lowers itself on a silk thread above "Four threads" (scroll-driven, transform-only) */
+      .categories .drop { position: absolute; left: 50%; top: 0; width: 0; height: 0; z-index: 1; pointer-events: none; }
+      .drop-line {
+        position: absolute; left: -0.5px; top: -60px; width: 1px; height: 106px;
+        transform-origin: 50% 0; transform: scaleY(0); will-change: transform;
+        background: linear-gradient(to bottom, transparent, rgba(var(--web-node), .5) 35%, rgba(var(--web-node), .85));
+      }
+      .drop-body { position: absolute; left: 0; top: -60px; width: 0; opacity: 0; will-change: transform, opacity; }
+      .drop-spider {
+        position: absolute; left: -15px; top: 0; width: 30px; height: 30px; display: block;
+        transform-origin: 50% 0;
+        filter: drop-shadow(0 0 6px rgba(232, 199, 102, .35));
+      }
+      html[data-theme="light"] .drop-spider {
+        filter: drop-shadow(0.5px 0 0 rgba(40,32,16,.8)) drop-shadow(-0.5px 0 0 rgba(40,32,16,.8)) drop-shadow(0 0.5px 0 rgba(40,32,16,.8)) drop-shadow(0 -0.5px 0 rgba(40,32,16,.8));
+      }
+      .drop.is-hung .drop-spider { animation: dropSway 6.5s ease-in-out infinite; }
+      @keyframes dropSway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
     </style>
 
     <section class="hero hero--home" id="heroHome">
@@ -217,7 +251,7 @@
       var desk = window.matchMedia('(min-width: 960px)').matches;
       var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-      var SPOKES = small ? 10 : 15, RINGS = small ? 5 : 7;
+      var SPOKES = small ? 12 : 18, RINGS = small ? 6 : 8; // a touch denser than before
       var TR = small ? 110 : 150, LR = small ? 170 : 240, MAXSH = small ? 1 : 2;
       var FLOOR = 0.28; // web brightness away from the light
 
@@ -227,6 +261,9 @@
       var ptr = { x: 0, y: 0, on: false }, imp = 0;
       var pulseT = 0, t0 = 0, last = 0, running = false, raf = 0, resizeT = 0, flashT = 0, io = null, sTick = false;
       var lit = reduce, rv = reduce ? 1 : 0, sense = 0, rot = 0, prog = 0, px = 0, py = 0, tpx = 0, tpy = 0;
+      var title = hero.querySelector('.hero-title'), goldEl = hero.querySelector('.hero-title .gold-text');
+      var goldPts = [], gl = 0, glSet = 0, goldT = 0;
+      var spokeEdges = [], couriers = [], prevTs = 0, nextCourier = 0;
 
       var THEME = { line: '201,168,118', node: '232,199,102', shimCore: '255,247,225', shimGlow: '255,240,200', am: 1 };
       function readTheme() {
@@ -278,10 +315,16 @@
           }
           spokes.push(line); inner.push(line[0]);
         }
+        spokeEdges = []; couriers = [];
         for (s = 0; s < SPOKES; s++) {
-          var L = spokes[s];
-          edges.push({ a: cn, b: L[0], sag: 0.05, seed: Math.random() * 10 });
-          for (r = 0; r < L.length - 1; r++) edges.push({ a: L[r], b: L[r + 1], sag: 0.05, seed: Math.random() * 10 });
+          var L = spokes[s], se = [];
+          var e0 = { a: cn, b: L[0], sag: 0.05, seed: Math.random() * 10 };
+          edges.push(e0); se.push(e0);
+          for (r = 0; r < L.length - 1; r++) {
+            var e1 = { a: L[r], b: L[r + 1], sag: 0.05, seed: Math.random() * 10 };
+            edges.push(e1); se.push(e1);
+          }
+          spokeEdges.push(se); // hub -> outer ring, used by the courier light
         }
         for (r = 0; r < RINGS; r++) for (s = 0; s < SPOKES; s++) {
           edges.push({ a: spokes[s][r], b: spokes[(s + 1) % SPOKES][r], sag: 0.09, seed: Math.random() * 10, ring: true });
@@ -302,9 +345,24 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         if (Math.abs(w - prevW) > 2 || !nodes.length) seed();
         prevW = w;
+        measureGold();
         if (reduce) render(0);
       }
       function onResize() { clearTimeout(resizeT); resizeT = setTimeout(resize, 120); }
+
+      // where the gold words sit (3 sample points per line), so the lantern can light them
+      function measureGold() {
+        goldPts = [];
+        if (!goldEl) return;
+        var hr = hero.getBoundingClientRect(), rs = goldEl.getClientRects();
+        for (var i = 0; i < rs.length; i++) {
+          var q = rs[i];
+          if (q.width < 2) continue;
+          for (var k = 1; k <= 3; k++) {
+            goldPts.push({ x: q.left - hr.left + q.width * (k / 4), y: q.top - hr.top + q.height / 2 });
+          }
+        }
+      }
 
       function burst() {
         if (!ring || !img) return;
@@ -353,6 +411,7 @@
       function render(ts) {
         var el = reduce ? 5000 : ts - t0, i, dx, dy;
         pulseT += 0.02;
+        var dt = prevTs ? Math.min(ts - prevTs, 64) : 16; prevTs = ts;
 
         // ---- timeline: web draws out from the hub (0-1.4s), light travels in (0.9-2.4s) ----
         var webT = clamp(el / 1400, 0, 1);
@@ -371,7 +430,7 @@
 
         if (!lit && el > 600) {
           dx = lant.x - hub.x; dy = lant.y - hub.y;
-          if (dx * dx + dy * dy < 2500) { lit = true; sense = 1; burst(); } // spider ignites once
+          if (dx * dx + dy * dy < 2500) { lit = true; sense = 1; nextCourier = ts + 2500; burst(); } // spider ignites once
         }
         if (lit && rv < 1) rv += (1 - rv) * 0.07;
 
@@ -387,6 +446,14 @@
         rot += (tr - rot) * 0.08;
         px += (tpx - px) * 0.08; py += (tpy - py) * 0.08;
         writeMark();
+
+        // gold words in the headline brighten when the light passes over them
+        if (title && goldPts.length && !reduce) {
+          var gt = 0;
+          for (i = 0; i < goldPts.length; i++) gt = Math.max(gt, lightAt(goldPts[i].x, goldPts[i].y));
+          gl += (Math.min(1, gt * 1.5) - gl) * 0.1;
+          if (Math.abs(gl - glSet) > 0.02) { glSet = gl; title.style.setProperty('--gl', gl.toFixed(2)); }
+        }
 
         // ---- draw ----
         ctx.clearRect(0, 0, w, h);
@@ -440,6 +507,28 @@
             ctx.fillStyle = 'rgba(' + THEME.shimGlow + ',' + (0.15 * fade * THEME.am).toFixed(3) + ')'; ctx.fill();
             ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 6.283);
             ctx.fillStyle = 'rgba(' + THEME.shimCore + ',' + (0.9 * fade * THEME.am).toFixed(3) + ')'; ctx.fill();
+          }
+
+          // courier: every few seconds one light runs down a spoke into the hub; the spider feels it land
+          if (lit && webT >= 1 && !couriers.length && ts > nextCourier && spokeEdges.length) {
+            couriers.push({ se: spokeEdges[Math.floor(Math.random() * spokeEdges.length)], t: 0 });
+          }
+          for (i = couriers.length - 1; i >= 0; i--) {
+            var cr = couriers[i]; cr.t += dt / 2400;
+            if (cr.t >= 1) {
+              couriers.splice(i, 1);
+              sense = Math.max(sense, 0.7);
+              nextCourier = ts + 5000 + Math.random() * 5000;
+              continue;
+            }
+            var nseg = cr.se.length, cpos = cr.t * nseg, si = Math.min(nseg - 1, Math.floor(cpos));
+            var sed = cr.se[nseg - 1 - si]; // walk the spoke from the outer ring inward
+            var cp = curvePt(sed.a, sed.b, sed.sag, sed.seed, 1 - (cpos - si));
+            var ca = Math.min(1, cr.t * 6);
+            ctx.beginPath(); ctx.arc(cp.x, cp.y, 4.2, 0, 6.283);
+            ctx.fillStyle = 'rgba(' + THEME.shimGlow + ',' + (0.18 * ca * THEME.am).toFixed(3) + ')'; ctx.fill();
+            ctx.beginPath(); ctx.arc(cp.x, cp.y, 2, 0, 6.283);
+            ctx.fillStyle = 'rgba(' + THEME.shimCore + ',' + (0.95 * ca * THEME.am).toFixed(3) + ')'; ctx.fill();
           }
         }
       }
@@ -515,6 +604,8 @@
 
       resize();
       writeMark();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureGold);
+      goldT = setTimeout(measureGold, 1800); // after the headline's split-reveal has settled
       if (!reduce) {
         if ('IntersectionObserver' in window) {
           io = new IntersectionObserver(function (en) {
@@ -527,7 +618,7 @@
       if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
         window.SpoiderPage.onCleanup(function () {
           stopLoop();
-          clearTimeout(resizeT); clearTimeout(flashT);
+          clearTimeout(resizeT); clearTimeout(flashT); clearTimeout(goldT);
           window.removeEventListener('resize', onResize);
           window.removeEventListener('scroll', onScroll);
           window.removeEventListener('sf-theme-change', readTheme);
@@ -540,6 +631,10 @@
 
     <!-- ================= CATEGORIES ================= -->
     <section class="categories" id="categories">
+      <div class="drop" aria-hidden="true">
+        <span class="drop-line"></span>
+        <div class="drop-body"><img class="drop-spider" src="assets/images/spoider-logo-vector.svg" alt=""></div>
+      </div>
       <p class="eyebrow center reveal">EXPLORE</p>
       <h2 class="section-title center split-reveal">Four threads. One taste.</h2>
       <div class="category-grid">
@@ -593,6 +688,49 @@
         </a>
       </div>
     </section>
+
+    <!-- Spider descent: as "Four threads" scrolls in, the spider lowers itself on a silk thread
+         and hangs (with a very slow sway) just above the heading. Scroll-driven, so it is always
+         smooth and reversible; transform/opacity only. -->
+    <script>
+    (function () {
+      var sec = document.getElementById('categories');
+      var drop = sec && sec.querySelector('.drop');
+      if (!drop) return;
+      var line = drop.querySelector('.drop-line');
+      var body = drop.querySelector('.drop-body');
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var ticking = false, cur = -1;
+
+      function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+      function apply(p) {
+        if (Math.abs(p - cur) < 0.001) return;
+        cur = p;
+        var e = ease(p);
+        line.style.transform = 'scaleY(' + e.toFixed(4) + ')';
+        body.style.transform = 'translateY(' + (e * 102).toFixed(2) + 'px)';
+        body.style.opacity = Math.min(1, e * 3).toFixed(2);
+        drop.classList.toggle('is-hung', e >= 0.98 && !reduce);
+      }
+      function update() {
+        ticking = false;
+        var vh = window.innerHeight, top = sec.getBoundingClientRect().top;
+        var p = reduce ? 1 : Math.max(0, Math.min(1, (vh * 0.92 - top) / (vh * 0.5)));
+        apply(p);
+      }
+      function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      update();
+
+      if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        window.SpoiderPage.onCleanup(function () {
+          window.removeEventListener('scroll', onScroll);
+          window.removeEventListener('resize', onScroll);
+        });
+      }
+    })();
+    </script>
 
     <!-- ================= CORRIDOR — product posters in motion (home only) =================
          Two rails of posters ride out of a vanishing point toward the viewer.
