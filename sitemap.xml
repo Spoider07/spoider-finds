@@ -1,47 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/</loc>
+    <loc>https://spoider-finds.vercel.app/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/desk-setup.html</loc>
+    <loc>https://spoider-finds.vercel.app/desk-setup.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/fashion-finds.html</loc>
+    <loc>https://spoider-finds.vercel.app/fashion-finds.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/accessories.html</loc>
+    <loc>https://spoider-finds.vercel.app/accessories.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/amazon-finds.html</loc>
+    <loc>https://spoider-finds.vercel.app/amazon-finds.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/about.html</loc>
+    <loc>https://spoider-finds.vercel.app/india.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://spoider-finds.vercel.app/india-desk-setup.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spoider-finds.vercel.app/india-accessories.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spoider-finds.vercel.app/india-amazon-finds.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spoider-finds.vercel.app/about.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/contact.html</loc>
+    <loc>https://spoider-finds.vercel.app/contact.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/privacy.html</loc>
+    <loc>https://spoider-finds.vercel.app/privacy.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://spoider07.github.io/spoider-finds/affiliate-disclosure.html</loc>
+    <loc>https://spoider-finds.vercel.app/affiliate-disclosure.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
