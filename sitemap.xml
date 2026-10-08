@@ -36,6 +36,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://spoider-finds.vercel.app/india-fashion-finds.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://spoider-finds.vercel.app/india-accessories.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
