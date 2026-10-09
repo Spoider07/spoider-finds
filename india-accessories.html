@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Theme anti-flash: must run before any CSS paints. Reads the
+       user's stored preference and sets data-theme on <html> before
+       the page renders, so a returning Light-mode user never sees a
+       flash of the default Dark theme. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('sf-theme');
+        if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XHQ6BSWKH"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -12,84 +26,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Accessories — For India — Spoider Finds</title>
-  <meta name="description" content="Jewelry, keychains, and small accessories with an aesthetic edge — shipped within India.">
-  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+  <meta name="description" content="Jewelry, keychains, and small details that finish a look — shipped within India.">
+  <link rel="canonical" href="https://spoider-finds.vercel.app/india-accessories.html">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Accessories — For India — Spoider Finds">
+  <meta property="og:description" content="Jewelry, keychains, and small details that finish a look — shipped within India.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://spoider-finds.vercel.app/india-accessories.html">
+  <!-- og:image / twitter:image intentionally removed: assets/images/og-cover.jpg
+       does not exist in the repo (404). Add them back once a real
+       1200x630 image is uploaded to assets/images/og-cover.jpg. -->
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Accessories — For India — Spoider Finds">
+  <meta name="twitter:description" content="Jewelry, keychains, and small details that finish a look — shipped within India.">
+
+  <link rel="icon" href="assets/images/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/images/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/images/favicon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .nav-badge-new {
-      display: inline-block;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.55rem;
-      letter-spacing: 0.05em;
-      color: #0a0a0b;
-      background: var(--gold-bright, #e8c766);
-      padding: 1px 5px;
-      border-radius: 4px;
-      margin-left: 5px;
-      vertical-align: middle;
-      transform: translateY(-1px);
-    }
-    .thread-cta {
-      max-width: 480px;
-      margin: 2.5rem auto 0;
-      padding: 2.2rem 1.5rem;
-      text-align: center;
-      border-top: 1px dashed rgba(201,168,118,0.35);
-    }
-    .thread-cta-dots {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 1rem;
-    }
-    .thread-cta-dots span {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--gold, #c9a876);
-      animation: threadDotPulse 1.4s ease-in-out infinite;
-    }
-    .thread-cta-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .thread-cta-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes threadDotPulse {
-      0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
-      40% { opacity: 1; transform: scale(1); }
-    }
-    .thread-cta h3 {
-      font-family: 'Fraunces', serif;
-      font-weight: 500;
-      font-size: 1.15rem;
-      margin: 0 0 0.5rem;
-      color: var(--gold-bright, #e8c766);
-    }
-    .thread-cta p {
-      font-size: 0.92rem;
-      opacity: 0.75;
-      margin: 0 0 1.3rem;
-      line-height: 1.5;
-    }
-    .state-msg {
-      text-align: center;
-      padding: 3rem 1rem;
-      opacity: 0.7;
-      font-size: 0.95rem;
-      grid-column: 1 / -1;
-    }
-    #productGrid .product-card {
-      opacity: 1 !important;
-      transform: none !important;
-    }
-  </style>
 </head>
 <body>
+  <div class="page-loader" id="pageLoader">
+    <svg class="loader-mark" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
+      <path class="loader-thread" pathLength="1" d="M32 2 L32 32" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+      <circle class="loader-dot" cx="32" cy="32" r="2.6" fill="var(--gold)"/>
+      <path class="loader-mark-line" pathLength="1" d="M32 8 L32 24 M32 40 L32 56 M8 32 L24 32 M40 32 L56 32 M14 14 L23 23 M41 41 L50 50 M50 14 L41 23 M23 41 L14 50" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+    </svg>
+  </div>
   <div class="grain"></div>
-  <header class="nav">
+
+  <header class="nav" id="nav">
     <div class="nav-inner">
-      <a href="index.html" class="logo"><svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0a0a0b"/><circle cx="16" cy="16" r="3.2" fill="#c9a876"/><path d="M16 4 L16 12.5 M16 19.5 L16 28 M4 16 L12.5 16 M19.5 16 L28 16 M8 8 L13.5 13.5 M18.5 18.5 L24 24 M24 8 L18.5 13.5 M13.5 18.5 L8 24" stroke="#c9a876" stroke-width="1.3" stroke-linecap="round" opacity="0.8"/></svg>Spoider<span class="logo-accent">Finds</span></a>
+      <a href="index.html" class="logo"><img src="assets/images/spoider-logo-vector.svg" alt="Spoider Finds" class="logo-img">Spoider<span class="logo-accent">Finds</span></a>
       <nav class="nav-links" aria-label="Primary">
         <a href="index.html#categories">Categories</a>
         <a href="index.html#featured">Featured</a>
@@ -97,6 +72,35 @@
         <a href="index.html#latest">Latest</a>
         <a href="india.html">🇮🇳 For India<span class="nav-badge-new">NEW</span></a>
       </nav>
+      <button class="search-toggle" type="button" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M21 21l-4.3-4.3"/>
+        </svg>
+      </button>
+      <!-- FIX: this used to share the .theme-toggle class with the
+           actual dark/light button below, so script.js's global
+           `.theme-toggle` click handler fired the theme sweep
+           animation at the same time the browser navigated to
+           profile.html — the two fought each other and the page
+           looked broken. Now it has its own .profile-toggle class
+           (styled identically in style.css), so only this link's
+           own navigation happens on click. -->
+      <a href="profile.html" class="profile-toggle" aria-label="Profile" style="text-decoration:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.2"/>
+          <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/>
+        </svg>
+      </a>
+      <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/>
+        </svg>
+      </button>
       <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -110,9 +114,14 @@
     </nav>
   </header>
 
-  <!-- flank threads: only visible above the ultra-wide breakpoint
-       (see style.css) so large / high-res screens get a designed
-       side presence instead of flat empty margin -->
+  <!-- thread line that draws down the page -->
+  <svg class="thread" id="thread" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true">
+    <path id="threadPath" d="M2,0 L2,3000" />
+  </svg>
+
+  <!-- flank threads: only shown above the ultra-wide breakpoint (see
+       style.css) so very large / high-res screens get a designed
+       presence on the sides instead of flat empty margin -->
   <svg class="thread-flank thread-flank--left" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true">
     <path d="M2,0 L2,3000" />
   </svg>
@@ -121,6 +130,61 @@
   </svg>
 
   <main id="page-wrap">
+    <!-- Page CSS lives INSIDE #page-wrap on purpose: transitions.js's AJAX swap
+         never touches <head>, so CSS kept only in <head> vanishes on page transitions. -->
+    <style>
+      .thread-cta {
+        max-width: 480px;
+        margin: 2.5rem auto 0;
+        padding: 2.2rem 1.5rem;
+        text-align: center;
+        border-top: 1px dashed rgba(201,168,118,0.35);
+      }
+      .thread-cta-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 1rem;
+      }
+      .thread-cta-dots span {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--gold, #c9a876);
+        animation: threadDotPulse 1.4s ease-in-out infinite;
+      }
+      .thread-cta-dots span:nth-child(2) { animation-delay: 0.2s; }
+      .thread-cta-dots span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes threadDotPulse {
+        0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+        40% { opacity: 1; transform: scale(1); }
+      }
+      .thread-cta h3 {
+        font-family: 'Fraunces', serif;
+        font-weight: 500;
+        font-size: 1.15rem;
+        margin: 0 0 0.5rem;
+        color: var(--gold-bright, #e8c766);
+      }
+      .thread-cta p {
+        font-size: 0.92rem;
+        opacity: 0.75;
+        margin: 0 0 1.3rem;
+        line-height: 1.5;
+      }
+      .state-msg {
+        text-align: center;
+        padding: 3rem 1rem;
+        opacity: 0.7;
+        font-size: 0.95rem;
+        grid-column: 1 / -1;
+      }
+      #productGrid .product-card {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    </style>
+
     <section class="hero" style="padding-top:90px; padding-bottom:40px;">
       <p class="eyebrow center reveal"><a href="india.html" style="color:inherit;">← FOR INDIA</a></p>
       <h1 class="hero-title" style="font-size:clamp(2rem, 5vw, 3.2rem);">Accessories</h1>
@@ -144,6 +208,18 @@
     (function () {
       var SUPABASE_URL = 'https://gqnwinkddckytrfpnhng.supabase.co';
       var SUPABASE_KEY = 'sb_publishable_NYb3HMwKyHL1YxlOIWtcQg_NGJwDwmQ';
+      var CATEGORY = 'accessories';
+      var TAG = 'Accessories';
+
+      // anything coming from the database is escaped before it goes into HTML
+      // (a title like: Shelf 24" Wide would otherwise break the card)
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
 
       function ensureSupabaseLib(callback) {
         if (window.supabase && typeof window.supabase.createClient === 'function') {
@@ -175,7 +251,6 @@
         });
       }
 
-      // ---- Spoider Score block builder (same shape as index.html) ----
       function scoreBarRow(label, val) {
         var v = Number(val) || 0;
         var pct = Math.max(0, Math.min(10, v)) * 10;
@@ -207,14 +282,28 @@
           '</div>';
       }
 
+      // ---- Wishlist heart HTML — bottom-right of every product image,
+      // site-wide. All the click/toggle/sign-in logic lives in script.js
+      // (delegated on document), so this loader only needs to render the
+      // markup with the product's id on data-heart-id. ----
+      function wishlistHeartHTML(p) {
+        return '<button type="button" class="wishlist-heart" data-heart-id="' + p.id + '" aria-label="Add to wishlist">' +
+          '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.6 8.4 2 4.8 5.6 4A5.4 5.4 0 0 1 12 7a5.4 5.4 0 0 1 6.4-3A5.6 5.6 0 0 1 22 11.8C19.5 16.4 12 21 12 21Z"/></svg>' +
+        '</button>';
+      }
+
       async function loadProducts() {
         var grid = document.getElementById('productGrid');
         if (!grid) return;
-        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // read-only client: must NOT look for a session / OAuth code in the URL,
+        // otherwise it races the site's real auth client right after Google sign-in
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
         var res = await sb
           .from('products')
           .select('*')
-          .eq('category', 'accessories')
+          .eq('category', CATEGORY)
           .eq('region', 'india')
           .eq('active', true)
           .order('created_at', { ascending: false });
@@ -231,18 +320,20 @@
         }
 
         grid.innerHTML = data.map(function (p) {
-          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+          return '<a href="' + esc(p.affiliate_link) + '" class="product-card" data-product-id="' + p.id + '" target="_blank" rel="sponsored noopener nofollow">' +
             '<div class="product-glow" aria-hidden="true"></div>' +
             '<div class="product-image">' +
-              '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
+              '<img src="' + esc(p.image_url || '') + '" alt="' + esc(p.title) + '" loading="lazy">' +
               scoreBadgeHTML(p) +
+              wishlistHeartHTML(p) +
             '</div>' +
-            '<div class="product-body"><span class="product-tag">Accessories</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
+            '<div class="product-body"><span class="product-tag">' + TAG + '</span><h3>' + esc(p.title) + '</h3><p>' + esc(p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
             scorePanelHTML(p) +
           '</a>';
         }).join('');
 
         watchImagesForLoad(grid);
+        if (window.syncWishlistHearts) window.syncWishlistHearts();
       }
 
       var grid0 = document.getElementById('productGrid');
@@ -252,34 +343,41 @@
     </script>
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <a href="index.html" class="logo">Spoider<span class="logo-accent">Finds</span></a>
-        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h4>Site</h4>
-          <a href="about.html">About</a>
-          <a href="contact.html">Contact</a>
-        </div>
-        <div class="footer-col">
-          <h4>Legal</h4>
-          <a href="privacy.html">Privacy Policy</a>
-          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
-        </div>
+  <!-- ================= FOOTER (persistent — outside #page-wrap, never swapped) ================= -->
+  <footer class="footer footer--cinematic" id="footerWeb">
+    <div class="footer-glow" aria-hidden="true"></div>
+    <div class="footer-bg-text" aria-hidden="true">SPOIDER</div>
+
+    <div class="footer-content">
+      <p class="eyebrow center reveal">A THREAD OF GOOD TASTE</p>
+      <h2 class="footer-heading">Every find, one thread — hand-picked, never mass-produced.</h2>
+      <div class="footer-pills reveal" style="--reveal-delay:0.1s;">
+        <a href="about.html" class="footer-pill">About</a>
+        <a href="contact.html" class="footer-pill">Contact</a>
+        <a href="privacy.html" class="footer-pill">Privacy Policy</a>
+        <a href="affiliate-disclosure.html" class="footer-pill">Affiliate Disclosure</a>
+        <a href="india.html" class="footer-pill">🇮🇳 India Edition</a>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
-      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+
+    <div class="footer-bottom-bar reveal" style="--reveal-delay:0.2s;">
+      <div class="footer-legal">
+        <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+        <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+      </div>
+      <button class="footer-top-btn" id="footerTopBtn" type="button" aria-label="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </button>
     </div>
-    <p class="footer-signature">Founder <span class="gold-text">~</span> Spoider</p>
   </footer>
 
   <script src="script.js"></script>
+  <script src="footer-web.js"></script>
   <script src="transitions.js"></script>
-  <script src="nav-desktop.js"></script>
+  <script src="search.js"></script>
+  <!-- nav-desktop.js is loaded by transitions.js (?v=5). Do NOT add a plain
+       <script src="nav-desktop.js"> tag here: it would load first and pin a stale cached copy. -->
 </body>
 </html>
