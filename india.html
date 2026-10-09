@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Theme anti-flash: must run before any CSS paints. Reads the
+       user's stored preference and sets data-theme on <html> before
+       the page renders, so a returning Light-mode user never sees a
+       flash of the default Dark theme. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('sf-theme');
+        if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7XHQ6BSWKH"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -13,6 +27,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>For India — Spoider Finds</title>
   <meta name="description" content="Spoider Finds' India-only picks — desk setups, fashion, and accessories sourced and shipped within India.">
+  <link rel="canonical" href="https://spoider-finds.vercel.app/india.html">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="For India — Spoider Finds">
+  <meta property="og:description" content="Spoider Finds' India-only picks — desk setups, fashion, and accessories sourced and shipped within India.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://spoider-finds.vercel.app/india.html">
+  <!-- og:image / twitter:image intentionally removed: assets/images/og-cover.jpg
+       does not exist in the repo (404). Add them back once a real
+       1200x630 image is uploaded to assets/images/og-cover.jpg. -->
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="For India — Spoider Finds">
+  <meta name="twitter:description" content="Spoider Finds' India-only picks — desk setups, fashion, and accessories sourced and shipped within India.">
 
   <link rel="icon" href="assets/images/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="assets/images/favicon-32.png">
@@ -22,186 +51,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .nav-badge-new {
-      display: inline-block;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.55rem;
-      letter-spacing: 0.05em;
-      color: #0a0a0b;
-      background: var(--gold-bright, #e8c766);
-      padding: 1px 5px;
-      border-radius: 4px;
-      margin-left: 5px;
-      vertical-align: middle;
-      transform: translateY(-1px);
-    }
-    .hero { position: relative; z-index: 0; }
-    .web-canvas {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      pointer-events: auto;
-      touch-action: pan-y;
-    }
-    .hero .aurora,
-    .hero-mark, .hero .eyebrow, .hero-title, .hero-sub {
-      position: relative;
-      z-index: 2;
-    }
-    .hero-mark::before {
-      content: '';
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 110px;
-      height: 110px;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(10,10,11,0.9) 0%, rgba(10,10,11,0.5) 45%, rgba(10,10,11,0) 75%);
-      z-index: -1;
-      pointer-events: none;
-    }
-    .hero-text-glow {
-      position: absolute;
-      left: 50%;
-      top: 56%;
-      transform: translate(-50%, -50%);
-      width: min(94%, 780px);
-      height: 68%;
-      background: radial-gradient(ellipse at center, rgba(10,10,11,0.55) 0%, rgba(10,10,11,0.3) 45%, rgba(10,10,11,0) 78%);
-      z-index: 1;
-      pointer-events: none;
-    }
-    .logo-img {
-      height: 40px;
-      width: auto;
-      vertical-align: middle;
-      margin-right: 2px;
-    }
-    .footer-logo-img {
-      height: 30px;
-      width: auto;
-      vertical-align: middle;
-      margin-right: 2px;
-    }
-    .state-msg {
-      text-align: center;
-      padding: 3rem 1rem;
-      opacity: 0.7;
-      font-size: 0.95rem;
-      grid-column: 1 / -1;
-    }
-
-    /* ===== Hero mark: static spider logo, layered premium glow ===== */
-    .hero-mark-inner {
-      position: relative;
-      width: 68px;
-      height: 68px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
-      user-select: none;
-      outline: none;
-    }
-    .hero-mark-halo {
-      position: absolute;
-      inset: -18%;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(220,185,120,0.22) 0%, rgba(180,140,70,0.08) 48%, transparent 75%);
-      filter: blur(14px);
-      z-index: 0;
-      pointer-events: none;
-      animation: markHaloBreathe 7s ease-in-out infinite;
-    }
-    @keyframes markHaloBreathe {
-      0%, 100% { opacity: 0.4; transform: scale(0.95); }
-      50%      { opacity: 0.65; transform: scale(1.04); }
-    }
-    .hero-mark-ping {
-      position: absolute;
-      inset: -4%;
-      border-radius: 50%;
-      border: 1px solid rgba(232,199,102,0.55);
-      opacity: 0;
-      z-index: 0;
-      pointer-events: none;
-      animation: markPingOnce 1.5s ease-out 1s 1 both;
-    }
-    @keyframes markPingOnce {
-      0%   { opacity: 0.85; transform: scale(0.55); }
-      100% { opacity: 0; transform: scale(2); }
-    }
-    .hero-mark-tap-ring {
-      position: absolute;
-      inset: -6%;
-      border-radius: 50%;
-      border: 1.5px solid rgba(255,241,204,0.75);
-      opacity: 0;
-      z-index: 3;
-      pointer-events: none;
-    }
-    .hero-mark-tap-ring.burst {
-      animation: markTapBurst 0.75s cubic-bezier(0.22,1,0.36,1);
-    }
-    @keyframes markTapBurst {
-      0%   { opacity: 0.9; transform: scale(0.5); }
-      100% { opacity: 0; transform: scale(2.3); }
-    }
-    .hero-mark-img {
-      position: relative;
-      z-index: 1;
-      display: block;
-      width: 68px;
-      height: 68px;
-      object-fit: contain;
-      transform-origin: center;
-      animation: markGlowPulse 7s ease-in-out infinite;
-      filter: drop-shadow(0 0 4px rgba(232,199,102,0.28)) drop-shadow(0 0 8px rgba(180,140,70,0.16));
-    }
-    @keyframes markGlowPulse {
-      0%, 100% { filter: drop-shadow(0 0 3px rgba(232,199,102,0.22)) drop-shadow(0 0 6px rgba(180,140,70,0.1)); opacity: 0.95; transform: scale(1); }
-      50%      { filter: drop-shadow(0 0 9px rgba(232,199,102,0.4)) drop-shadow(0 0 4px rgba(255,238,190,0.22)); opacity: 1; transform: scale(1.02); }
-    }
-    .hero-mark-img.flash {
-      animation: markGlowPulse 7s ease-in-out infinite, markTapFlash 0.55s ease-out;
-    }
-    @keyframes markTapFlash {
-      0%   { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
-      30%  { filter: drop-shadow(0 0 22px rgba(255,238,190,0.9)) drop-shadow(0 0 10px rgba(232,199,102,0.6)); }
-      100% { filter: drop-shadow(0 0 4px rgba(232,199,102,0.25)) drop-shadow(0 0 8px rgba(180,140,70,0.14)); }
-    }
-    .hero-mark-glint {
-      position: absolute;
-      top: 22%;
-      left: 8%;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,247,225,0.85), transparent 70%);
-      filter: blur(1.5px);
-      mix-blend-mode: screen;
-      z-index: 2;
-      opacity: 0;
-      pointer-events: none;
-      animation: markGlintSweep 9.5s ease-in-out infinite;
-    }
-    @keyframes markGlintSweep {
-      0%, 68%  { opacity: 0; transform: translate(0, 0) scale(0.8); }
-      74%      { opacity: 0.75; transform: translate(14px, 12px) scale(1); }
-      80%      { opacity: 0.55; transform: translate(24px, 20px) scale(0.9); }
-      88%      { opacity: 0; transform: translate(30px, 26px) scale(0.7); }
-      100%     { opacity: 0; transform: translate(0, 0) scale(0.8); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .hero-mark-halo, .hero-mark-ping, .hero-mark-img, .hero-mark-glint, .hero-mark-tap-ring { animation: none; }
-    }
-  </style>
 </head>
 <body>
   <div class="page-loader" id="pageLoader">
@@ -229,6 +78,29 @@
           <path d="M21 21l-4.3-4.3"/>
         </svg>
       </button>
+      <!-- FIX: this used to share the .theme-toggle class with the
+           actual dark/light button below, so script.js's global
+           `.theme-toggle` click handler fired the theme sweep
+           animation at the same time the browser navigated to
+           profile.html — the two fought each other and the page
+           looked broken. Now it has its own .profile-toggle class
+           (styled identically in style.css), so only this link's
+           own navigation happens on click. -->
+      <a href="profile.html" class="profile-toggle" aria-label="Profile" style="text-decoration:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.2"/>
+          <path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/>
+        </svg>
+      </a>
+      <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to light mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.5v2.4M12 19.1v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/>
+        </svg>
+      </button>
       <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -242,13 +114,14 @@
     </nav>
   </header>
 
+  <!-- thread line that draws down the page -->
   <svg class="thread" id="thread" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true">
     <path id="threadPath" d="M2,0 L2,3000" />
   </svg>
 
-  <!-- flank threads: only visible above the ultra-wide breakpoint
-       (see style.css) so large / high-res screens get a designed
-       side presence instead of flat empty margin -->
+  <!-- flank threads: only shown above the ultra-wide breakpoint (see
+       style.css) so very large / high-res screens get a designed
+       presence on the sides instead of flat empty margin -->
   <svg class="thread-flank thread-flank--left" viewBox="0 0 4 3000" preserveAspectRatio="none" aria-hidden="true">
     <path d="M2,0 L2,3000" />
   </svg>
@@ -257,15 +130,65 @@
   </svg>
 
   <main id="page-wrap">
-    <section class="hero">
-      <div class="aurora" aria-hidden="true">
-        <span class="aurora-blob aurora-blob--1"></span>
-        <span class="aurora-blob aurora-blob--2"></span>
-        <span class="aurora-blob aurora-blob--3"></span>
-      </div>
+    <style id="heroLivingCSS">
+      /* spider starts dim; JS lights it when the lantern reaches the hub */
+      .hero--home .hero-mark-inner { opacity: .14; --sense: 0; will-change: transform, opacity; }
+      /* vibration glow — driven by --sense (0..1) */
+      .hero--home .hero-mark-inner::after {
+        content: ""; position: absolute; inset: -45%; border-radius: 50%; z-index: 0; pointer-events: none;
+        background: radial-gradient(circle, rgba(255,238,190,.5), rgba(232,199,102,.16) 42%, transparent 70%);
+        opacity: calc(var(--sense) * .9);
+      }
+      html[data-theme="light"] .hero--home .hero-mark-inner::after {
+        background: radial-gradient(circle, rgba(184,149,85,.5), rgba(184,149,85,.14) 42%, transparent 70%);
+      }
+      /* mobile: spider is the hub of the web, so give it presence */
+      @media (max-width: 959px) {
+        .hero--home .hero-mark-inner, .hero--home .hero-mark-img { width: 92px; height: 92px; }
+        .hero--home .hero-mark::before { width: 132px; height: 132px; }
+        .hero--home .hero-mark { margin-bottom: 26px; }
+        /* tighter top so more of the hero (both CTAs) sits above the fold */
+        .hero--home { padding-top: 76px; }
+        .hero--home .hero-sub { margin-bottom: 28px; }
+        .hero--home .hero-text-glow { top: 60%; height: 78%; }
+      }
+      @media (prefers-reduced-motion: reduce) { .hero--home .hero-mark-inner { opacity: 1; } }
+
+      /* the gold words catch the lantern light (--gl is set on the h1 by JS, 0..1) */
+      .hero--home .hero-title { --gl: 0; }
+      /* (no text-shadow here on purpose: the headline words sit in overflow:hidden masks, which clip
+         a shadow into square patches. The soft glow is drawn on the web canvas behind the text.) */
+      @supports (color: color-mix(in srgb, red 50%, blue)) {
+        html[data-theme="light"] .hero--home .hero-title .gold-text { color: color-mix(in srgb, var(--gold-bright) calc(var(--gl) * 100%), var(--gold)); }
+        .hero--home .hero-title .gold-text {
+          color: color-mix(in srgb, #fff0c0 calc(var(--gl) * 75%), var(--gold));
+        }
+      }
+
+      /* spider lowers itself on a silk thread above "Four threads" (scroll-driven, transform-only) */
+      .categories .drop { position: absolute; left: 50%; top: 0; width: 0; height: 0; z-index: 1; pointer-events: none; }
+      .drop-line {
+        position: absolute; left: -0.5px; top: -60px; width: 1px; height: 106px;
+        transform-origin: 50% 0; transform: scaleY(0); will-change: transform;
+        background: linear-gradient(to bottom, transparent, rgba(var(--web-node), .5) 35%, rgba(var(--web-node), .85));
+      }
+      .drop-body { position: absolute; left: 0; top: -60px; width: 0; opacity: 0; will-change: transform, opacity; }
+      .drop-spider {
+        position: absolute; left: -15px; top: 0; width: 30px; height: 30px; display: block;
+        transform-origin: 50% 0;
+        filter: drop-shadow(0 0 6px rgba(232, 199, 102, .35));
+      }
+      html[data-theme="light"] .drop-spider {
+        filter: drop-shadow(0.5px 0 0 rgba(40,32,16,.8)) drop-shadow(-0.5px 0 0 rgba(40,32,16,.8)) drop-shadow(0 0.5px 0 rgba(40,32,16,.8)) drop-shadow(0 -0.5px 0 rgba(40,32,16,.8));
+      }
+      .drop.is-hung .drop-spider { animation: dropSway 6.5s ease-in-out infinite; }
+      @keyframes dropSway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+    </style>
+
+    <section class="hero hero--home" id="heroHome">
       <canvas id="webCanvas" class="web-canvas" aria-hidden="true"></canvas>
       <div class="hero-text-glow" aria-hidden="true"></div>
-      <div class="hero-mark hero-enter" aria-hidden="true">
+      <div class="hero-mark hero-enter" style="animation-delay:0.05s" aria-hidden="true">
         <div class="hero-mark-inner">
           <span class="hero-mark-halo"></span>
           <span class="hero-mark-ping"></span>
@@ -274,12 +197,445 @@
           <span class="hero-mark-glint"></span>
         </div>
       </div>
-      <p class="eyebrow hero-enter">🇮🇳 CURATED FOR INDIA</p>
-      <h1 class="hero-title split-reveal" data-trigger="load" data-delay="0.42" style="font-size: clamp(2rem, 5vw, 3rem);">Same taste. <span class="gold-text">Faster to your door.</span></h1>
-      <p class="hero-sub hero-enter">Every pick here ships within India — no waiting, no import hassle.</p>
+      <p class="eyebrow hero-enter" style="animation-delay:0.28s">🇮🇳 CURATED FOR INDIA</p>
+      <h1 class="hero-title split-reveal" data-trigger="load" data-delay="0.42">Same taste. <span class="gold-text">Faster to your door.</span></h1>
+      <p class="hero-sub hero-enter" style="animation-delay:0.88s">Every pick here ships within India — no waiting, no import hassle.</p>
+      <div class="hero-actions hero-enter" style="animation-delay:1.06s">
+        <a href="#featured" class="btn btn-primary">See Featured Finds</a>
+        <a href="#categories" class="btn btn-ghost">Browse Categories</a>
+      </div>
     </section>
 
+    <!-- Living Web script: web canvas + lantern + spider senses + mark parallax/scroll-fade/tap burst
+         (replaces the old separate hero-canvas and hero-mark scripts) -->
+    <script>
+    (function () {
+      'use strict';
+      var canvas = document.getElementById('webCanvas');
+      var hero = document.getElementById('heroHome');
+      if (!canvas || !hero) return;
+      var mark = hero.querySelector('.hero-mark-inner');
+      if (!mark) return;
+      var ring = mark.querySelector('.hero-mark-tap-ring');
+      var img = mark.querySelector('.hero-mark-img');
+      var ctx = canvas.getContext('2d');
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var small = window.matchMedia('(max-width: 600px)').matches;
+      var desk = window.matchMedia('(min-width: 960px)').matches;
+      var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+      var SPOKES = small ? 12 : 18, RINGS = small ? 6 : 8; // a touch denser than before
+      var TR = small ? 110 : 150, LR = small ? 170 : 240, MAXSH = small ? 1 : 2;
+      var FLOOR = 0.28; // web brightness away from the light
+
+      var w = 0, h = 0, prevW = 0, R = 0;
+      var nodes = [], spokes = [], inner = [], edges = [], shimmers = [];
+      var hub = { x: 0, y: 0 }, start = { x: 0, y: 0 }, lant = { x: 0, y: 0, set: false };
+      var ptr = { x: 0, y: 0, on: false }, imp = 0;
+      var pulseT = 0, t0 = 0, last = 0, running = false, raf = 0, resizeT = 0, flashT = 0, io = null, sTick = false;
+      var lit = reduce, rv = reduce ? 1 : 0, sense = 0, rot = 0, prog = 0, px = 0, py = 0, tpx = 0, tpy = 0;
+      var title = hero.querySelector('.hero-title'), goldEl = hero.querySelector('.hero-title .gold-text');
+      var goldPts = [], gl = 0, glSet = 0, goldT = 0, lastGold = 0;
+      var visit = false, visitStart = 0, nextVisit = 0;
+      var spokeEdges = [], couriers = [], prevTs = 0, nextCourier = 0;
+
+      var THEME = { line: '201,168,118', node: '232,199,102', shimCore: '255,247,225', shimGlow: '255,240,200', am: 1 };
+      function readTheme() {
+        var cs = getComputedStyle(document.documentElement);
+        THEME.line = (cs.getPropertyValue('--web-line') || THEME.line).trim();
+        THEME.node = (cs.getPropertyValue('--web-node') || THEME.node).trim();
+        THEME.shimCore = (cs.getPropertyValue('--web-shimmer-core') || THEME.shimCore).trim();
+        THEME.shimGlow = (cs.getPropertyValue('--web-shimmer-glow') || THEME.shimGlow).trim();
+        THEME.am = parseFloat(cs.getPropertyValue('--web-alpha-mult')) || 1;
+        if (reduce && w) render(0);
+      }
+      readTheme();
+      window.addEventListener('sf-theme-change', readTheme);
+
+      function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+      // layout-based (ignores transforms), so hub stays right during the entrance animation
+      function markCenter() {
+        var x = 0, y = 0, e = mark;
+        while (e && e !== hero) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; }
+        return { x: x + mark.offsetWidth / 2, y: y + mark.offsetHeight / 2 };
+      }
+
+      function rayToEdge(cx, cy, a, pad) {
+        var dx = Math.cos(a), dy = Math.sin(a);
+        var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
+        var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
+        var t = Math.min(tX, tY);
+        return { x: cx + dx * t, y: cy + dy * t };
+      }
+
+      function seed() {
+        nodes = []; spokes = []; inner = []; edges = []; shimmers = [];
+        hub = markCenter();
+        R = small ? w * 0.82 : Math.min(w, h) * 0.44;
+        start = { x: hub.x + Math.cos(0.6) * R * 0.95, y: hub.y + Math.sin(0.6) * R * 0.95 };
+        if (!lant.set) { lant.x = start.x; lant.y = start.y; lant.set = true; }
+        var cn = { x: hub.x, y: hub.y, ox: hub.x, oy: hub.y, seed: 0 };
+        var angles = [], s, r;
+        for (s = 0; s < SPOKES; s++) {
+          var ang = (Math.PI * 2 * s) / SPOKES + (Math.random() - 0.5) * 0.04;
+          angles.push(ang);
+          var line = [];
+          for (r = 1; r <= RINGS; r++) {
+            var rr = R * (r / RINGS) * (1 + (Math.random() - 0.5) * 0.02);
+            var x = hub.x + Math.cos(ang) * rr, y = hub.y + Math.sin(ang) * rr;
+            var n = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * 6.283 };
+            nodes.push(n); line.push(n);
+          }
+          spokes.push(line); inner.push(line[0]);
+        }
+        spokeEdges = []; couriers = [];
+        for (s = 0; s < SPOKES; s++) {
+          var L = spokes[s], se = [];
+          var e0 = { a: cn, b: L[0], sag: 0.05, seed: Math.random() * 10 };
+          edges.push(e0); se.push(e0);
+          for (r = 0; r < L.length - 1; r++) {
+            var e1 = { a: L[r], b: L[r + 1], sag: 0.05, seed: Math.random() * 10 };
+            edges.push(e1); se.push(e1);
+          }
+          spokeEdges.push(se); // hub -> outer ring, used by the courier light
+        }
+        for (r = 0; r < RINGS; r++) for (s = 0; s < SPOKES; s++) {
+          edges.push({ a: spokes[s][r], b: spokes[(s + 1) % SPOKES][r], sag: 0.09, seed: Math.random() * 10, ring: true });
+        }
+        function anchor(si) {
+          var p = rayToEdge(hub.x, hub.y, angles[si], 4);
+          var an = { x: p.x, y: p.y, ox: p.x, oy: p.y, vx: 0, vy: 0 };
+          edges.push({ a: spokes[si][RINGS - 1], b: an, sag: 0.02, seed: Math.random() * 10, anchor: true });
+        }
+        for (s = 0; s < SPOKES; s += 3) anchor(s);
+      }
+
+      function resize() {
+        var rect = hero.getBoundingClientRect();
+        w = rect.width; h = rect.height;
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (Math.abs(w - prevW) > 2 || !nodes.length) seed();
+        prevW = w;
+        measureGold();
+        if (reduce) render(0);
+      }
+      function onResize() { clearTimeout(resizeT); resizeT = setTimeout(resize, 120); }
+
+      // where the gold words sit (3 sample points per line), so the lantern can light them
+      function measureGold() {
+        goldPts = [];
+        title = hero.querySelector('.hero-title') || title;
+        var els = hero.querySelectorAll('.hero-title .gold-text');
+        var hr = hero.getBoundingClientRect();
+        for (var j = 0; j < els.length; j++) {
+          var rs = els[j].getClientRects();
+          for (var i = 0; i < rs.length; i++) {
+            var q = rs[i];
+            if (q.width < 2) continue;
+            for (var k = 1; k <= 3; k++) {
+              goldPts.push({ x: q.left - hr.left + q.width * (k / 4), y: q.top - hr.top + q.height / 2, r: Math.max(q.height * 1.0, q.width / 4 * 1.3) });
+            }
+          }
+        }
+      }
+
+      function burst() {
+        if (!ring || !img) return;
+        ring.classList.remove('burst'); img.classList.remove('flash');
+        void ring.offsetWidth;
+        ring.classList.add('burst'); img.classList.add('flash');
+        clearTimeout(flashT);
+        flashT = setTimeout(function () { ring.classList.remove('burst'); img.classList.remove('flash'); }, 800);
+      }
+
+      function step(n) {
+        n.vx += (n.ox - n.x) * 0.004; n.vy += (n.oy - n.y) * 0.004;
+        n.vx += Math.sin(pulseT * 0.4 + n.seed) * 0.025;
+        n.vy += Math.cos(pulseT * 0.4 + n.seed * 1.3) * 0.025;
+        if (ptr.on) {
+          var rad = TR * (1 + imp * 0.5);
+          var dx = n.x - ptr.x, dy = n.y - ptr.y, d = Math.sqrt(dx * dx + dy * dy);
+          if (d < rad && d > 0.01) {
+            var f = (1 - d / rad) * 2.2 * (1 + imp * 1.6);
+            n.vx += (dx / d) * f; n.vy += (dy / d) * f;
+          }
+        }
+        n.vx *= 0.9; n.vy *= 0.9; n.x += n.vx; n.y += n.vy;
+      }
+
+      function lightAt(x, y) {
+        if (reduce) return 0.5;
+        var dx = x - lant.x, dy = y - lant.y, f = 1 - Math.sqrt(dx * dx + dy * dy) / LR;
+        return f > 0 ? f * f : 0;
+      }
+
+      function curvePt(a, b, sag, sd, t) {
+        var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, dx = b.x - a.x, dy = b.y - a.y;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var off = dist * sag * (Math.sin(pulseT * 0.5 + sd) * 0.5 + 0.5);
+        var cx = mx - dy / dist * off, cy = my + dx / dist * off, it = 1 - t;
+        return { x: it * it * a.x + 2 * it * t * cx + t * t * b.x, y: it * it * a.y + 2 * it * t * cy + t * t * b.y };
+      }
+
+      function writeMark() {
+        mark.style.opacity = ((0.14 + 0.86 * rv) * (1 - prog)).toFixed(3);
+        mark.style.transform = 'translate(' + px.toFixed(1) + 'px,' + (py - prog * 14).toFixed(1) + 'px) scale(' + (1 - prog * 0.1).toFixed(3) + ') rotate(' + rot.toFixed(2) + 'deg)';
+        mark.style.setProperty('--sense', sense.toFixed(3));
+      }
+
+      function render(ts) {
+        var el = reduce ? 5000 : ts - t0, i, dx, dy;
+        pulseT += 0.02;
+        var dt = prevTs ? Math.min(ts - prevTs, 64) : 16; prevTs = ts;
+
+        // ---- timeline: web draws out from the hub (0-1.4s), light travels in (0.9-2.4s) ----
+        var webT = clamp(el / 1400, 0, 1);
+        var introR = R * 1.25 * (1 - Math.pow(1 - webT, 3));
+        var travelT = clamp((el - 900) / 1500, 0, 1);
+        var tx, ty;
+        if (ptr.on) { tx = ptr.x; ty = ptr.y; visit = false; }
+        else if (travelT < 1) {
+          var e = 1 - Math.pow(1 - travelT, 3);
+          tx = start.x + (hub.x - start.x) * e; ty = start.y + (hub.y - start.y) * e;
+        } else {
+          // every ~10s the light wanders over to the gold words and reads across them, then drifts back
+          if (!visit && lit && goldPts.length && ts > nextVisit) { visit = true; visitStart = ts; }
+          if (visit) {
+            var vv = (ts - visitStart) / 2800;
+            if (vv >= 1) { visit = false; nextVisit = ts + 9000 + Math.random() * 5000; }
+            else { var gi = goldPts[Math.min(goldPts.length - 1, Math.floor(vv * goldPts.length))]; tx = gi.x; ty = gi.y; }
+          }
+          if (!visit) {
+            var s = ts / 1000;
+            tx = hub.x + Math.cos(s * 0.35) * R * 0.45; ty = hub.y + Math.sin(s * 0.27) * R * 0.38;
+          }
+        }
+        lant.x += (tx - lant.x) * 0.12; lant.y += (ty - lant.y) * 0.12;
+
+        if (!lit && el > 600) {
+          dx = lant.x - hub.x; dy = lant.y - hub.y;
+          if (dx * dx + dy * dy < 2500) { lit = true; sense = 1; nextCourier = ts + 2500; nextVisit = ts + 4200; burst(); } // spider ignites once
+        }
+        if (lit && rv < 1) rv += (1 - rv) * 0.07;
+
+        // ---- physics + what the spider "feels" (energy of the ring around it) ----
+        for (i = 0; i < nodes.length; i++) step(nodes[i]);
+        imp = 0;
+        var en = 0;
+        for (i = 0; i < inner.length; i++) en += Math.abs(inner[i].vx) + Math.abs(inner[i].vy);
+        en /= inner.length;
+        var st = clamp((en - 0.12) / 0.9, 0, 1);
+        sense += (st - sense) * (st > sense ? 0.35 : 0.06);
+        var tr = ptr.on ? clamp((ptr.x - hub.x) / (R * 0.8), -1, 1) * 5 * Math.min(1, sense * 2) : 0;
+        rot += (tr - rot) * 0.08;
+        px += (tpx - px) * 0.08; py += (tpy - py) * 0.08;
+        writeMark();
+
+        // gold words in the headline brighten when the light passes over them
+        if (!reduce && ts - lastGold > 2000) { lastGold = ts; measureGold(); } // headline may re-flow after fonts / split-reveal
+        if (title && goldPts.length && !reduce) {
+          var gt = 0;
+          for (i = 0; i < goldPts.length; i++) gt = Math.max(gt, lightAt(goldPts[i].x, goldPts[i].y));
+          gl += (Math.min(1, gt * 1.5) - gl) * 0.1;
+          if (Math.abs(gl - glSet) > 0.02) { glSet = gl; title.style.setProperty('--gl', gl.toFixed(2)); }
+        }
+
+        // ---- draw ----
+        ctx.clearRect(0, 0, w, h);
+        ctx.lineWidth = 1;
+        var pulse = 0.75 + Math.sin(pulseT) * 0.25;
+        var base = 0.5 * pulse * THEME.am;
+
+        if (!reduce) {
+          var g = ctx.createRadialGradient(lant.x, lant.y, 0, lant.x, lant.y, LR * 0.8);
+          g.addColorStop(0, 'rgba(' + THEME.shimGlow + ',' + (0.1 * THEME.am).toFixed(3) + ')');
+          g.addColorStop(1, 'rgba(' + THEME.shimGlow + ',0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(lant.x - LR, lant.y - LR, LR * 2, LR * 2);
+        }
+
+        if (!reduce && gl > 0.02) {
+          for (i = 0; i < goldPts.length; i++) {
+            var gp = goldPts[i];
+            var gg = ctx.createRadialGradient(gp.x, gp.y, 0, gp.x, gp.y, gp.r);
+            gg.addColorStop(0, 'rgba(' + THEME.shimGlow + ',' + (0.3 * gl * THEME.am).toFixed(3) + ')');
+            gg.addColorStop(1, 'rgba(' + THEME.shimGlow + ',0)');
+            ctx.fillStyle = gg;
+            ctx.fillRect(gp.x - gp.r, gp.y - gp.r, gp.r * 2, gp.r * 2);
+          }
+        }
+
+        for (i = 0; i < edges.length; i++) {
+          var ed = edges[i], a = ed.a, b = ed.b;
+          var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+          var hx = mx - hub.x, hy = my - hub.y;
+          var vis = reduce ? 1 : clamp((introR - Math.sqrt(hx * hx + hy * hy)) / 70, 0, 1);
+          if (vis <= 0) continue;
+          var kind = ed.anchor ? 0.45 : (ed.ring ? 0.75 : 1);
+          var al = Math.min(0.9, base * kind * (FLOOR + 0.95 * lightAt(mx, my)) * vis);
+          var ddx = b.x - a.x, ddy = b.y - a.y, dist = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+          var off = dist * ed.sag * (Math.sin(pulseT * 0.5 + ed.seed) * 0.5 + 0.5);
+          ctx.strokeStyle = 'rgba(' + THEME.line + ',' + al.toFixed(3) + ')';
+          ctx.beginPath(); ctx.moveTo(a.x, a.y);
+          ctx.quadraticCurveTo(mx - ddy / dist * off, my + ddx / dist * off, b.x, b.y);
+          ctx.stroke();
+        }
+
+        for (i = 0; i < nodes.length; i++) {
+          var n = nodes[i], nx = n.x - hub.x, ny = n.y - hub.y;
+          var nv = reduce ? 1 : clamp((introR - Math.sqrt(nx * nx + ny * ny)) / 70, 0, 1);
+          if (nv <= 0) continue;
+          ctx.beginPath(); ctx.arc(n.x, n.y, 1.3, 0, 6.283);
+          ctx.fillStyle = 'rgba(' + THEME.node + ',' + (((0.55 * pulse + 0.15) * THEME.am) * (0.3 + 0.9 * lightAt(n.x, n.y)) * nv).toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        if (!reduce) {
+          if (webT >= 1 && Math.random() < 0.02 && shimmers.length < MAXSH) {
+            shimmers.push({ edge: edges[Math.floor(Math.random() * edges.length)], t: 0, sp: 0.008 + Math.random() * 0.006, rev: Math.random() < 0.5 });
+          }
+          for (i = shimmers.length - 1; i >= 0; i--) {
+            var sh = shimmers[i]; sh.t += sh.sp;
+            if (sh.t >= 1) { shimmers.splice(i, 1); continue; }
+            var p = curvePt(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, sh.rev ? 1 - sh.t : sh.t);
+            var fade = Math.sin(sh.t * Math.PI);
+            ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, 6.283);
+            ctx.fillStyle = 'rgba(' + THEME.shimGlow + ',' + (0.15 * fade * THEME.am).toFixed(3) + ')'; ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, 6.283);
+            ctx.fillStyle = 'rgba(' + THEME.shimCore + ',' + (0.9 * fade * THEME.am).toFixed(3) + ')'; ctx.fill();
+          }
+
+          // courier: every few seconds one light runs down a spoke into the hub; the spider feels it land
+          if (lit && webT >= 1 && !couriers.length && ts > nextCourier && spokeEdges.length) {
+            couriers.push({ se: spokeEdges[Math.floor(Math.random() * spokeEdges.length)], t: 0 });
+          }
+          for (i = couriers.length - 1; i >= 0; i--) {
+            var cr = couriers[i]; cr.t += dt / 2400;
+            if (cr.t >= 1) {
+              couriers.splice(i, 1);
+              sense = Math.max(sense, 0.7);
+              nextCourier = ts + 5000 + Math.random() * 5000;
+              continue;
+            }
+            var nseg = cr.se.length, cpos = cr.t * nseg, si = Math.min(nseg - 1, Math.floor(cpos));
+            var sed = cr.se[nseg - 1 - si]; // walk the spoke from the outer ring inward
+            var cp = curvePt(sed.a, sed.b, sed.sag, sed.seed, 1 - (cpos - si));
+            var ca = Math.min(1, cr.t * 6);
+            ctx.beginPath(); ctx.arc(cp.x, cp.y, 4.2, 0, 6.283);
+            ctx.fillStyle = 'rgba(' + THEME.shimGlow + ',' + (0.18 * ca * THEME.am).toFixed(3) + ')'; ctx.fill();
+            ctx.beginPath(); ctx.arc(cp.x, cp.y, 2, 0, 6.283);
+            ctx.fillStyle = 'rgba(' + THEME.shimCore + ',' + (0.95 * ca * THEME.am).toFixed(3) + ')'; ctx.fill();
+          }
+        }
+      }
+
+      // full rate while something is happening, 30fps when the web is just breathing
+      function tick(ts) {
+        if (!running) return;
+        raf = requestAnimationFrame(tick);
+        var busy = ptr.on || sense > 0.04 || ts - t0 < 2800 || Math.abs(tpx - px) > 0.2 || Math.abs(tpy - py) > 0.2;
+        if (ts - last < (busy ? 10 : 32)) return;
+        last = ts;
+        render(ts);
+      }
+      function startLoop() {
+        if (running || reduce) return;
+        running = true;
+        if (!t0) t0 = performance.now();
+        raf = requestAnimationFrame(tick);
+      }
+      function stopLoop() { running = false; if (raf) cancelAnimationFrame(raf); }
+
+      // ---- input ----
+      function setPtr(cx, cy) {
+        var r = canvas.getBoundingClientRect();
+        ptr.x = cx - r.left; ptr.y = cy - r.top; ptr.on = true;
+      }
+      function onHeroMove(e) {
+        if (e.pointerType === 'touch') return;
+        setPtr(e.clientX, e.clientY);
+        if (desk) {
+          var r = hero.getBoundingClientRect();
+          tpx = ((e.clientX - r.left) / r.width - 0.5) * -18;
+          tpy = ((e.clientY - r.top) / r.height - 0.5) * -18;
+        }
+      }
+      function onHeroDown(e) { if (e.pointerType === 'touch') return; setPtr(e.clientX, e.clientY); imp = 1; }
+      function onHeroLeave() { ptr.on = false; tpx = 0; tpy = 0; }
+      function onCanvasDown(e) { if (e.pointerType === 'touch') { setPtr(e.clientX, e.clientY); imp = 1; } }
+      function onTouchMove(e) { if (e.touches && e.touches[0]) setPtr(e.touches[0].clientX, e.touches[0].clientY); }
+      function onTouchEnd() { ptr.on = false; }
+
+      if (!reduce) {
+        if (fine) {
+          // listen on the whole hero so the lantern also follows the cursor over the text
+          hero.addEventListener('pointermove', onHeroMove, { passive: true });
+          hero.addEventListener('pointerdown', onHeroDown, { passive: true });
+          hero.addEventListener('pointerleave', onHeroLeave, { passive: true });
+        }
+        hero.addEventListener('pointerdown', onCanvasDown, { passive: true });
+        hero.addEventListener('touchstart', onTouchMove, { passive: true });
+        hero.addEventListener('touchmove', onTouchMove, { passive: true });
+        hero.addEventListener('touchend', onTouchEnd, { passive: true });
+        hero.addEventListener('touchcancel', onTouchEnd, { passive: true });
+      }
+      mark.addEventListener('click', burst);
+
+      function onScroll() {
+        if (sTick) return;
+        sTick = true;
+        requestAnimationFrame(function () {
+          sTick = false;
+          var r = hero.getBoundingClientRect(), fr = hero.offsetHeight * 0.5;
+          prog = fr > 0 ? clamp(-r.top / fr, 0, 1) : 0;
+          if (!running) writeMark();
+        });
+      }
+      function onVis() {
+        if (document.hidden) stopLoop();
+        else if (hero.getBoundingClientRect().top < window.innerHeight) startLoop();
+      }
+      window.addEventListener('resize', onResize);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      document.addEventListener('visibilitychange', onVis);
+
+      resize();
+      writeMark();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureGold);
+      goldT = setTimeout(measureGold, 1800); // after the headline's split-reveal has settled
+      if (!reduce) {
+        if ('IntersectionObserver' in window) {
+          io = new IntersectionObserver(function (en) {
+            en.forEach(function (x) { if (x.isIntersecting) startLoop(); else stopLoop(); });
+          }, { threshold: 0.05 });
+          io.observe(hero);
+        } else startLoop();
+      }
+
+      if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        window.SpoiderPage.onCleanup(function () {
+          stopLoop();
+          clearTimeout(resizeT); clearTimeout(flashT); clearTimeout(goldT);
+          window.removeEventListener('resize', onResize);
+          window.removeEventListener('scroll', onScroll);
+          window.removeEventListener('sf-theme-change', readTheme);
+          document.removeEventListener('visibilitychange', onVis);
+          if (io) io.disconnect();
+        });
+      }
+    })();
+    </script>
+
+    <!-- ================= CATEGORIES ================= -->
     <section class="categories" id="categories">
+      <div class="drop" aria-hidden="true">
+        <span class="drop-line"></span>
+        <div class="drop-body"><img class="drop-spider" src="assets/images/spoider-logo-vector.svg" alt=""></div>
+      </div>
       <p class="eyebrow center reveal">EXPLORE</p>
       <h2 class="section-title center split-reveal">Four threads. Now local.</h2>
       <div class="category-grid">
@@ -334,7 +690,50 @@
       </div>
     </section>
 
-    <!-- ================= FEATURED (INDIA) ================= -->
+    <!-- Spider descent: as "Four threads" scrolls in, the spider lowers itself on a silk thread
+         and hangs (with a very slow sway) just above the heading. Scroll-driven, so it is always
+         smooth and reversible; transform/opacity only. -->
+    <script>
+    (function () {
+      var sec = document.getElementById('categories');
+      var drop = sec && sec.querySelector('.drop');
+      if (!drop) return;
+      var line = drop.querySelector('.drop-line');
+      var body = drop.querySelector('.drop-body');
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var ticking = false, cur = -1;
+
+      function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+      function apply(p) {
+        if (Math.abs(p - cur) < 0.001) return;
+        cur = p;
+        var e = ease(p);
+        line.style.transform = 'scaleY(' + e.toFixed(4) + ')';
+        body.style.transform = 'translateY(' + (e * 102).toFixed(2) + 'px)';
+        body.style.opacity = Math.min(1, e * 3).toFixed(2);
+        drop.classList.toggle('is-hung', e >= 0.98 && !reduce);
+      }
+      function update() {
+        ticking = false;
+        var vh = window.innerHeight, top = sec.getBoundingClientRect().top;
+        var p = reduce ? 1 : Math.max(0, Math.min(1, (vh * 0.92 - top) / (vh * 0.5)));
+        apply(p);
+      }
+      function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      update();
+
+      if (window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        window.SpoiderPage.onCleanup(function () {
+          window.removeEventListener('scroll', onScroll);
+          window.removeEventListener('resize', onScroll);
+        });
+      }
+    })();
+    </script>
+
+    <!-- ================= FEATURED ================= -->
     <section class="featured" id="featured">
       <div class="section-head reveal">
         <div>
@@ -348,314 +747,40 @@
       </div>
     </section>
 
-    <script>
-    (function () {
-      var canvas = document.getElementById('webCanvas');
-      if (!canvas) return;
-      var ctx = canvas.getContext('2d');
-      var hero = canvas.closest('.hero');
-      var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var nodes = [];
-      var spokes = [];
-      var edges = [];
-      var shimmers = [];
-      var centerNode = { x: 0, y: 0 };
-      var pointer = { x: -9999, y: -9999, active: false };
-      var running = false;
-      var rafId = null;
-      var lastFrame = 0;
-      var FRAME_INTERVAL = 1000 / 30;
+    <!-- ================= TRUST ================= -->
+    <section class="trust" id="trust">
+      <p class="eyebrow center reveal">WHY SPOIDER FINDS</p>
+      <h2 class="section-title center split-reveal">Built on taste, not volume.</h2>
+      <div class="trust-grid">
+        <div class="trust-card reveal" style="--reveal-delay:0.03s;">
+          <span class="trust-num">01</span>
+          <h3 class="snap-reveal">Actually tested taste</h3>
+          <p>Every product is chosen because it earned a spot in our own boards first — not because it pays the most commission.</p>
+        </div>
+        <div class="trust-card reveal" style="--reveal-delay:0.09s;">
+          <span class="trust-num">02</span>
+          <h3 class="snap-reveal">No noise, no filler</h3>
+          <p>We'd rather post one great find a week than ten mediocre ones. Quality over volume, always.</p>
+        </div>
+        <div class="trust-card reveal" style="--reveal-delay:0.15s;">
+          <span class="trust-num">03</span>
+          <h3 class="snap-reveal">Transparent, always</h3>
+          <p>We earn a small commission on qualifying purchases at no extra cost to you. Full disclosure, every time.</p>
+        </div>
+      </div>
+    </section>
 
-      var isSmall = window.matchMedia('(max-width: 600px)').matches;
-      var SPOKE_COUNT = isSmall ? 10 : 15;
-      var RING_COUNT = isSmall ? 5 : 7;
-      var TOUCH_RADIUS = isSmall ? 110 : 150;
-      var MAX_SHIMMERS = isSmall ? 1 : 2;
-      var pulseT = 0;
-
-      var prevW = 0;
-      var resizeTimer = null;
-
-      function resize() {
-        var rect = hero.getBoundingClientRect();
-        var newW = rect.width;
-        var newH = rect.height;
-        var widthChanged = Math.abs(newW - prevW) > 2;
-
-        w = newW;
-        h = newH;
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        if (widthChanged || nodes.length === 0) {
-          seedNodes();
-        }
-        prevW = newW;
-      }
-
-      function onWindowResize() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(resize, 120);
-      }
-
-      function seedNodes() {
-        nodes = [];
-        spokes = [];
-        edges = [];
-        shimmers = [];
-        var cx = w / 2;
-        var cy = h * 0.42;
-        var radiusX = Math.min(w, h) * 0.44;
-        var radiusY = radiusX;
-
-        centerNode = { x: cx, y: cy, ox: cx, oy: cy, seed: 0 };
-
-        var spokeAngles = [];
-        for (var s = 0; s < SPOKE_COUNT; s++) {
-          var angle = (Math.PI * 2 * s) / SPOKE_COUNT + (Math.random() - 0.5) * 0.04;
-          spokeAngles.push(angle);
-          var ring = [];
-          for (var r = 1; r <= RING_COUNT; r++) {
-            var frac = r / RING_COUNT;
-            var jitter = 1 + (Math.random() - 0.5) * 0.02;
-            var rx = radiusX * frac * jitter;
-            var ry = radiusY * frac * jitter;
-            var x = cx + Math.cos(angle) * rx;
-            var y = cy + Math.sin(angle) * ry;
-            var node = { x: x, y: y, ox: x, oy: y, vx: 0, vy: 0, seed: Math.random() * Math.PI * 2 };
-            nodes.push(node);
-            ring.push(node);
-          }
-          spokes.push(ring);
-        }
-
-        for (var s2 = 0; s2 < spokes.length; s2++) {
-          var ring2 = spokes[s2];
-          edges.push({ a: centerNode, b: ring2[0], sag: 0.05, seed: Math.random() * 10 });
-          for (var r2 = 0; r2 < ring2.length - 1; r2++) {
-            edges.push({ a: ring2[r2], b: ring2[r2 + 1], sag: 0.05, seed: Math.random() * 10 });
-          }
-        }
-        for (var r3 = 0; r3 < RING_COUNT; r3++) {
-          for (var s3 = 0; s3 < spokes.length; s3++) {
-            var a3 = spokes[s3][r3];
-            var b3 = spokes[(s3 + 1) % spokes.length][r3];
-            if (a3 && b3) edges.push({ a: a3, b: b3, sag: 0.09, seed: Math.random() * 10, isRing: true });
-          }
-        }
-
-        var anchorEvery = 3;
-        for (var sa = 0; sa < spokes.length; sa += anchorEvery) {
-          var outerNode = spokes[sa][spokes[sa].length - 1];
-          var aAngle = spokeAngles[sa];
-          var anchorPt = rayToRectEdge(cx, cy, aAngle, w, h, 4);
-          var anchorNode = { x: anchorPt.x, y: anchorPt.y, ox: anchorPt.x, oy: anchorPt.y, vx: 0, vy: 0 };
-          edges.push({ a: outerNode, b: anchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
-        }
-
-        var topIdx = 0, topDiff = Infinity;
-        for (var ti = 0; ti < spokeAngles.length; ti++) {
-          var norm = ((spokeAngles[ti] % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-          var diff = Math.abs(norm - Math.PI * 1.5);
-          diff = Math.min(diff, Math.PI * 2 - diff);
-          if (diff < topDiff) { topDiff = diff; topIdx = ti; }
-        }
-        var topOuter = spokes[topIdx][spokes[topIdx].length - 1];
-        var topAnchorPt = rayToRectEdge(cx, cy, spokeAngles[topIdx], w, h, 4);
-        var topAnchorNode = { x: topAnchorPt.x, y: topAnchorPt.y, ox: topAnchorPt.x, oy: topAnchorPt.y, vx: 0, vy: 0 };
-        edges.push({ a: topOuter, b: topAnchorNode, sag: 0.02, seed: Math.random() * 10, isAnchor: true });
-      }
-
-      function rayToRectEdge(cx, cy, angle, w, h, pad) {
-        var dx = Math.cos(angle), dy = Math.sin(angle);
-        var tX = dx > 0 ? (w - pad - cx) / dx : (dx < 0 ? (pad - cx) / dx : Infinity);
-        var tY = dy > 0 ? (h - pad - cy) / dy : (dy < 0 ? (pad - cy) / dy : Infinity);
-        var t = Math.min(tX, tY);
-        return { x: cx + dx * t, y: cy + dy * t };
-      }
-
-      function spawnShimmer() {
-        if (!edges.length || shimmers.length >= MAX_SHIMMERS) return;
-        var edge = edges[Math.floor(Math.random() * edges.length)];
-        shimmers.push({ edge: edge, t: 0, speed: 0.008 + Math.random() * 0.006, reverse: Math.random() < 0.5 });
-      }
-
-      function curvePoint(a, b, sag, seed, t) {
-        var mx = (a.x + b.x) / 2;
-        var my = (a.y + b.y) / 2;
-        var dx = b.x - a.x, dy = b.y - a.y;
-        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        var nx = -dy / dist, ny = dx / dist;
-        var wobble = Math.sin(pulseT * 0.5 + seed) * 0.5 + 0.5;
-        var offset = dist * sag * wobble;
-        var cxp = mx + nx * offset;
-        var cyp = my + ny * offset;
-        var it = 1 - t;
-        var x = it * it * a.x + 2 * it * t * cxp + t * t * b.x;
-        var y = it * it * a.y + 2 * it * t * cyp + t * t * b.y;
-        return { x: x, y: y, ctrlX: cxp, ctrlY: cyp };
-      }
-
-      function step(node) {
-        var dxHome = node.ox - node.x;
-        var dyHome = node.oy - node.y;
-        node.vx += dxHome * 0.004;
-        node.vy += dyHome * 0.004;
-
-        node.vx += Math.sin(pulseT * 0.4 + node.seed) * 0.025;
-        node.vy += Math.cos(pulseT * 0.4 + node.seed * 1.3) * 0.025;
-
-        if (pointer.active) {
-          var dx = node.x - pointer.x;
-          var dy = node.y - pointer.y;
-          var dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < TOUCH_RADIUS && dist > 0.01) {
-            var force = (1 - dist / TOUCH_RADIUS) * 2.2;
-            node.vx += (dx / dist) * force;
-            node.vy += (dy / dist) * force;
-          }
-        }
-
-        node.vx *= 0.9;
-        node.vy *= 0.9;
-        node.x += node.vx;
-        node.y += node.vy;
-      }
-
-      function drawEdge(edge, alpha) {
-        var a = edge.a, b = edge.b;
-        var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-        var dx = b.x - a.x, dy = b.y - a.y;
-        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        var nx = -dy / dist, ny = dx / dist;
-        var wobble = Math.sin(pulseT * 0.5 + edge.seed) * 0.5 + 0.5;
-        var offset = dist * edge.sag * wobble;
-        var cxp = mx + nx * offset, cyp = my + ny * offset;
-
-        ctx.strokeStyle = 'rgba(201,168,118,' + alpha.toFixed(3) + ')';
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.quadraticCurveTo(cxp, cyp, b.x, b.y);
-        ctx.stroke();
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, w, h);
-        ctx.lineWidth = 1;
-        pulseT += 0.02;
-        var pulse = 0.75 + Math.sin(pulseT) * 0.25;
-        var baseAlpha = 0.5 * pulse;
-
-        for (var i = 0; i < nodes.length; i++) {
-          step(nodes[i]);
-        }
-
-        for (var e = 0; e < edges.length; e++) {
-          var edge = edges[e];
-          var edgeAlpha = edge.isAnchor ? baseAlpha * 0.45 : (edge.isRing ? baseAlpha * 0.75 : baseAlpha);
-          drawEdge(edge, edgeAlpha);
-        }
-
-        for (var i = 0; i < nodes.length; i++) {
-          var n = nodes[i];
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, 1.3, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(232,199,102,' + (0.55 * pulse + 0.15).toFixed(3) + ')';
-          ctx.fill();
-        }
-
-        if (Math.random() < 0.02) spawnShimmer();
-        for (var si = shimmers.length - 1; si >= 0; si--) {
-          var sh = shimmers[si];
-          sh.t += sh.speed;
-          if (sh.t >= 1) { shimmers.splice(si, 1); continue; }
-          var tt = sh.reverse ? 1 - sh.t : sh.t;
-          var pos = curvePoint(sh.edge.a, sh.edge.b, sh.edge.sag, sh.edge.seed, tt);
-          var fade = Math.sin(sh.t * Math.PI);
-          ctx.beginPath();
-          ctx.arc(pos.x, pos.y, 3.2, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,240,200,' + (0.15 * fade).toFixed(3) + ')';
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(pos.x, pos.y, 1.6, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255,247,225,' + (0.9 * fade).toFixed(3) + ')';
-          ctx.fill();
-        }
-      }
-
-      function loop(ts) {
-        if (!running) return;
-        if (ts - lastFrame >= FRAME_INTERVAL) {
-          lastFrame = ts;
-          draw();
-        }
-        rafId = requestAnimationFrame(loop);
-      }
-
-      function start() {
-        if (running) return;
-        running = true;
-        rafId = requestAnimationFrame(loop);
-      }
-
-      function stop() {
-        running = false;
-        if (rafId) cancelAnimationFrame(rafId);
-      }
-
-      function setPointer(x, y, active) {
-        var rect = canvas.getBoundingClientRect();
-        pointer.x = x - rect.left;
-        pointer.y = y - rect.top;
-        pointer.active = active;
-      }
-
-      canvas.addEventListener('pointermove', function (e) {
-        setPointer(e.clientX, e.clientY, true);
-      }, { passive: true });
-
-      canvas.addEventListener('pointerleave', function () {
-        pointer.active = false;
-      }, { passive: true });
-
-      canvas.addEventListener('touchmove', function (e) {
-        if (e.touches && e.touches[0]) {
-          setPointer(e.touches[0].clientX, e.touches[0].clientY, true);
-        }
-      }, { passive: true });
-
-      canvas.addEventListener('touchend', function () {
-        pointer.active = false;
-      }, { passive: true });
-
-      window.addEventListener('resize', onWindowResize);
-
-      if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting) start(); else stop();
-          });
-        }, { threshold: 0.05 });
-        io.observe(hero);
-      } else {
-        start();
-      }
-
-      document.addEventListener('visibilitychange', function () {
-        if (document.hidden) stop(); else if (hero.getBoundingClientRect().top < window.innerHeight) start();
-      });
-
-      resize();
-    })();
-    </script>
+    <!-- ================= NEWSLETTER / CTA ================= -->
+    <section class="cta">
+      <div class="cta-inner reveal">
+        <h2>New finds land every week.</h2>
+        <p>Follow along on Pinterest — it's where every thread starts.</p>
+        <a href="https://pin.it/4OG3bUqMz" class="btn btn-primary" target="_blank" rel="noopener">Follow on Pinterest</a>
+      </div>
+    </section>
 
     <script>
-    /* Reusable scroll-scale + fade for Featured cards — re-runnable after Supabase injects cards.
-       Sets BOTH transform and opacity (older version only set transform, leaving cards
-       stuck at opacity:0 if the CSS defaults .product-card to invisible until revealed). */
+    var sfFeaturedCleanupRegistered = false;
     window.initFeaturedScale = function () {
       var cards = Array.prototype.slice.call(document.querySelectorAll('#featured .product-card'));
       if (!cards.length) return;
@@ -674,10 +799,69 @@
       var active = new Set();
       var ticking = false;
       var lastScrollY = -1;
+      var isDesktopTilt = window.matchMedia('(min-width: 960px)').matches;
+      var MAX_TILT = 6;
 
-      cards.forEach(function (card) {
+      cards.forEach(function (card, idx) {
         card.style.transformOrigin = '50% 65%';
         card.style.willChange = 'opacity, transform';
+        card.style.transitionProperty = 'opacity';
+        card.dataset.scale = MAX_SCALE;
+        card.dataset.reveal = '0';
+        card.dataset.hover = '0';
+        card.dataset.tiltX = '0';
+        card.dataset.tiltY = '0';
+        if (!card.dataset.index) card.dataset.index = idx;
+
+        function paint() {
+          var scale = parseFloat(card.dataset.scale);
+          var reveal = parseFloat(card.dataset.reveal || '1');
+          var lift = card.dataset.hover === '1' ? -6 : 0;
+          var riseOffset = (1 - reveal) * 22;
+          var tiltX = parseFloat(card.dataset.tiltX);
+          var tiltY = parseFloat(card.dataset.tiltY);
+          card.style.opacity = reveal.toFixed(3);
+          card.style.transform =
+            'perspective(900px) scale(' + scale.toFixed(3) + ') translateY(' + (lift + riseOffset).toFixed(1) + 'px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg)';
+        }
+        card._paint = paint;
+
+        if (isDesktopTilt) {
+          var tiltRaf = null;
+          var targetTX = 0, targetTY = 0;
+          function easeTilt() {
+            var curTX = parseFloat(card.dataset.tiltX);
+            var curTY = parseFloat(card.dataset.tiltY);
+            curTX += (targetTX - curTX) * 0.15;
+            curTY += (targetTY - curTY) * 0.15;
+            card.dataset.tiltX = curTX;
+            card.dataset.tiltY = curTY;
+            paint();
+            if (Math.abs(targetTX - curTX) > 0.05 || Math.abs(targetTY - curTY) > 0.05) {
+              tiltRaf = requestAnimationFrame(easeTilt);
+            } else {
+              tiltRaf = null;
+            }
+          }
+          card.addEventListener('mouseenter', function () {
+            card.dataset.hover = '1';
+            paint();
+          });
+          card.addEventListener('mousemove', function (e) {
+            var rect = card.getBoundingClientRect();
+            var relX = (e.clientX - rect.left) / rect.width - 0.5;
+            var relY = (e.clientY - rect.top) / rect.height - 0.5;
+            targetTY = relX * MAX_TILT;
+            targetTX = relY * -MAX_TILT;
+            if (!tiltRaf) tiltRaf = requestAnimationFrame(easeTilt);
+          });
+          card.addEventListener('mouseleave', function () {
+            card.dataset.hover = '0';
+            targetTX = 0;
+            targetTY = 0;
+            if (!tiltRaf) tiltRaf = requestAnimationFrame(easeTilt);
+          });
+        }
       });
 
       function smoothstep(t) {
@@ -691,10 +875,14 @@
         var start = vh;
         var end = vh * 0.62;
         var raw = (start - rect.top) / (start - end);
-        var p = smoothstep(raw);
+
+        var stagger = (parseInt(card.dataset.index || '0', 10) % 4) * 0.05;
+        var p = smoothstep((raw - stagger) / (1 - stagger));
+
         var scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * p;
-        card.style.transform = 'scale(' + scale.toFixed(3) + ')';
-        card.style.opacity = p.toFixed(3);
+        card.dataset.scale = scale;
+        card.dataset.reveal = p;
+        card._paint();
       }
 
       function onFrame() {
@@ -711,8 +899,9 @@
         }
       }
 
+      var io = null;
       if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
+        io = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
             if (entry.isIntersecting) {
               active.add(entry.target);
@@ -725,64 +914,23 @@
 
         cards.forEach(function (card) { io.observe(card); });
       } else {
-        cards.forEach(function (card) {
-          card.style.opacity = '1';
-          active.add(card);
-        });
+        cards.forEach(function (card) { active.add(card); });
       }
 
       window.addEventListener('scroll', requestTick, { passive: true });
       window.addEventListener('resize', requestTick);
       requestTick();
+
+      if (!sfFeaturedCleanupRegistered && window.SpoiderPage && window.SpoiderPage.onCleanup) {
+        sfFeaturedCleanupRegistered = true;
+        window.SpoiderPage.onCleanup(function () {
+          window.removeEventListener('scroll', requestTick);
+          window.removeEventListener('resize', requestTick);
+          if (io) io.disconnect();
+        });
+      }
     };
     window.initFeaturedScale();
-    </script>
-
-    <script>
-    (function () {
-      var mark = document.querySelector('.hero-mark-inner');
-      var hero = document.querySelector('.hero');
-      if (!mark || !hero) return;
-
-      /* Scroll fade — logo softly fades, shrinks and drifts up as you scroll past the hero */
-      var ticking = false;
-      function updateScrollFade() {
-        ticking = false;
-        var rect = hero.getBoundingClientRect();
-        var fadeRange = hero.offsetHeight * 0.5;
-        var scrolled = Math.min(Math.max(-rect.top, 0), fadeRange);
-        var progress = fadeRange > 0 ? scrolled / fadeRange : 0;
-        mark.style.opacity = (1 - progress).toFixed(3);
-        mark.style.transform = 'translateY(' + (-progress * 14).toFixed(1) + 'px) scale(' + (1 - progress * 0.1).toFixed(3) + ')';
-      }
-      function onScroll() {
-        if (!ticking) {
-          ticking = true;
-          requestAnimationFrame(updateScrollFade);
-        }
-      }
-      window.addEventListener('scroll', onScroll, { passive: true });
-      updateScrollFade();
-
-      /* Tap interaction — a soft gold ring burst + brief bright flash */
-      var ring = mark.querySelector('.hero-mark-tap-ring');
-      var img = mark.querySelector('.hero-mark-img');
-      var flashTimer = null;
-      function burst() {
-        if (!ring || !img) return;
-        ring.classList.remove('burst');
-        img.classList.remove('flash');
-        void ring.offsetWidth;
-        ring.classList.add('burst');
-        img.classList.add('flash');
-        clearTimeout(flashTimer);
-        flashTimer = setTimeout(function () {
-          ring.classList.remove('burst');
-          img.classList.remove('flash');
-        }, 800);
-      }
-      mark.addEventListener('click', burst);
-    })();
     </script>
 
     <!-- ================= FEATURED — Supabase loader (India) ================= -->
@@ -827,7 +975,17 @@
         });
       }
 
-      // ---- Spoider Score block builder (same shape as index.html) ----
+      // ---- Spoider Score block builder — same shape used on every
+      // product-listing page (index.html Featured, india.html Featured,
+      // and each India category page's own loader). Returns '' when the
+      // product has no spoider_score yet, so older products render
+      // exactly as before.
+      //
+      // Badge = always-visible small pill on the product image.
+      // Panel = the full breakdown, hidden by default (max-height: 0 in
+      // CSS) and revealed by script.js's hover/hold handler, which just
+      // toggles .is-active on the parent .product-card. No trigger
+      // button, no close button — the reveal IS the interaction. ----
       function scoreBarRow(label, val) {
         var v = Number(val) || 0;
         var pct = Math.max(0, Math.min(10, v)) * 10;
@@ -859,10 +1017,29 @@
           '</div>';
       }
 
+      // ---- Wishlist heart HTML — bottom-right of every product image,
+      // site-wide. All the click/toggle/sign-in logic lives in script.js
+      // (delegated on document), so this loader only needs to render the
+      // markup with the product's id on data-heart-id. ----
+      function wishlistHeartHTML(p) {
+        return '<button type="button" class="wishlist-heart" data-heart-id="' + p.id + '" aria-label="Add to wishlist">' +
+          '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.6 8.4 2 4.8 5.6 4A5.4 5.4 0 0 1 12 7a5.4 5.4 0 0 1 6.4-3A5.6 5.6 0 0 1 22 11.8C19.5 16.4 12 21 12 21Z"/></svg>' +
+        '</button>';
+      }
+
       async function loadFeatured() {
         var grid = document.getElementById('featuredGrid');
         if (!grid) return;
-        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Public read-only fetch — no signed-in session is ever needed
+        // here, so we tell the client not to look for one at all
+        // (persistSession/autoRefreshToken/detectSessionInUrl: false).
+        // Without this, this client would also try to read/consume any
+        // Google OAuth redirect in the URL — racing against the site's
+        // single real auth client in auth.js and risking a "code already
+        // used" error on sign-in.
+        var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
         var res = await sb
           .from('products')
           .select('*')
@@ -882,13 +1059,14 @@
           return;
         }
 
-        grid.innerHTML = data.map(function (p) {
+        grid.innerHTML = data.map(function (p, i) {
           var tag = CATEGORY_LABELS[p.category] || p.category;
-          return '<a href="' + p.affiliate_link + '" class="product-card" target="_blank" rel="sponsored noopener nofollow">' +
+          return '<a href="' + p.affiliate_link + '" class="product-card" data-index="' + i + '" data-product-id="' + p.id + '" target="_blank" rel="sponsored noopener nofollow">' +
             '<div class="product-glow" aria-hidden="true"></div>' +
             '<div class="product-image">' +
               '<img src="' + (p.image_url || '') + '" alt="' + p.title + '" loading="lazy">' +
               scoreBadgeHTML(p) +
+              wishlistHeartHTML(p) +
             '</div>' +
             '<div class="product-body"><span class="product-tag">' + tag + '</span><h3>' + p.title + '</h3><p>' + (p.description || '') + '</p><span class="product-link">View on Amazon →</span></div>' +
             scorePanelHTML(p) +
@@ -896,6 +1074,7 @@
         }).join('');
 
         watchImagesForLoad(grid);
+        if (window.syncWishlistHearts) window.syncWishlistHearts();
 
         if (window.initFeaturedScale) window.initFeaturedScale();
       }
@@ -905,37 +1084,44 @@
       ensureSupabaseLib(loadFeatured);
     })();
     </script>
+
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <a href="index.html" class="logo"><img src="assets/images/spoider-logo-vector.svg" alt="Spoider Finds" class="footer-logo-img">Spoider<span class="logo-accent">Finds</span></a>
-        <p>A hand-curated thread of the internet's best aesthetic finds.</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h4>Site</h4>
-          <a href="about.html">About</a>
-          <a href="contact.html">Contact</a>
-        </div>
-        <div class="footer-col">
-          <h4>Legal</h4>
-          <a href="privacy.html">Privacy Policy</a>
-          <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
-        </div>
+  <!-- ================= FOOTER (persistent — outside #page-wrap, never swapped) ================= -->
+  <footer class="footer footer--cinematic" id="footerWeb">
+    <div class="footer-glow" aria-hidden="true"></div>
+    <div class="footer-bg-text" aria-hidden="true">SPOIDER</div>
+
+    <div class="footer-content">
+      <p class="eyebrow center reveal">A THREAD OF GOOD TASTE</p>
+      <h2 class="footer-heading">Every find, one thread — hand-picked, never mass-produced.</h2>
+      <div class="footer-pills reveal" style="--reveal-delay:0.1s;">
+        <a href="about.html" class="footer-pill">About</a>
+        <a href="contact.html" class="footer-pill">Contact</a>
+        <a href="privacy.html" class="footer-pill">Privacy Policy</a>
+        <a href="affiliate-disclosure.html" class="footer-pill">Affiliate Disclosure</a>
+        <a href="india.html" class="footer-pill">🇮🇳 India Edition</a>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
-      <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+
+    <div class="footer-bottom-bar reveal" style="--reveal-delay:0.2s;">
+      <div class="footer-legal">
+        <p>As an Amazon Associate, Spoider Finds earns from qualifying purchases.</p>
+        <p>© <span id="year"></span> Spoider Finds. All rights reserved.</p>
+      </div>
+      <button class="footer-top-btn" id="footerTopBtn" type="button" aria-label="Back to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </button>
     </div>
-    <p class="footer-signature">Founder <span class="gold-text">~</span> Spoider</p>
   </footer>
 
   <script src="script.js"></script>
+  <script src="footer-web.js"></script>
   <script src="transitions.js"></script>
   <script src="search.js"></script>
-  <script src="nav-desktop.js"></script>
+  <!-- nav-desktop.js is loaded by transitions.js (?v=5). Do NOT add a plain
+       <script src="nav-desktop.js"> tag here: it would load first and pin a stale cached copy. -->
 </body>
 </html>
