@@ -3,7 +3,6 @@
 // Built server-side, so there are no browser CORS limits on avatars or product
 // images. Anything that fails to load (font, avatar, grail image) is simply
 // skipped; the card still renders.
-import { ImageResponse } from '@vercel/og';
 import { rankFor, getProfile, getOwned, cleanUsername, clip, safeHttps } from './_shared.js';
 
 // NOTE: this one runs on the normal Node.js runtime (no edge config on purpose).
@@ -173,6 +172,20 @@ function brandCard(d) {
 }
 
 export async function GET(request) {
+  try {
+    return await render(request);
+  } catch (e) {
+    // Show the real error in the browser instead of a blank 500 (easier to debug).
+    return new Response('og error: ' + (e && e.stack ? e.stack : String(e)), {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }
+    });
+  }
+}
+
+async function render(request) {
+  var mod = await import('@vercel/og');
+  var ImageResponse = mod.ImageResponse;
   var url = new URL(request.url);
   var username = cleanUsername(url.searchParams.get('u'));
   var fonts = await loadFonts();
