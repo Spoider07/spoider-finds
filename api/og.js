@@ -4,13 +4,25 @@
 // images. Anything that fails to load (font, avatar, grail image) is simply
 // skipped; the card still renders.
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { rankFor, getProfile, getOwned, cleanUsername, clip, safeHttps } from './_shared.js';
 
-// @vercel/og pulls in a dependency that calls require("fs"). In an ES-module
-// project there is no global `require`, which crashes with
-// 'Dynamic require of "fs" is not supported'. Giving it one fixes that.
-if (typeof globalThis.require === 'undefined') {
-  globalThis.require = createRequire(import.meta.url);
+// @vercel/og bundles old-style (CommonJS) code that expects `require`,
+// `__dirname` and `__filename`. An ES-module project has none of them, which
+// crashes with 'Dynamic require of "fs"' / '__dirname is not defined'.
+// We hand them over before the library loads.
+var nodeRequire = createRequire(import.meta.url);
+if (typeof globalThis.require === 'undefined') globalThis.require = nodeRequire;
+if (typeof globalThis.__dirname === 'undefined') {
+  var ogDir;
+  try {
+    ogDir = dirname(nodeRequire.resolve('@vercel/og'));
+  } catch (e) {
+    ogDir = join(process.cwd(), 'node_modules', '@vercel', 'og', 'dist');
+  }
+  globalThis.__dirname = ogDir;
+  globalThis.__filename = join(ogDir, 'index.node.js');
 }
 
 // NOTE: this one runs on the normal Node.js runtime (no edge config on purpose).
