@@ -193,6 +193,10 @@
       .pf-meta svg{width:13px;height:13px;flex-shrink:0;color:var(--gold)}
       .pf-meta a{color:var(--gold);transition:color .2s var(--ease)}
       .pf-meta a:hover{color:var(--gold-bright)}
+      .pf-wrap .pf-btn.is-done{background:var(--gold-dim);border-color:var(--gold)}
+      .pf-wrap .pf-btn.is-done svg{animation:pfDonePop .42s var(--ease)}
+      @keyframes pfDonePop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+      @media (prefers-reduced-motion:reduce){.pf-wrap .pf-btn.is-done svg{animation:none}}
       .pf-share-msg{display:block;margin-top:6px;font-size:.76rem;color:var(--gold-bright);min-height:1.1em;word-break:break-all}
 
       /* ---------- standing: rank + progress + counts, one surface ---------- */
@@ -1366,8 +1370,19 @@
         el('pfUsername').textContent = p.username ? '@' + p.username : '';
         el('pfBio').textContent = p.bio || (isOwn ? 'Add a bio to tell people about yourself.' : '');
         document.title = displayName + (p.username ? ' (@' + p.username + ')' : '') + ' — Spoider Finds';
+        // keep the description and canonical in step with the profile being shown
+        // (crawlers that run scripts read these; link previews use /u/<username>)
+        try {
+          var md = document.querySelector('meta[name="description"]');
+          if (md) md.setAttribute('content', (p.bio ? p.bio + ' — ' : '') + displayName + "'s shelf on Spoider Finds.");
+          if (p.username) {
+            var cn = document.querySelector('link[rel="canonical"]');
+            if (!cn) { cn = document.createElement('link'); cn.rel = 'canonical'; document.head.appendChild(cn); }
+            cn.href = 'https://spoider-finds.vercel.app/u/' + encodeURIComponent(p.username);
+          }
+        } catch (e) {}
         var parts = [];
-        if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M12 21s-6.5-5.8-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.2-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/>') + escapeHtml(p.location) + '</span>');
+if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M12 21s-6.5-5.8-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.2-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/>') + escapeHtml(p.location) + '</span>');
         var link = safeHref(p.social_url);
         if (link) {
           var label = link.replace(/^https?:\/\//i, '').replace(/\/$/, '');
@@ -1524,7 +1539,12 @@
       async function share() {
         var p = state.profile;
         if (!p || !p.username) { say('Set a username first to get a shareable link.', 3000); return; }
-        var url = window.location.origin + window.location.pathname + '?u=' + encodeURIComponent(p.username);
+        // Share the clean /u/<username> link: link previews (WhatsApp, Instagram, X, Discord)
+        // show the generated share card for it. The old github.io copy has no /u/ route,
+        // so it always points at the Vercel site.
+        var host = window.location.hostname;
+        var origin = (/\.github\.io$/i.test(host) || !host) ? 'https://spoider-finds.vercel.app' : window.location.origin;
+        var url = origin + '/u/' + encodeURIComponent(p.username);
         var rankName = el('pfRankName') ? el('pfRankName').textContent : '';
         var shareTitle = state.isOwn
           ? ((p.display_name || p.username) + ' \u00b7 ' + rankName + ' on Spoider Finds \u2014 ' + state.owned.length + ' owned')
@@ -1535,9 +1555,27 @@
           catch (e) { if (e && e.name === 'AbortError') return; }
         }
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          try { await navigator.clipboard.writeText(url); say('Link copied ✓', 2200); return; } catch (e) {}
+          try { await navigator.clipboard.writeText(url); markShared(); say('Link copied', 2200); return; } catch (e) {}
         }
         say(url);
+      }
+
+      // brief confirmation on the Share button itself: the icon turns into a check
+      var shareIconHtml = null, shareDoneTimer = null;
+      function markShared() {
+        var b = el('pfShareBtn');
+        if (!b) return;
+        var svg = b.querySelector('svg'), label = b.querySelector('.pf-btn-label');
+        if (shareIconHtml === null) shareIconHtml = svg ? svg.innerHTML : '';
+        if (svg) svg.innerHTML = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+        if (label) label.textContent = 'Copied';
+        b.classList.add('is-done');
+        clearTimeout(shareDoneTimer);
+        shareDoneTimer = later(function () {
+          if (svg) svg.innerHTML = shareIconHtml;
+          if (label) label.textContent = 'Share';
+          b.classList.remove('is-done');
+        }, 1900);
       }
 
       // =============== rank certificate (full-screen, 3D) ===============
