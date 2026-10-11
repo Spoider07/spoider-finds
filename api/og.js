@@ -171,22 +171,31 @@ function brandCard(d) {
   ]);
 }
 
-export async function GET(request) {
+// Classic Node handler (req, res): works on every Vercel Node runtime version.
+export default async function handler(req, res) {
   try {
-    return await render(request);
+    var host = req.headers.host || 'spoider-finds.vercel.app';
+    var proto = req.headers['x-forwarded-proto'] || 'https';
+    var url = new URL(req.url, proto + '://' + host);
+    var resp = await render(url);
+    var buf = Buffer.from(await resp.arrayBuffer());
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', String(buf.length));
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    res.end(buf);
   } catch (e) {
-    // Show the real error in the browser instead of a blank 500 (easier to debug).
-    return new Response('og error: ' + (e && e.stack ? e.stack : String(e)), {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }
-    });
+    // Show the real error in the browser instead of a blank page (easier to debug).
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end('og error: ' + (e && e.stack ? e.stack : String(e)));
   }
 }
 
-async function render(request) {
+async function render(url) {
   var mod = await import('@vercel/og');
   var ImageResponse = mod.ImageResponse;
-  var url = new URL(request.url);
   var username = cleanUsername(url.searchParams.get('u'));
   var fonts = await loadFonts();
   var meta = {
