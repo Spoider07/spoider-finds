@@ -3,7 +3,15 @@
 // Built server-side, so there are no browser CORS limits on avatars or product
 // images. Anything that fails to load (font, avatar, grail image) is simply
 // skipped; the card still renders.
+import { createRequire } from 'node:module';
 import { rankFor, getProfile, getOwned, cleanUsername, clip, safeHttps } from './_shared.js';
+
+// @vercel/og pulls in a dependency that calls require("fs"). In an ES-module
+// project there is no global `require`, which crashes with
+// 'Dynamic require of "fs" is not supported'. Giving it one fixes that.
+if (typeof globalThis.require === 'undefined') {
+  globalThis.require = createRequire(import.meta.url);
+}
 
 // NOTE: this one runs on the normal Node.js runtime (no edge config on purpose).
 // Vercel's edge bundler rejects @vercel/og in a plain static project.
