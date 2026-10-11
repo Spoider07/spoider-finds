@@ -156,13 +156,15 @@ function card(d) {
   ]);
 
   // ----- right column: the grail, or quiet concentric rings -----
+  // (the grail photo is kept at 250px on purpose: WhatsApp drops to a tiny thumbnail
+  //  when the image file is much over ~300 KB, and photos are what make a PNG heavy)
   var right;
   if (d.grail && d.grail.src) {
     right = h('div', { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 500, height: 630 }, [
       h('div', { display: 'flex', fontFamily: sans, fontSize: 18, letterSpacing: 7, color: A, marginBottom: 20 }, 'THE GRAIL'),
-      h('div', { display: 'flex', width: 340, height: 340, borderRadius: 24, overflow: 'hidden', border: '2px solid ' + soft(0.6) },
-        h('img', { width: 340, height: 340, objectFit: 'cover' }, undefined, { src: d.grail.src, width: 340, height: 340 })),
-      h('div', Object.assign({ display: 'flex', fontFamily: sans, fontSize: 22, marginTop: 22, maxWidth: 340, textAlign: 'center', justifyContent: 'center' }, muted), clip(d.grail.title, 44))
+      h('div', { display: 'flex', width: 250, height: 250, borderRadius: 22, overflow: 'hidden', border: '2px solid ' + soft(0.6) },
+        h('img', { width: 250, height: 250, objectFit: 'cover' }, undefined, { src: d.grail.src, width: 250, height: 250 })),
+      h('div', Object.assign({ display: 'flex', fontFamily: sans, fontSize: 22, marginTop: 22, maxWidth: 300, textAlign: 'center', justifyContent: 'center' }, muted), clip(d.grail.title, 44))
     ]);
   } else {
     var ring = function (size, off, a) {
