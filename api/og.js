@@ -6,7 +6,8 @@
 import { ImageResponse } from '@vercel/og';
 import { rankFor, getProfile, getOwned, cleanUsername, clip, safeHttps } from './_shared.js';
 
-export const config = { runtime: 'edge' };
+// NOTE: this one runs on the normal Node.js runtime (no edge config on purpose).
+// Vercel's edge bundler rejects @vercel/og in a plain static project.
 
 // Same metals as the profile "Accent" picker.
 var ACCENTS = {
@@ -171,7 +172,7 @@ function brandCard(d) {
   ]);
 }
 
-export default async function handler(request) {
+export async function GET(request) {
   var url = new URL(request.url);
   var username = cleanUsername(url.searchParams.get('u'));
   var fonts = await loadFonts();
