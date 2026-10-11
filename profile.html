@@ -231,6 +231,86 @@
       .pf-stat-num{font-family:var(--font-display);font-size:1.7rem;font-weight:500;color:var(--text-primary);font-variant-numeric:lining-nums tabular-nums;line-height:1.1}
       .pf-stat-label{font-size:.76rem;color:var(--text-secondary);margin-top:3px}
 
+      /* ---------- social: follow, counts, connections sheet ---------- */
+      .pf-wrap .pf-btn.pf-follow{min-width:108px;background:rgb(var(--ac2));border-color:rgb(var(--ac2));color:#0b0b0c;font-weight:600}
+      .pf-wrap .pf-btn.pf-follow:hover{background:rgb(var(--ac));border-color:rgb(var(--ac))}
+      .pf-follow svg{display:none}
+      .pf-follow .l-following,.pf-follow .l-unfollow{display:none}
+      .pf-follow:not(.is-on) .i-plus{display:block}
+      .pf-wrap .pf-btn.pf-follow.is-on{background:transparent;border-color:rgba(var(--ac),.5);color:var(--gold-bright);font-weight:500}
+      .pf-wrap .pf-btn.pf-follow.is-on:hover{background:var(--gold-dim);border-color:var(--gold)}
+      .pf-follow.is-on .i-check{display:block}
+      .pf-follow.is-on .l-follow{display:none}
+      .pf-follow.is-on .l-following{display:inline}
+      @media (hover:hover){
+        .pf-follow.is-on:hover .l-following,.pf-follow.is-on:hover .i-check{display:none}
+        .pf-follow.is-on:hover .l-unfollow{display:inline}
+        .pf-follow.is-on:hover .i-plus{display:none}
+      }
+      .pf-wrap .pf-btn.pf-follow.pop{animation:pfFollowPop .5s var(--ease-spring)}
+      @keyframes pfFollowPop{0%{transform:scale(.94)}55%{transform:scale(1.07)}100%{transform:scale(1)}}
+
+      .pf-social{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;margin:2px 0 12px}
+      .pf-soc-btn{display:inline-flex;align-items:baseline;gap:7px;padding:4px 0;background:none;border:none;color:var(--text-secondary);font:inherit;font-size:.86rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease)}
+      .pf-soc-btn b{display:inline-block;font-family:var(--font-display);font-weight:500;font-size:1.2rem;line-height:1;color:var(--text-primary);font-variant-numeric:lining-nums tabular-nums}
+      .pf-soc-btn b.bump{animation:pfBump .5s var(--ease-spring)}
+      .pf-soc-btn:hover{color:var(--gold-bright)}
+      .pf-soc-btn:focus-visible,.pf-mutual:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+      .pf-follows-you{font-size:.68rem;font-weight:500;letter-spacing:.04em;color:var(--text-secondary);padding:3px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface)}
+      .pf-mutual{display:inline-flex;align-items:center;gap:10px;margin:0 0 12px;padding:0;background:none;border:none;cursor:pointer;text-align:left;font:inherit;font-size:.8rem;line-height:1.4;color:var(--text-secondary);-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease)}
+      .pf-mutual-av{display:flex;flex-shrink:0}
+      .pf-mutual-av img{width:24px;height:24px;border-radius:50%;object-fit:cover;background:var(--surface);border:2px solid var(--bg);margin-left:-8px}
+      .pf-mutual-av img:first-child{margin-left:0}
+      .pf-mutual b{font-weight:500;color:var(--text-primary)}
+      .pf-mutual:hover{color:var(--text-primary)}
+
+      /* connections sheet: lives on <body> (same reason as the certificate), so it carries its own accent vars */
+      .pf-sheet{--ac:201,168,118;--ac2:232,199,102;--gold:rgb(var(--ac));--gold-bright:rgb(var(--ac2));--gold-dim:rgba(var(--ac),.14);position:fixed;inset:0;z-index:9980;display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .25s var(--ease);overscroll-behavior:contain}
+      .pf-sheet.is-open{opacity:1}
+      .pf-sheet-bd{position:absolute;inset:0;background:rgba(5,5,6,.64);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+      .pf-sheet-panel{position:relative;width:100%;max-width:520px;max-height:78vh;max-height:min(78dvh,640px);display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--border);border-bottom:none;border-radius:24px 24px 0 0;box-shadow:0 -24px 60px rgba(0,0,0,.45);transform:translateY(26px);transition:transform .4s var(--ease);padding-bottom:env(safe-area-inset-bottom,0px)}
+      .pf-sheet.is-open .pf-sheet-panel{transform:none}
+      .pf-sheet-grab{width:38px;height:4px;border-radius:4px;background:var(--border);margin:10px auto 0;flex-shrink:0}
+      .pf-sheet-head{display:flex;align-items:center;gap:8px;padding:2px 10px 0 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
+      .pf-sheet-tabs{position:relative;flex:1;display:flex}
+      .pf-sheet-tab{flex:1;padding:15px 8px 14px;background:none;border:none;cursor:pointer;font:inherit;font-size:.92rem;font-weight:500;color:var(--text-secondary);text-align:center;transition:color .2s var(--ease);-webkit-tap-highlight-color:transparent}
+      .pf-sheet-tab span{margin-left:7px;font-family:var(--font-mono);font-size:.74rem;color:var(--gold)}
+      .pf-sheet-tab.is-active{color:var(--text-primary)}
+      .pf-sheet-ind{position:absolute;left:0;bottom:-1px;width:50%;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-bright));transition:transform .38s var(--ease)}
+      .pf-sheet-tabs[data-tab="following"] .pf-sheet-ind{transform:translateX(100%)}
+      .pf-sheet-x{flex-shrink:0;width:38px;height:38px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);background:none;border:1px solid var(--border);-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease),border-color .2s var(--ease),transform .25s var(--ease)}
+      .pf-sheet-x svg{width:15px;height:15px;display:block}
+      .pf-sheet-x:hover{color:var(--gold-bright);border-color:var(--gold)}
+      .pf-sheet-x:active{transform:scale(.92)}
+      .pf-sheet-tab:focus-visible,.pf-sheet-x:focus-visible,.pf-row-btn:focus-visible,.pf-row-link:focus-visible,.pf-sheet-more:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+      .pf-sheet-list{list-style:none;margin:0;padding:8px 8px 20px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+      .pf-row{display:flex;align-items:center;gap:12px;padding:8px;border-radius:16px;transition:background .2s var(--ease);animation:pfCardIn .4s var(--ease) backwards;animation-delay:calc(var(--i,0)*28ms)}
+      .pf-row:hover{background:var(--surface)}
+      .pf-row-link{flex:1;min-width:0;display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;border-radius:12px}
+      .pf-row-av{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--surface);border:1px solid rgba(var(--ac),.4)}
+      .pf-row-txt{min-width:0;display:flex;flex-direction:column}
+      .pf-row-txt b{font-family:var(--font-display);font-weight:500;font-size:1.02rem;line-height:1.25;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .pf-row-txt i{font-style:normal;font-family:var(--font-mono);font-size:.74rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+      .pf-row-btn{flex-shrink:0;min-height:34px;padding:0 16px;border-radius:999px;font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;background:rgb(var(--ac2));color:#0b0b0c;border:1px solid rgb(var(--ac2));-webkit-tap-highlight-color:transparent;transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease),transform .2s var(--ease)}
+      .pf-row-btn.is-on{background:transparent;color:var(--gold-bright);border-color:rgba(var(--ac),.45);font-weight:500}
+      .pf-row-btn:active{transform:scale(.95)}
+      .pf-row-btn:disabled{opacity:.6;cursor:default}
+      .pf-sheet-empty{padding:46px 26px 42px;text-align:center;color:var(--text-secondary);font-size:.9rem;line-height:1.65}
+      .pf-sheet-empty b{display:block;font-family:var(--font-display);font-weight:500;font-size:1.2rem;color:var(--text-primary);margin-bottom:6px}
+      .pf-sheet-empty button{margin-top:14px}
+      .pf-sheet-more{display:block;margin:10px auto 0;padding:9px 20px;border-radius:999px;font:inherit;font-size:.8rem;font-weight:500;cursor:pointer;color:var(--gold-bright);background:none;border:1px solid rgba(var(--ac),.34);transition:background .2s var(--ease),border-color .2s var(--ease)}
+      .pf-sheet-more:hover{background:var(--gold-dim);border-color:var(--gold)}
+      @media (min-width:640px){
+        .pf-sheet{align-items:center}
+        .pf-sheet-panel{border-radius:24px;border-bottom:1px solid var(--border);transform:translateY(16px) scale(.985);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+        .pf-sheet-grab{display:none}
+        .pf-sheet-head{padding-top:4px}
+      }
+      @media (prefers-reduced-motion:reduce){
+        .pf-sheet,.pf-sheet-panel,.pf-sheet-ind{transition:none}
+        .pf-row,.pf-wrap .pf-btn.pf-follow.pop,.pf-soc-btn b.bump{animation:none}
+      }
+
       /* ---------- certificate modal (appended to <body> by JS, not inside #page-wrap:
                     #page-wrap has will-change:transform, which would trap position:fixed) ---------- */
       .pf-cert{position:fixed;inset:0;z-index:9990;background:#08080a;opacity:0;transition:opacity .28s var(--ease);overscroll-behavior:contain;touch-action:none}
@@ -557,7 +637,21 @@
         .pf-web .t-fork{opacity:.55;animation:none!important}
         .pf-web.tree .w-slot{transition:none}
       }
-    </style>
+    
+      /* polish: depth, sheen, social feel */
+      .pf-cover{box-shadow:0 18px 40px -26px rgba(var(--ac),.35),0 1px 0 rgba(255,255,255,.04) inset}
+      .pf-cover-glow::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.05) 50%,transparent 60%);transform:translateX(-60%);animation:pfSheen 9s ease-in-out infinite}
+      @keyframes pfSheen{0%,55%{transform:translateX(-60%)}100%{transform:translateX(60%)}}
+      .pf-avatar-wrap{filter:drop-shadow(0 10px 22px rgba(0,0,0,.45))}
+      .pf-name{background:linear-gradient(180deg,var(--text-primary,#fff) 55%,rgba(var(--ac),.75));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+      .pf-wrap[data-font="mono"] .pf-name{background:none;-webkit-text-fill-color:currentColor}
+      .pf-social{font-variant-numeric:tabular-nums}
+      .pf-wrap .pf-btn.pf-follow:not(.is-on){position:relative;overflow:hidden;box-shadow:0 8px 22px -10px rgba(var(--ac2),.7)}
+      .pf-wrap .pf-btn.pf-follow:not(.is-on)::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);transform:translateX(-120%);animation:pfBtnSheen 5s ease-in-out 1.5s infinite}
+      @keyframes pfBtnSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+      @media (hover:hover){.pf-wrap .pf-btn.pf-follow:not(.is-on):hover{transform:translateY(-1px)}}
+      @media (prefers-reduced-motion:reduce){.pf-cover-glow::after,.pf-wrap .pf-btn.pf-follow:not(.is-on)::after{animation:none}}
+</style>
 
     <div class="pf-wrap" id="pfRoot" data-rank="0" data-accent="gold" data-frame="ring" data-font="serif">
 
@@ -592,6 +686,7 @@
             <img class="pf-avatar" id="pfAvatar" src="assets/images/spoider-logo-vector.svg" alt="" referrerpolicy="no-referrer">
           </div>
           <div class="pf-header-actions">
+            <button class="btn pf-btn pf-follow" id="pfFollowBtn" type="button" aria-pressed="false" hidden><svg class="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><svg class="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="l-follow">Follow</span><span class="l-following">Following</span><span class="l-unfollow">Unfollow</span></button>
             <button class="btn pf-btn" id="pfThemeBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg><span class="pf-btn-label">Customize</span></button>
             <button class="btn pf-btn pf-btn-iconm" id="pfEditBtn" type="button" aria-label="Edit profile" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span class="pf-btn-label">Edit</span></button>
             <button class="btn pf-btn pf-btn-iconm" id="pfShareBtn" type="button" aria-label="Share profile" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="pf-btn-label">Share</span></button>
@@ -602,6 +697,12 @@
           <h1 class="pf-name" id="pfName">—</h1>
           <p class="pf-username" id="pfUsername"></p>
           <p class="pf-bio" id="pfBio"></p>
+          <div class="pf-social" id="pfSocial" hidden>
+            <button class="pf-soc-btn" id="pfFollowersBtn" type="button"><b id="pfFollowersN">0</b><span id="pfFollowersL">Followers</span></button>
+            <button class="pf-soc-btn" id="pfFollowingBtn" type="button"><b id="pfFollowingN">0</b><span>Following</span></button>
+            <span class="pf-follows-you" id="pfFollowsYou" hidden>Follows you</span>
+          </div>
+          <button class="pf-mutual" id="pfMutual" type="button" hidden></button>
           <p class="pf-eyeing" id="pfEyeing" hidden></p>
           <div class="pf-tags" id="pfTags"></div>
           <div class="pf-meta" id="pfMeta"></div>
@@ -1184,7 +1285,7 @@
         if (n < 2) {
           if (dnaIO) { dnaIO.disconnect(); dnaIO = null; }
           state.dnaSig = ''; state.dnaShown = false;
-          if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="pf-dna-hint">Own 2 finds to unlock your Taste DNA.</p>'; box.hidden = false; }
+if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="pf-dna-hint">Own 2 finds to unlock your Taste DNA.</p>'; box.hidden = false; }
           else box.hidden = true;
           return;
         }
@@ -1282,6 +1383,8 @@
         el('pfWeb').removeAttribute('data-key');
         applyTheme(state.theme);
         renderHeader();
+        resetSocial();
+        loadSocial();
         for (var k in KINDS) el(KINDS[k].widget).hidden = !state.isOwn;
         requestAnimationFrame(function () { moveInd(true); fitSide(); });
         if ('ResizeObserver' in window && !sideRO) { var sdEl = document.querySelector('#pfProfile .pf-side'); if (sdEl) { sideRO = new ResizeObserver(function () { if (alive) fitSide(); }); sideRO.observe(sdEl); } }
@@ -1329,6 +1432,7 @@
       async function bootInner() {
         var my = ++bootSeq;
         closeCert(true);
+        closeSheet(true);
         showLoading();
         var sb = state.sb;
         var target = (new URLSearchParams(window.location.search).get('u') || '').trim().toLowerCase();
@@ -1382,7 +1486,7 @@
           }
         } catch (e) {}
         var parts = [];
-if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M12 21s-6.5-5.8-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.2-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/>') + escapeHtml(p.location) + '</span>');
+        if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M12 21s-6.5-5.8-6.5-11A6.5 6.5 0 0 1 12 3.5 6.5 6.5 0 0 1 18.5 10c0 5.2-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/>') + escapeHtml(p.location) + '</span>');
         var link = safeHref(p.social_url);
         if (link) {
           var label = link.replace(/^https?:\/\//i, '').replace(/\/$/, '');
@@ -1576,6 +1680,321 @@ if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M1
           if (label) label.textContent = 'Share';
           b.classList.remove('is-done');
         }, 1900);
+      }
+
+      // =============== social: follow, followers, following ===============
+      var soc = { ok: false, counts: { followers: 0, following: 0 }, iFollow: false, followsMe: false, mine: {}, mutual: [], busy: false, seq: 0 };
+      var sheetEl = null, sheetFocusBack = null, sheetTab = 'followers', sheetSeq = 0, sheetRows = 0, sheetCounts = false;
+      var SHEET_PAGE = 40;
+      var X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+      function fmtCount(n) {
+        n = Number(n) || 0;
+        if (n < 1000) return String(n);
+        if (n < 10000) return (Math.floor(n / 100) / 10).toFixed(1).replace(/\.0$/, '') + 'K';
+        if (n < 1000000) return Math.floor(n / 1000) + 'K';
+        return (Math.floor(n / 100000) / 10).toFixed(1).replace(/\.0$/, '') + 'M';
+      }
+      function openSignIn() {
+        if (window.SpoiderAuth && typeof window.SpoiderAuth.openModal === 'function') window.SpoiderAuth.openModal();
+      }
+      function socNum(id, n) {
+        var e = el(id);
+        if (!e) return;
+        if (n >= 1000) { e.textContent = fmtCount(n); return; }
+        var from = parseInt(e.textContent, 10);
+        if (isNaN(from) || e.textContent !== String(from)) from = 0;
+        if (from !== n) { e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); }
+        e.textContent = n;
+      }
+      function avatarOf(u) { return (u && u.avatar_url) || FALLBACK_AVATAR; }
+
+      function resetSocial() {
+        soc.seq++;
+        soc.ok = false; soc.counts = { followers: 0, following: 0 }; soc.iFollow = false; soc.followsMe = false; soc.mine = {}; soc.mutual = []; soc.busy = false;
+        var f = el('pfFollowersN'), g = el('pfFollowingN');
+        if (f) f.textContent = '0';
+        if (g) g.textContent = '0';
+        renderSocial();
+      }
+
+      async function loadSocial() {
+        var p = state.profile;
+        if (!p || !p.id || !state.sb) return;
+        var my = ++soc.seq, sb = state.sb, uid = state.uid;
+        try {
+          var jobs = [
+            sb.from('follows').select('follower_id', { count: 'exact', head: true }).eq('following_id', p.id),
+            sb.from('follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', p.id)
+          ];
+          if (uid) jobs.push(sb.from('follows').select('following_id').eq('follower_id', uid).limit(2000));
+          if (uid && !state.isOwn) jobs.push(sb.from('follows').select('follower_id').eq('follower_id', p.id).eq('following_id', uid).limit(1));
+          var res = await Promise.all(jobs);
+          if (!alive || my !== soc.seq) return;
+          if (res[0].error || res[1].error) throw (res[0].error || res[1].error);
+          soc.counts.followers = res[0].count || 0;
+          soc.counts.following = res[1].count || 0;
+          var i = 2;
+          soc.mine = {};
+          if (uid) { (res[i++].data || []).forEach(function (row) { soc.mine[row.following_id] = true; }); }
+          soc.followsMe = !!(uid && !state.isOwn && res[i] && res[i].data && res[i].data.length);
+          soc.iFollow = !!(uid && !state.isOwn && soc.mine[p.id]);
+          soc.ok = true;
+          renderSocial();
+          loadMutual(my);
+        } catch (e) {
+          console.warn('[profile] social unavailable', e);
+          if (!alive || my !== soc.seq) return;
+          soc.ok = false;
+          renderSocial();
+        }
+      }
+
+      async function loadMutual(my) {
+        var p = state.profile;
+        soc.mutual = [];
+        if (!state.uid || state.isOwn || !p || !Object.keys(soc.mine).length) { renderMutual(); return; }
+        try {
+          var r = await state.sb.rpc('mutual_followers', { target: p.id });
+          if (!alive || my !== soc.seq) return;
+          soc.mutual = (r.data || []).filter(function (u) { return u && u.id; });
+        } catch (e) { soc.mutual = []; }
+        renderMutual();
+      }
+
+      function renderSocial() {
+        var box = el('pfSocial'), fb = el('pfFollowBtn');
+        if (!box || !fb) return;
+        var p = state.profile, show = !!(soc.ok && p);
+        box.hidden = !show;
+        fb.hidden = !(show && !state.isOwn);
+        el('pfFollowsYou').hidden = !(show && soc.followsMe);
+        if (show) {
+          socNum('pfFollowersN', soc.counts.followers);
+          socNum('pfFollowingN', soc.counts.following);
+          el('pfFollowersL').textContent = soc.counts.followers === 1 ? 'Follower' : 'Followers';
+          var nm = p.display_name || p.username || 'this profile';
+          fb.classList.toggle('is-on', soc.iFollow);
+          fb.setAttribute('aria-pressed', soc.iFollow ? 'true' : 'false');
+          fb.setAttribute('aria-label', (soc.iFollow ? 'Unfollow ' : 'Follow ') + nm);
+        }
+        if (!show) { var m = el('pfMutual'); if (m) m.hidden = true; }
+        updateSheetCounts();
+      }
+
+      function renderMutual() {
+        var box = el('pfMutual');
+        if (!box) return;
+        var list = soc.mutual || [];
+        if (!list.length || !soc.ok) { box.hidden = true; box.innerHTML = ''; return; }
+        var nm = function (u) { return escapeHtml(u.display_name || u.username || 'Someone'); };
+        var text = list.length === 1 ? '<b>' + nm(list[0]) + '</b>'
+          : (list.length === 2 ? '<b>' + nm(list[0]) + '</b> and <b>' + nm(list[1]) + '</b>'
+          : '<b>' + nm(list[0]) + '</b>, <b>' + nm(list[1]) + '</b> and ' + (list.length - 2) + ' more');
+        var avs = list.slice(0, 3).map(function (u) { return '<img src="' + escapeHtml(avatarOf(u)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'; }).join('');
+        box.innerHTML = '<span class="pf-mutual-av">' + avs + '</span><span>Followed by ' + text + ' <span>· people you follow</span></span>';
+        box.querySelectorAll('img').forEach(function (im) { im.onerror = function () { im.onerror = null; im.src = FALLBACK_AVATAR; }; });
+        box.hidden = false;
+      }
+
+      async function followUser(targetId, want) {
+        if (!state.uid) { openSignIn(); return false; }
+        if (targetId === state.uid) return false;
+        try {
+          var r = want
+            ? await state.sb.from('follows').insert({ follower_id: state.uid, following_id: targetId })
+            : await state.sb.from('follows').delete().eq('follower_id', state.uid).eq('following_id', targetId);
+          if (r.error && !(want && r.error.code === '23505')) throw r.error;
+          return true;
+        } catch (e) {
+          console.error('[profile] follow failed', e);
+          return false;
+        }
+      }
+
+      // keeps every number and button in step with one follow/unfollow
+      function applyFollow(targetId, now) {
+        var was = !!soc.mine[targetId];
+        if (was === now) return;
+        if (now) soc.mine[targetId] = true; else delete soc.mine[targetId];
+        var p = state.profile;
+        if (p && state.isOwn) soc.counts.following = Math.max(0, soc.counts.following + (now ? 1 : -1));
+        if (p && targetId === p.id) {
+          soc.iFollow = now;
+          soc.counts.followers = Math.max(0, soc.counts.followers + (now ? 1 : -1));
+        }
+        renderSocial();
+      }
+
+      async function toggleFollowMain() {
+        var p = state.profile;
+        if (!p || state.isOwn || soc.busy) return;
+        if (!state.uid) { openSignIn(); return; }
+        var want = !soc.iFollow, btn = el('pfFollowBtn');
+        soc.busy = true;
+        applyFollow(p.id, want);
+        if (!reduce) { btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop'); }
+        var ok = await followUser(p.id, want);
+        soc.busy = false;
+        if (!alive) return;
+        if (!ok) { applyFollow(p.id, !want); say("Couldn't update. Try again.", 2600); }
+        else loadMutual(soc.seq);
+      }
+
+      // ----- connections sheet -----
+      function sheetTabsHtml() {
+        return '<button class="pf-sheet-tab" type="button" role="tab" data-sh-tab="followers" id="pfShTabF">Followers<span id="pfShCountF">0</span></button>' +
+               '<button class="pf-sheet-tab" type="button" role="tab" data-sh-tab="following" id="pfShTabG">Following<span id="pfShCountG">0</span></button>' +
+               '<i class="pf-sheet-ind" aria-hidden="true"></i>';
+      }
+      function updateSheetCounts() {
+        if (!sheetEl) return;
+        var f = sheetEl.querySelector('#pfShCountF'), g = sheetEl.querySelector('#pfShCountG');
+        if (f) f.textContent = fmtCount(soc.counts.followers);
+        if (g) g.textContent = fmtCount(soc.counts.following);
+      }
+      function onSheetKey(e) { if (e.key === 'Escape') { e.preventDefault(); closeSheet(); } }
+
+      function openSheet(tab) {
+        if (sheetEl || !alive || !state.profile || !soc.ok) return;
+        sheetTab = tab === 'following' ? 'following' : 'followers';
+        sheetFocusBack = document.activeElement;
+        var cs = getComputedStyle(root);
+        var box = document.createElement('div');
+        box.className = 'pf-sheet';
+        box.style.setProperty('--ac', cs.getPropertyValue('--ac').trim() || '201,168,118');
+        box.style.setProperty('--ac2', cs.getPropertyValue('--ac2').trim() || '232,199,102');
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-modal', 'true');
+        box.setAttribute('aria-label', (state.profile.display_name || state.profile.username || 'Profile') + ' connections');
+        box.innerHTML = '<div class="pf-sheet-bd" data-sh-close></div>' +
+          '<div class="pf-sheet-panel"><div class="pf-sheet-grab" aria-hidden="true"></div>' +
+          '<div class="pf-sheet-head"><div class="pf-sheet-tabs" role="tablist" data-tab="' + sheetTab + '">' + sheetTabsHtml() + '</div>' +
+          '<button class="pf-sheet-x" type="button" data-sh-close aria-label="Close">' + X_SVG + '</button></div>' +
+          '<ul class="pf-sheet-list" id="pfSheetList"></ul></div>';
+        box.addEventListener('click', onSheetClick);
+        document.body.appendChild(box);
+        sheetEl = box;
+        document.documentElement.style.overflow = 'hidden';
+        document.addEventListener('keydown', onSheetKey);
+        setSheetTab(sheetTab, true);
+        updateSheetCounts();
+        requestAnimationFrame(function () { box.classList.add('is-open'); });
+        later(function () { var x = box.querySelector('.pf-sheet-x'); if (x && sheetEl === box) x.focus({ preventScroll: true }); }, 60);
+      }
+
+      function closeSheet(instant) {
+        if (!sheetEl) return;
+        var node = sheetEl;
+        sheetEl = null;
+        sheetSeq++;
+        document.removeEventListener('keydown', onSheetKey);
+        document.documentElement.style.overflow = '';
+        function kill() { if (node.parentNode) node.parentNode.removeChild(node); }
+        if (instant || reduce) kill();
+        else { node.classList.remove('is-open'); setTimeout(kill, 320); }
+        if (!instant && sheetFocusBack) { try { sheetFocusBack.focus({ preventScroll: true }); } catch (e) {} }
+        sheetFocusBack = null;
+      }
+
+      function setSheetTab(tab, first) {
+        if (!sheetEl) return;
+        sheetTab = tab;
+        var tabs = sheetEl.querySelector('.pf-sheet-tabs');
+        tabs.setAttribute('data-tab', tab);
+        sheetEl.querySelectorAll('.pf-sheet-tab').forEach(function (b) {
+          var on = b.getAttribute('data-sh-tab') === tab;
+          b.classList.toggle('is-active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        loadSheet(true);
+      }
+
+      function rowBtnHtml(id, on) {
+        return '<button class="pf-row-btn' + (on ? ' is-on' : '') + '" type="button" data-fol="' + escapeHtml(id) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? 'Following' : 'Follow') + '</button>';
+      }
+
+      async function loadSheet(reset) {
+        if (!sheetEl) return;
+        var list = sheetEl.querySelector('#pfSheetList'), p = state.profile;
+        var my = ++sheetSeq, tab = sheetTab;
+        if (reset) {
+          sheetRows = 0;
+          list.scrollTop = 0;
+          var sk = '';
+          for (var s = 0; s < 6; s++) sk += '<li class="pf-row"><span class="pf-sk" style="width:48px;height:48px;border-radius:50%;flex-shrink:0"></span><span class="pf-sk" style="height:13px;width:' + (38 + (s * 7) % 24) + '%;border-radius:99px"></span></li>';
+          list.innerHTML = sk;
+        } else {
+          var more = list.querySelector('[data-sh-more]'); if (more) more.disabled = true;
+        }
+        var fromFollowers = tab === 'followers';
+        var fk = fromFollowers ? 'follows_follower_id_fkey' : 'follows_following_id_fkey';
+        var r;
+        try {
+          r = await state.sb.from('follows')
+            .select('created_at, who:profiles!' + fk + '(id,username,display_name,avatar_url)')
+            .eq(fromFollowers ? 'following_id' : 'follower_id', p.id)
+            .order('created_at', { ascending: false })
+            .range(sheetRows, sheetRows + SHEET_PAGE - 1);
+        } catch (e) { r = { error: e }; }
+        if (!alive || !sheetEl || my !== sheetSeq) return;
+        if (r.error) {
+          list.innerHTML = '<li class="pf-sheet-empty"><b>Couldn’t load</b>Check your connection and try again.<br><button class="pf-sheet-more" type="button" data-sh-retry>Try again</button></li>';
+          return;
+        }
+        var rows = (r.data || []).filter(function (x) { return x && x.who && x.who.id; });
+        var gotRaw = (r.data || []).length;
+        if (reset) list.innerHTML = '';
+        else { var old = list.querySelector('[data-sh-morewrap]'); if (old) old.parentNode.removeChild(old); }
+        if (reset && !rows.length) {
+          var own = state.isOwn;
+          var t, s2;
+          if (fromFollowers) { t = 'No followers yet'; s2 = own ? 'Share your profile and your first follower will land here.' : 'Be the first to follow ' + escapeHtml(p.display_name || p.username || 'them') + '.'; }
+          else { t = 'Not following anyone yet'; s2 = own ? 'Use search → People to find other collectors and follow them.' : 'Nobody here yet.'; }
+          list.innerHTML = '<li class="pf-sheet-empty"><b>' + t + '</b>' + s2 + '</li>';
+          return;
+        }
+        var html = '', base = sheetRows;
+        rows.forEach(function (row, i) {
+          var u = row.who, isMe = u.id === state.uid;
+          var inner = '<img class="pf-row-av" src="' + escapeHtml(avatarOf(u)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' +
+            '<span class="pf-row-txt"><b>' + escapeHtml(u.display_name || u.username || 'Spoider user') + '</b>' + (u.username ? '<i>@' + escapeHtml(u.username) + '</i>' : '') + '</span>';
+          var link = u.username
+            ? '<a class="pf-row-link" href="profile.html?u=' + encodeURIComponent(u.username) + '">' + inner + '</a>'
+            : '<span class="pf-row-link">' + inner + '</span>';
+          html += '<li class="pf-row" style="--i:' + Math.min(i, 10) + '">' + link + (isMe ? '' : rowBtnHtml(u.id, !!soc.mine[u.id])) + '</li>';
+        });
+        list.insertAdjacentHTML('beforeend', html);
+        sheetRows = base + gotRaw;
+        list.querySelectorAll('.pf-row-av').forEach(function (im) { im.onerror = function () { im.onerror = null; im.src = FALLBACK_AVATAR; }; });
+        if (gotRaw >= SHEET_PAGE) list.insertAdjacentHTML('beforeend', '<li data-sh-morewrap><button class="pf-sheet-more" type="button" data-sh-more>Show more</button></li>');
+      }
+
+      async function rowFollow(btn) {
+        var id = btn.getAttribute('data-fol');
+        if (!id || btn.disabled) return;
+        if (!state.uid) { closeSheet(true); openSignIn(); return; }
+        var want = !soc.mine[id];
+        function paint(on) { btn.classList.toggle('is-on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); btn.textContent = on ? 'Following' : 'Follow'; }
+        btn.disabled = true;
+        applyFollow(id, want);
+        paint(want);
+        var ok = await followUser(id, want);
+        btn.disabled = false;
+        if (!alive) return;
+        if (!ok) { applyFollow(id, !want); paint(!want); }
+      }
+
+      function onSheetClick(e) {
+        var t = e.target;
+        if (t.closest('[data-sh-close]')) { closeSheet(); return; }
+        var tab = t.closest('[data-sh-tab]');
+        if (tab) { var name = tab.getAttribute('data-sh-tab'); if (name !== sheetTab) setSheetTab(name); return; }
+        var fol = t.closest('[data-fol]');
+        if (fol) { rowFollow(fol); return; }
+        if (t.closest('[data-sh-more]')) { loadSheet(false); return; }
+        if (t.closest('[data-sh-retry]')) { loadSheet(true); return; }
+        if (t.closest('a.pf-row-link')) { closeSheet(true); }
       }
 
       // =============== rank certificate (full-screen, 3D) ===============
@@ -1798,6 +2217,10 @@ if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M1
         el('pfCancelBtn').addEventListener('click', closeEdit);
         el('pfSaveBtn').addEventListener('click', saveEdit);
         el('pfShareBtn').addEventListener('click', share);
+        el('pfFollowBtn').addEventListener('click', toggleFollowMain);
+        el('pfFollowersBtn').addEventListener('click', function () { openSheet('followers'); });
+        el('pfFollowingBtn').addEventListener('click', function () { openSheet('following'); });
+        el('pfMutual').addEventListener('click', function () { openSheet('followers'); });
         el('pfThemeBtn').addEventListener('click', openTheme);
         el('pfThCancel').addEventListener('click', function () { closeTheme(true); });
         el('pfThSave').addEventListener('click', saveTheme);
@@ -1858,6 +2281,7 @@ if (p.location) parts.push('<span class="pf-meta-item">' + metaIcon('<path d="M1
       function cleanup() {
         alive = false;
         closeCert(true);
+        closeSheet(true);
         timers.forEach(clearTimeout);
         if (dnaIO) { try { dnaIO.disconnect(); } catch (e) {} dnaIO = null; }
         window.removeEventListener('resize', onResize);
