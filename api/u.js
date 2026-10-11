@@ -25,7 +25,8 @@ export default async function handler(request) {
   if (profile.bio) desc += ' — ' + clip(profile.bio, 120);
 
   var pageUrl = url.origin + '/u/' + profile.username;
-  var img = url.origin + '/api/og?u=' + encodeURIComponent(profile.username);
+  // v= is only a cache-buster for chat apps that remember the old preview image; bump it after changing the card design
+  var img = url.origin + '/api/og?u=' + encodeURIComponent(profile.username) + '&v=3';
 
   var html = '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -38,6 +39,7 @@ export default async function handler(request) {
     '<meta property="og:description" content="' + esc(desc) + '">' +
     '<meta property="og:url" content="' + esc(pageUrl) + '">' +
     '<meta property="og:image" content="' + esc(img) + '">' +
+    '<meta property="og:image:type" content="image/png">' +
     '<meta property="og:image:width" content="1200">' +
     '<meta property="og:image:height" content="630">' +
     '<meta name="twitter:card" content="summary_large_image">' +
