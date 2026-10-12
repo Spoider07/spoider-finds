@@ -278,6 +278,8 @@
       .pf-sheet-tab.is-active{color:var(--text-primary)}
       .pf-sheet-ind{position:absolute;left:0;bottom:-1px;width:50%;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-bright));transition:transform .38s var(--ease)}
       .pf-sheet-tabs[data-tab="following"] .pf-sheet-ind{transform:translateX(100%)}
+      .pf-sheet-tabs.has3 .pf-sheet-ind{width:33.3333%}
+      .pf-sheet-tabs.has3[data-tab="mutual"] .pf-sheet-ind{transform:translateX(200%)}
       .pf-sheet-x{flex-shrink:0;width:38px;height:38px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);background:none;border:1px solid var(--border);-webkit-tap-highlight-color:transparent;transition:color .2s var(--ease),border-color .2s var(--ease),transform .25s var(--ease)}
       .pf-sheet-x svg{width:15px;height:15px;display:block}
       .pf-sheet-x:hover{color:var(--gold-bright);border-color:var(--gold)}
@@ -1266,11 +1268,11 @@
           var r = t.getBoundingClientRect();
           t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
           t.style.setProperty('--my', (e.clientY - r.top) + 'px');
-        }, { passive: true });
+}, { passive: true });
         function toggle(c) {
           var mo = box.querySelector('.pf-mo');
           if (!c || !mo) return;
-var on = c.classList.contains('is-focus');
+          var on = c.classList.contains('is-focus');
           [].forEach.call(mo.querySelectorAll('.is-focus'), function (x) { x.classList.remove('is-focus'); });
           if (!on) c.classList.add('is-focus');
           mo.classList.toggle('has-focus', !on);
@@ -1821,7 +1823,7 @@ var on = c.classList.contains('is-focus');
           : (list.length === 2 ? '<b>' + nm(list[0]) + '</b> and <b>' + nm(list[1]) + '</b>'
           : '<b>' + nm(list[0]) + '</b>, <b>' + nm(list[1]) + '</b> and ' + (list.length - 2) + ' more');
         var avs = list.slice(0, 3).map(function (u) { return '<img src="' + escapeHtml(avatarOf(u)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'; }).join('');
-        box.innerHTML = '<span class="pf-mutual-av">' + avs + '</span><span>Followed by ' + text + ' <span>· people you follow</span></span>';
+        box.innerHTML = '<span class="pf-mutual-av">' + avs + '</span><span>Followed by ' + text + ' <span>· ' + mutualCount() + ' mutual' + (list.length === 1 ? '' : 's') + '</span></span>';
         box.querySelectorAll('img').forEach(function (im) { im.onerror = function () { im.onerror = null; im.src = FALLBACK_AVATAR; }; });
         box.hidden = false;
       }
@@ -1874,19 +1876,23 @@ var on = c.classList.contains('is-focus');
       function sheetTabsHtml() {
         return '<button class="pf-sheet-tab" type="button" role="tab" data-sh-tab="followers" id="pfShTabF">Followers<span id="pfShCountF">0</span></button>' +
                '<button class="pf-sheet-tab" type="button" role="tab" data-sh-tab="following" id="pfShTabG">Following<span id="pfShCountG">0</span></button>' +
+               (mutualAvail() ? '<button class="pf-sheet-tab" type="button" role="tab" data-sh-tab="mutual" id="pfShTabM">Mutual<span id="pfShCountM">' + mutualCount() + '</span></button>' : '') +
                '<i class="pf-sheet-ind" aria-hidden="true"></i>';
       }
+      function mutualAvail() { return !!(state.uid && !state.isOwn && soc.mutual && soc.mutual.length); }
+      function mutualCount() { var n = (soc.mutual || []).length; return n >= 50 ? '50+' : String(n); }
       function updateSheetCounts() {
         if (!sheetEl) return;
         var f = sheetEl.querySelector('#pfShCountF'), g = sheetEl.querySelector('#pfShCountG');
         if (f) f.textContent = fmtCount(soc.counts.followers);
         if (g) g.textContent = fmtCount(soc.counts.following);
+        var m = sheetEl.querySelector('#pfShCountM'); if (m) m.textContent = mutualCount();
       }
       function onSheetKey(e) { if (e.key === 'Escape') { e.preventDefault(); closeSheet(); } }
 
       function openSheet(tab) {
         if (sheetEl || !alive || !state.profile || !soc.ok) return;
-        sheetTab = tab === 'following' ? 'following' : 'followers';
+        sheetTab = tab === 'following' ? 'following' : (tab === 'mutual' && mutualAvail() ? 'mutual' : 'followers');
         sheetFocusBack = document.activeElement;
         var cs = getComputedStyle(root);
         var box = document.createElement('div');
@@ -1898,7 +1904,7 @@ var on = c.classList.contains('is-focus');
         box.setAttribute('aria-label', (state.profile.display_name || state.profile.username || 'Profile') + ' connections');
         box.innerHTML = '<div class="pf-sheet-bd" data-sh-close></div>' +
           '<div class="pf-sheet-panel"><div class="pf-sheet-grab" aria-hidden="true"></div>' +
-          '<div class="pf-sheet-head"><div class="pf-sheet-tabs" role="tablist" data-tab="' + sheetTab + '">' + sheetTabsHtml() + '</div>' +
+          '<div class="pf-sheet-head"><div class="pf-sheet-tabs' + (mutualAvail() ? ' has3' : '') + '" role="tablist" data-tab="' + sheetTab + '">' + sheetTabsHtml() + '</div>' +
           '<button class="pf-sheet-x" type="button" data-sh-close aria-label="Close">' + X_SVG + '</button></div>' +
           '<ul class="pf-sheet-list" id="pfSheetList"></ul></div>';
         box.addEventListener('click', onSheetClick);
@@ -1955,6 +1961,19 @@ var on = c.classList.contains('is-focus');
           list.innerHTML = sk;
         } else {
           var more = list.querySelector('[data-sh-more]'); if (more) more.disabled = true;
+        }
+        if (tab === 'mutual') {
+          var mh = '';
+          (soc.mutual || []).forEach(function (u, i) {
+            if (!u || !u.id) return;
+            var inner = '<img class="pf-row-av" src="' + escapeHtml(avatarOf(u)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' +
+              '<span class="pf-row-txt"><b>' + escapeHtml(u.display_name || u.username || 'Spoider user') + '</b>' + (u.username ? '<i>@' + escapeHtml(u.username) + '</i>' : '') + '</span>';
+            var lk = u.username ? '<a class="pf-row-link" href="profile.html?u=' + encodeURIComponent(u.username) + '">' + inner + '</a>' : '<span class="pf-row-link">' + inner + '</span>';
+            mh += '<li class="pf-row" style="--i:' + Math.min(i, 10) + '">' + lk + rowBtnHtml(u.id, !!soc.mine[u.id]) + '</li>';
+          });
+          list.innerHTML = mh || '<li class="pf-sheet-empty"><b>No mutuals yet</b>People you follow who follow them will show up here.</li>';
+          list.querySelectorAll('.pf-row-av').forEach(function (im) { im.onerror = function () { im.onerror = null; im.src = FALLBACK_AVATAR; }; });
+          return;
         }
         var fromFollowers = tab === 'followers';
         var fk = fromFollowers ? 'follows_follower_id_fkey' : 'follows_following_id_fkey';
@@ -2249,7 +2268,7 @@ var on = c.classList.contains('is-focus');
         el('pfFollowBtn').addEventListener('click', toggleFollowMain);
         el('pfFollowersBtn').addEventListener('click', function () { openSheet('followers'); });
         el('pfFollowingBtn').addEventListener('click', function () { openSheet('following'); });
-        el('pfMutual').addEventListener('click', function () { openSheet('followers'); });
+        el('pfMutual').addEventListener('click', function () { openSheet('mutual'); });
         el('pfThemeBtn').addEventListener('click', openTheme);
         el('pfThCancel').addEventListener('click', function () { closeTheme(true); });
         el('pfThSave').addEventListener('click', saveTheme);
