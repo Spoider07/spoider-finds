@@ -673,7 +673,10 @@
   function bindSocial() {
     var SB_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
     var FALLBACK_AVATAR = "assets/images/spoider-logo-vector.svg";
-    var S = { sb: null, uid: null, items: [], unread: 0, following: new Set(), channel: null, open: false };
+    var S = { sb: null, uid: null, items: [], unread: 0, following: new Set(), channel: null, open: false, sheetOpen: false };
+    var mq = window.matchMedia("(max-width:760px)");
+    var subs = [];
+    var sheet = null, sheetBack = null, sheetList = null;
 
     // ---------- styles (self-contained, theme-aware) ----------
     var st = document.createElement("style");
@@ -704,14 +707,27 @@
       "@media (min-width:900px){.nf-toast{left:auto;right:24px;transform:translate(0,-140%)}.nf-toast.show{transform:none}}" +
       ".nf-toast .nf-av{width:42px;height:42px}" +
       ".nf-toast .nf-txt{font-size:.86rem}" +
-      ".friends-own{position:absolute;left:10px;bottom:10px;z-index:5;display:inline-flex;align-items:center;height:32px;padding:0 4px 0 3px;border-radius:999px;background:rgba(10,10,11,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(4px);transition:opacity .45s var(--ease),transform .45s var(--ease);pointer-events:none}" +
+      ".fo-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 14px}" +
+      ".fo-row > :first-child{flex:0 0 auto}" +
+      ".friends-own{display:inline-flex;align-items:center;gap:8px;min-width:0;max-width:100%;opacity:0;transform:translateY(3px);transition:opacity .5s var(--ease),transform .5s var(--ease)}" +
       ".friends-own.in{opacity:1;transform:none}" +
-      "html[data-theme='light'] .friends-own{background:rgba(255,255,255,.7)}" +
-      ".friends-own img{width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #111113;background:#222;margin-left:-8px}" +
-      "html[data-theme='light'] .friends-own img{border-color:#fff}" +
-      ".friends-own img:first-child{margin-left:0}" +
-      ".friends-own .fo-n{font-size:.7rem;font-weight:600;color:var(--gold-bright);padding:0 7px 0 5px;letter-spacing:.02em}" +
-      "@media (prefers-reduced-motion:reduce){.nf-panel,.nf-toast,.friends-own,.notif-bell .nb-dot{transition:none}}";
+      ".friends-own .fo-av{display:inline-flex;flex-shrink:0}" +
+      ".friends-own .fo-av img{width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid var(--bg-elevated,#111113);background:var(--surface);margin-left:-7px;box-sizing:content-box}" +
+      ".friends-own .fo-av img:first-child{margin-left:0}" +
+      ".friends-own .fo-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.74rem;line-height:1.2;color:var(--text-secondary);letter-spacing:.01em}" +
+      ".friends-own .fo-t b{color:var(--gold-bright);font-weight:600}" +
+      ".profile-toggle.nf-pt{position:relative}" +
+      ".profile-toggle.nf-pt::after{content:'';position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 0 2px var(--bg-elevated,#0a0a0b)}" +
+      ".nf-back{position:fixed;inset:0;z-index:10003;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}" +
+      ".nf-back.open{opacity:1;pointer-events:auto}" +
+      ".nf-sheet{position:fixed;z-index:10004;left:0;right:0;bottom:0;box-sizing:border-box;max-height:78vh;display:flex;flex-direction:column;background:var(--bg-elevated,#111113);border:1px solid var(--border);border-bottom:none;border-radius:22px 22px 0 0;transform:translateY(102%);transition:transform .42s cubic-bezier(.22,1,.36,1);padding-bottom:env(safe-area-inset-bottom)}" +
+      ".nf-sheet.open{transform:none}" +
+      ".nf-sheet .nf-grab{width:38px;height:4px;border-radius:4px;background:var(--border);margin:9px auto 0}" +
+      ".nf-sheet .nf-head{padding:12px 14px 12px 18px}" +
+      ".nf-x{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}" +
+      ".nf-x svg{width:14px;height:14px}" +
+      "@media (max-width:760px){.nf-toast{top:auto;bottom:calc(16px + env(safe-area-inset-bottom));transform:translate(-50%,140%);padding:10px 12px;border-radius:14px}.nf-toast.show{transform:translate(-50%,0)}.nf-toast .nf-av{width:36px;height:36px}.nf-toast .nf-txt{font-size:.82rem}}" +
+      "@media (prefers-reduced-motion:reduce){.nf-panel,.nf-toast,.friends-own,.nf-sheet,.nf-back,.notif-bell .nb-dot{transition:none}}";
     document.head.appendChild(st);
 
     // ---------- helpers ----------
@@ -756,6 +772,7 @@
     var bell = null, panel = null, listEl = null;
 
     function buildBell() {
+      if (mq.matches) return false;
       var nav = document.querySelector(".nav") || document.getElementById("nav");
       var anchor = nav && nav.querySelector(".theme-toggle");
       if (!anchor) return false;
@@ -817,9 +834,18 @@
     function updateBadge() {
       S.unread = S.items.filter(function (n) { return !n.read_at; }).length;
       if (bell) bell.classList.toggle("has-unread", S.unread > 0);
+      var pt = document.querySelector(".nav .profile-toggle:not(.notif-bell)");
+      document.querySelectorAll(".profile-toggle.nf-pt").forEach(function (x) { if (x !== pt || !(mq.matches && S.unread > 0)) x.classList.remove("nf-pt"); });
+      if (pt && mq.matches && S.unread > 0) pt.classList.add("nf-pt");
+      subs.forEach(function (fn) { try { fn(S.unread); } catch (e) {} });
     }
 
     function renderList() {
+      renderInto(listEl);
+      renderInto(sheetList);
+      updateBadge();
+    }
+    function renderInto(listEl) {
       if (!listEl) return;
       listEl.textContent = "";
       if (!S.items.length) {
@@ -827,7 +853,6 @@
         e.appendChild(mk("div", "", "Nothing yet."));
         e.appendChild(mk("div", "", "When someone follows you, you'll see it here."));
         listEl.appendChild(e);
-        updateBadge();
         return;
       }
       S.items.forEach(function (n) {
@@ -852,7 +877,6 @@
         row.appendChild(btn);
         listEl.appendChild(row);
       });
-      updateBadge();
     }
 
     async function followBack(targetId, btn) {
@@ -869,7 +893,7 @@
     }
 
     async function markAllRead() {
-      if (!S.open || !S.sb || !S.uid) return;
+      if ((!S.open && !S.sheetOpen) || !S.sb || !S.uid) return;
       var any = S.items.some(function (n) { return !n.read_at; });
       if (!any) return;
       S.items.forEach(function (n) { if (!n.read_at) n.read_at = new Date().toISOString(); });
@@ -878,6 +902,65 @@
         await S.sb.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", S.uid).is("read_at", null);
       } catch (e) {}
     }
+
+    // ---------- bottom sheet (mobile; also opened from the profile page) ----------
+    function buildSheet() {
+      if (sheet) return;
+      sheetBack = mk("div", "nf-back");
+      sheet = mk("div", "nf-sheet");
+      sheet.setAttribute("role", "dialog");
+      sheet.setAttribute("aria-label", "Notifications");
+      sheet.appendChild(mk("div", "nf-grab"));
+      var head = mk("div", "nf-head");
+      head.appendChild(mk("h3", "", "Notifications"));
+      var x = mk("button", "nf-x");
+      x.type = "button";
+      x.setAttribute("aria-label", "Close");
+      x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      x.addEventListener("click", function () { setSheet(false); });
+      head.appendChild(x);
+      sheet.appendChild(head);
+      sheetList = mk("div", "nf-list");
+      sheet.appendChild(sheetList);
+      sheetBack.addEventListener("click", function () { setSheet(false); });
+      sheetList.addEventListener("click", function (e) { if (e.target.closest(".nf-row") && !e.target.closest(".nf-fb")) setSheet(false); });
+      document.body.appendChild(sheetBack);
+      document.body.appendChild(sheet);
+      renderInto(sheetList);
+    }
+    function setSheet(open) {
+      if (open) buildSheet();
+      if (!sheet) return;
+      S.sheetOpen = open;
+      if (open) {
+        if (S.open) setOpen(false);
+        requestAnimationFrame(function () { requestAnimationFrame(function () { sheet.classList.add("open"); sheetBack.classList.add("open"); }); });
+        setTimeout(markAllRead, 900);
+      } else {
+        sheet.classList.remove("open");
+        sheetBack.classList.remove("open");
+        S.items.forEach(function (n) { n.read_at = n.read_at || "x"; });
+        setTimeout(renderList, 350);
+      }
+    }
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.sheetOpen) setSheet(false); });
+    function openNotifications() {
+      if (!S.uid) return;
+      if (mq.matches || !bell) setSheet(true); else setOpen(true);
+    }
+    window.SpoiderNotify = {
+      open: openNotifications,
+      openSheet: function () { if (S.uid) setSheet(true); },
+      onChange: function (fn) { subs.push(fn); try { fn(S.unread); } catch (e) {} return function () { subs = subs.filter(function (f) { return f !== fn; }); }; },
+      get unread() { return S.unread; },
+      get signedIn() { return !!S.uid; }
+    };
+    var onMq = function () {
+      if (!S.uid) return;
+      if (mq.matches) { destroyBell(); } else { if (S.sheetOpen) setSheet(false); if (!bell) buildBell(); }
+      renderList();
+    };
+    if (mq.addEventListener) mq.addEventListener("change", onMq); else if (mq.addListener) mq.addListener(onMq);
 
     // ---------- data ----------
     var SEL = "id,created_at,read_at,actor:profiles!notifications_actor_id_fkey(id,username,display_name,avatar_url)";
@@ -907,6 +990,9 @@
         var t = mk("a", "nf-toast");
         t.href = profileHref(a);
         t.setAttribute("role", "status");
+        t.addEventListener("click", function (ev) {
+          if (mq.matches) { ev.preventDefault(); t.remove(); setSheet(true); }
+        });
         t.appendChild(avatarImg(a, "nf-av"));
         var txt = mk("div", "nf-txt");
         txt.appendChild(mk("b", "", nameOf(a)));
@@ -976,20 +1062,43 @@
       cardCache.clear();
     }
 
+    function findViewLink(card) {
+      var all = card.querySelectorAll("a,span,div,button,p");
+      var hit = null;
+      for (var k = 0; k < all.length; k++) {
+        var el = all[k];
+        if (/^\s*View on Amazon/i.test(el.textContent || "") && (el.textContent || "").length < 40) hit = el;
+      }
+      return hit;
+    }
+
     function paintCard(card, list) {
-      var host = card.querySelector(".product-image") || card;
-      if (host.querySelector(".friends-own") || !list || !list.length) return;
-      var wrap = mk("span", "friends-own");
-      var who = list.map(nameOf);
-      wrap.setAttribute("role", "img");
-      wrap.setAttribute("aria-label", (who.length > 2 ? who[0] + " and " + (who.length - 1) + " others you follow" : who.join(" and ") + (who.length > 1 ? " (you follow them)" : " (you follow)")) + " own this");
-      wrap.title = who.length > 3 ? who.slice(0, 3).join(", ") + " +" + (who.length - 3) + " you follow own this" : who.join(", ") + " you follow own this";
-      list.slice(0, 3).forEach(function (p) { wrap.appendChild(avatarImg(p, "")); });
-      if (list.length > 3) wrap.appendChild(mk("span", "fo-n", "+" + (list.length - 3)));
-      else wrap.appendChild(mk("span", "fo-n", ""));
-      if (!wrap.lastChild.textContent) wrap.lastChild.remove();
-      host.appendChild(wrap);
-      requestAnimationFrame(function () { requestAnimationFrame(function () { wrap.classList.add("in"); }); });
+      if (card.querySelector(".friends-own") || !list || !list.length) return;
+      var names = list.map(nameOf);
+      var chip = mk("span", "friends-own");
+      var avs = mk("span", "fo-av");
+      avs.setAttribute("aria-hidden", "true");
+      list.slice(0, 3).forEach(function (p) { avs.appendChild(avatarImg(p, "")); });
+      chip.appendChild(avs);
+      var t = mk("span", "fo-t");
+      var first = mk("b", "", names[0]);
+      t.appendChild(first);
+      if (names.length === 1) t.appendChild(document.createTextNode(" owns this"));
+      else if (names.length === 2) { t.appendChild(document.createTextNode(" & ")); t.appendChild(mk("b", "", names[1])); t.appendChild(document.createTextNode(" own this")); }
+      else t.appendChild(document.createTextNode(" +" + (names.length - 1) + " own this"));
+      chip.appendChild(t);
+      chip.title = names.join(", ") + (names.length > 1 ? " — people you follow own this" : " — someone you follow owns this");
+
+      var link = findViewLink(card);
+      var row = link && link.closest(".fo-row");
+      if (link && !row && link.parentNode && card.contains(link.parentNode)) {
+        row = mk("div", "fo-row");
+        link.parentNode.insertBefore(row, link);
+        row.appendChild(link);
+      }
+      if (row) row.appendChild(chip);
+      else { chip.style.margin = "12px 18px 16px"; card.appendChild(chip); }
+      requestAnimationFrame(function () { requestAnimationFrame(function () { chip.classList.add("in"); }); });
     }
 
     async function decorateCards() {
