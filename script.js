@@ -716,6 +716,17 @@
       ".friends-own .fo-av img:first-child{margin-left:0}" +
       ".friends-own .fo-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.74rem;line-height:1.2;color:var(--text-secondary);letter-spacing:.01em}" +
       ".friends-own .fo-t b{color:var(--gold-bright);font-weight:600}" +
+      ".friends-own{cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:999px;padding:3px 8px 3px 3px;margin:-3px -8px -3px -3px;transition:opacity .5s var(--ease),transform .5s var(--ease),background .2s}" +
+      ".friends-own:hover{background:var(--surface)}" +
+      ".friends-own:focus-visible{outline:2px solid var(--gold);outline-offset:2px}" +
+      ".fo-pop{position:fixed;z-index:10005;box-sizing:border-box;max-height:250px;overflow-y:auto;overscroll-behavior:contain;padding:6px;background:var(--bg-elevated,#111113);border:1px solid var(--border);border-radius:14px;box-shadow:0 24px 60px -18px rgba(0,0,0,.65);opacity:0;transform:translateY(4px) scale(.98);transition:opacity .2s var(--ease),transform .25s var(--ease)}" +
+      ".fo-pop.in{opacity:1;transform:none}" +
+      ".fo-pop .fo-ph{padding:6px 10px 8px;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}" +
+      ".fo-pr{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:none;border-radius:10px;background:none;color:var(--text-primary);font:inherit;text-align:left;cursor:pointer}" +
+      ".fo-pr:hover{background:var(--surface)}" +
+      ".fo-pr img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--surface);border:1px solid var(--border)}" +
+      ".fo-pr span{min-width:0;display:flex;flex-direction:column;font-size:.84rem;line-height:1.25}" +
+      ".fo-pr span i{font-style:normal;font-size:.72rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
       ".profile-toggle.nf-pt{position:relative}" +
       ".profile-toggle.nf-pt::after{content:'';position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 0 2px var(--bg-elevated,#0a0a0b)}" +
       ".nf-back{position:fixed;inset:0;z-index:10003;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}" +
@@ -1062,6 +1073,54 @@
       cardCache.clear();
     }
 
+    function goProfile(p) {
+      if (!p || !p.username) return;
+      var a = document.createElement("a");
+      a.href = profileHref(p);
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    var pop = null;
+    function closePop() {
+      if (!pop) return;
+      var el = pop; pop = null;
+      el.classList.remove("in");
+      setTimeout(function () { if (el.parentNode) el.remove(); }, 220);
+    }
+    function openPop(anchor, list) {
+      closePop();
+      pop = mk("div", "fo-pop");
+      pop.setAttribute("role", "menu");
+      pop.appendChild(mk("div", "fo-ph", "People you follow who own this"));
+      list.forEach(function (p) {
+        var b = mk("button", "fo-pr");
+        b.type = "button";
+        b.setAttribute("role", "menuitem");
+        b.appendChild(avatarImg(p, ""));
+        var t = mk("span", "");
+        t.appendChild(document.createTextNode(nameOf(p)));
+        if (p.username) t.appendChild(mk("i", "", "@" + p.username));
+        b.appendChild(t);
+        b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); closePop(); goProfile(p); });
+        pop.appendChild(b);
+      });
+      document.body.appendChild(pop);
+      var r = anchor.getBoundingClientRect();
+      var w = Math.min(270, window.innerWidth - 24);
+      pop.style.width = w + "px";
+      pop.style.left = Math.round(Math.min(Math.max(12, r.left), window.innerWidth - w - 12)) + "px";
+      var h = Math.min(250, pop.scrollHeight);
+      if (r.top > h + 20) pop.style.top = Math.round(r.top - h - 10) + "px";
+      else pop.style.top = Math.round(r.bottom + 10) + "px";
+      requestAnimationFrame(function () { requestAnimationFrame(function () { if (pop) pop.classList.add("in"); }); });
+    }
+    document.addEventListener("click", function (e) { if (pop && !e.target.closest(".fo-pop") && !e.target.closest(".friends-own")) closePop(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePop(); });
+    window.addEventListener("scroll", closePop, { passive: true });
+
     function findViewLink(card) {
       var all = card.querySelectorAll("a,span,div,button,p");
       var hit = null;
@@ -1087,7 +1146,19 @@
       else if (names.length === 2) { t.appendChild(document.createTextNode(" & ")); t.appendChild(mk("b", "", names[1])); t.appendChild(document.createTextNode(" own this")); }
       else t.appendChild(document.createTextNode(" +" + (names.length - 1) + " own this"));
       chip.appendChild(t);
-      chip.title = names.join(", ") + (names.length > 1 ? " — people you follow own this" : " — someone you follow owns this");
+      chip.setAttribute("role", "button");
+      chip.tabIndex = 0;
+      chip.setAttribute("aria-label", names.join(", ") + (names.length > 1 ? " — people you follow own this. Open list" : " owns this. Open profile"));
+      var act = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (list.length === 1) goProfile(list[0]);
+        else if (pop) closePop();
+        else openPop(chip, list);
+      };
+      chip.addEventListener("click", act);
+      chip.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") act(e); });
+      chip.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
 
       var link = findViewLink(card);
       var row = link && link.closest(".fo-row");
