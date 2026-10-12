@@ -658,6 +658,414 @@
     syncHeartsOnPage();
   }
 
+  // ============================================================
+  // Social layer (site-wide, bound once by delegation / observers):
+  //   1) Notification bell in the header (signed-in only) with an
+  //      unread dot, a dropdown of "X started following you" rows
+  //      (with Follow back), and a live toast the moment someone
+  //      follows you (Supabase Realtime on public.notifications).
+  //   2) "People you follow own this" — a small overlapping avatar
+  //      stack on product cards (signed-in only), from the
+  //      friends_owning() RPC. Cards are found by their
+  //      .wishlist-heart[data-heart-id], so no per-page changes.
+  // Everything is best-effort: any failure leaves the page as is.
+  // ============================================================
+  function bindSocial() {
+    var SB_URL = "https://gqnwinkddckytrfpnhng.supabase.co";
+    var FALLBACK_AVATAR = "assets/images/spoider-logo-vector.svg";
+    var S = { sb: null, uid: null, items: [], unread: 0, following: new Set(), channel: null, open: false };
+
+    // ---------- styles (self-contained, theme-aware) ----------
+    var st = document.createElement("style");
+    st.textContent =
+      ".notif-bell{position:relative;margin-left:22px}" +
+      ".notif-bell + .theme-toggle{margin-left:12px}" +
+      "@media (max-width:760px){.notif-bell{margin-left:auto}.notif-bell + .theme-toggle{margin-left:10px}}" +
+      ".notif-bell .nb-dot{position:absolute;top:6px;right:7px;min-width:8px;height:8px;border-radius:999px;background:var(--gold-bright);box-shadow:0 0 0 2px var(--bg-elevated,#0a0a0b);opacity:0;transform:scale(.4);transition:opacity .25s var(--ease),transform .35s cubic-bezier(.34,1.56,.64,1)}" +
+      ".notif-bell.has-unread .nb-dot{opacity:1;transform:scale(1)}" +
+      ".nf-panel{box-sizing:border-box;position:fixed;z-index:10001;width:min(360px,calc(100vw - 24px));max-height:min(70vh,520px);display:flex;flex-direction:column;background:var(--bg-elevated,#111113);border:1px solid var(--border);border-radius:16px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,118,.06);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;pointer-events:none;transition:opacity .22s var(--ease),transform .28s var(--ease);overflow:hidden}" +
+      ".nf-panel.open{opacity:1;transform:none;pointer-events:auto}" +
+      ".nf-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid var(--border)}" +
+      ".nf-head h3{font-family:var(--font-display,inherit);font-weight:500;font-size:1.05rem;color:var(--text-primary);margin:0;letter-spacing:-.01em}" +
+      ".nf-list{overflow-y:auto;overscroll-behavior:contain;padding:6px}" +
+      ".nf-empty{padding:34px 24px;text-align:center;color:var(--text-secondary);font-size:.86rem;line-height:1.55}" +
+      ".nf-row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;text-decoration:none;color:inherit;position:relative;transition:background .2s var(--ease)}" +
+      ".nf-row:hover{background:var(--surface)}" +
+      ".nf-row.is-new::before{content:'';position:absolute;left:2px;top:50%;width:4px;height:4px;margin-top:-2px;border-radius:50%;background:var(--gold-bright)}" +
+      ".nf-av{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--surface);border:1px solid var(--border)}" +
+      ".nf-txt{flex:1;min-width:0;font-size:.84rem;line-height:1.4;color:var(--text-secondary)}" +
+      ".nf-txt b{color:var(--text-primary);font-weight:600}" +
+      ".nf-txt time{display:block;font-size:.72rem;color:var(--text-secondary);opacity:.75;margin-top:1px}" +
+      ".nf-fb{flex-shrink:0;font:inherit;font-size:.76rem;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--gold);background:var(--gold);color:#0b0b0c;cursor:pointer;transition:transform .2s var(--ease),opacity .2s}" +
+      ".nf-fb:active{transform:scale(.95)}" +
+      ".nf-fb.is-on{background:transparent;color:var(--gold);border-color:var(--border);cursor:default}" +
+      ".nf-toast{box-sizing:border-box;position:fixed;z-index:10002;top:14px;left:50%;width:min(380px,calc(100vw - 24px));display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-elevated,#111113);border:1px solid var(--gold-dim,rgba(201,168,118,.35));border-radius:16px;box-shadow:0 24px 60px -18px rgba(0,0,0,.65),0 0 40px -16px rgba(201,168,118,.4);color:var(--text-primary);text-decoration:none;transform:translate(-50%,-140%);opacity:0;transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .35s}" +
+      ".nf-toast.show{transform:translate(-50%,0);opacity:1}" +
+      "@media (min-width:900px){.nf-toast{left:auto;right:24px;transform:translate(0,-140%)}.nf-toast.show{transform:none}}" +
+      ".nf-toast .nf-av{width:42px;height:42px}" +
+      ".nf-toast .nf-txt{font-size:.86rem}" +
+      ".friends-own{position:absolute;left:10px;bottom:10px;z-index:5;display:inline-flex;align-items:center;height:32px;padding:0 4px 0 3px;border-radius:999px;background:rgba(10,10,11,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(4px);transition:opacity .45s var(--ease),transform .45s var(--ease);pointer-events:none}" +
+      ".friends-own.in{opacity:1;transform:none}" +
+      "html[data-theme='light'] .friends-own{background:rgba(255,255,255,.7)}" +
+      ".friends-own img{width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #111113;background:#222;margin-left:-8px}" +
+      "html[data-theme='light'] .friends-own img{border-color:#fff}" +
+      ".friends-own img:first-child{margin-left:0}" +
+      ".friends-own .fo-n{font-size:.7rem;font-weight:600;color:var(--gold-bright);padding:0 7px 0 5px;letter-spacing:.02em}" +
+      "@media (prefers-reduced-motion:reduce){.nf-panel,.nf-toast,.friends-own,.notif-bell .nb-dot{transition:none}}";
+    document.head.appendChild(st);
+
+    // ---------- helpers ----------
+    function getClient() {
+      return new Promise(function (resolve) {
+        var tries = 0;
+        (function check() {
+          if (window.SpoiderAuth && window.SpoiderAuth.client) return resolve(window.SpoiderAuth.client);
+          if (++tries > 60) return resolve(null);
+          setTimeout(check, 100);
+        })();
+      });
+    }
+    function nameOf(p) { return (p && (p.display_name || p.username)) || "Someone"; }
+    function avatarOf(p) { return (p && p.avatar_url) || FALLBACK_AVATAR; }
+    function profileHref(p) { return "profile.html?u=" + encodeURIComponent((p && p.username) || ""); }
+    function ago(iso) {
+      var s = Math.max(1, (Date.now() - new Date(iso).getTime()) / 1000);
+      if (s < 60) return "just now";
+      if (s < 3600) return Math.floor(s / 60) + "m ago";
+      if (s < 86400) return Math.floor(s / 3600) + "h ago";
+      if (s < 86400 * 7) return Math.floor(s / 86400) + "d ago";
+      return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+    }
+    function mk(tag, cls, text) {
+      var el = document.createElement(tag);
+      if (cls) el.className = cls;
+      if (text != null) el.textContent = text;
+      return el;
+    }
+    function avatarImg(p, cls) {
+      var img = mk("img", cls);
+      img.alt = "";
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      img.src = avatarOf(p);
+      img.addEventListener("error", function () { if (img.src.indexOf(FALLBACK_AVATAR) < 0) img.src = FALLBACK_AVATAR; }, { once: true });
+      return img;
+    }
+
+    // ---------- bell + panel ----------
+    var bell = null, panel = null, listEl = null;
+
+    function buildBell() {
+      var nav = document.querySelector(".nav") || document.getElementById("nav");
+      var anchor = nav && nav.querySelector(".theme-toggle");
+      if (!anchor) return false;
+      bell = mk("button", "theme-toggle notif-bell");
+      bell.type = "button";
+      bell.setAttribute("aria-label", "Notifications");
+      bell.setAttribute("aria-haspopup", "true");
+      bell.setAttribute("aria-expanded", "false");
+      bell.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1112 0c0 5 2 6.5 2 6.5H4S6 14 6 9z"/><path d="M10 19a2 2 0 004 0"/></svg><span class="nb-dot"></span>';
+      // keep it out of the theme-sweep handler (it listens on .theme-toggle)
+      bell.classList.remove("theme-toggle");
+      bell.classList.add("profile-toggle");
+      anchor.parentNode.insertBefore(bell, anchor);
+
+      panel = mk("div", "nf-panel");
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-label", "Notifications");
+      var head = mk("div", "nf-head");
+      head.appendChild(mk("h3", "", "Notifications"));
+      panel.appendChild(head);
+      listEl = mk("div", "nf-list");
+      panel.appendChild(listEl);
+      document.body.appendChild(panel);
+      renderList();
+      return true;
+    }
+
+    function destroyBell() {
+      if (bell && bell.parentNode) bell.remove();
+      if (panel && panel.parentNode) panel.remove();
+      bell = panel = listEl = null;
+      S.open = false;
+    }
+
+    function positionPanel() {
+      if (!bell || !panel) return;
+      var r = bell.getBoundingClientRect();
+      var w = Math.min(360, window.innerWidth - 24);
+      var left = Math.min(Math.max(12, r.right - w), window.innerWidth - w - 12);
+      panel.style.top = Math.round(r.bottom + 10) + "px";
+      panel.style.left = Math.round(left) + "px";
+    }
+
+    function setOpen(open) {
+      if (!panel) return;
+      S.open = open;
+      if (open) positionPanel();
+      panel.classList.toggle("open", open);
+      bell.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) {
+        setTimeout(markAllRead, 900);
+      } else {
+        S.items.forEach(function (n) { n.read_at = n.read_at || "x"; });
+        renderList();
+      }
+    }
+
+    function updateBadge() {
+      S.unread = S.items.filter(function (n) { return !n.read_at; }).length;
+      if (bell) bell.classList.toggle("has-unread", S.unread > 0);
+    }
+
+    function renderList() {
+      if (!listEl) return;
+      listEl.textContent = "";
+      if (!S.items.length) {
+        var e = mk("div", "nf-empty");
+        e.appendChild(mk("div", "", "Nothing yet."));
+        e.appendChild(mk("div", "", "When someone follows you, you'll see it here."));
+        listEl.appendChild(e);
+        updateBadge();
+        return;
+      }
+      S.items.forEach(function (n) {
+        var a = n.actor || {};
+        var row = mk("a", "nf-row" + (n.read_at ? "" : " is-new"));
+        row.href = profileHref(a);
+        row.appendChild(avatarImg(a, "nf-av"));
+        var t = mk("div", "nf-txt");
+        var b = mk("b", "", nameOf(a));
+        t.appendChild(b);
+        t.appendChild(document.createTextNode(" started following you"));
+        t.appendChild(mk("time", "", ago(n.created_at)));
+        row.appendChild(t);
+        var iFollow = S.following.has(a.id);
+        var btn = mk("button", "nf-fb" + (iFollow ? " is-on" : ""), iFollow ? "Following" : "Follow back");
+        btn.type = "button";
+        btn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          followBack(a.id, btn);
+        });
+        row.appendChild(btn);
+        listEl.appendChild(row);
+      });
+      updateBadge();
+    }
+
+    async function followBack(targetId, btn) {
+      if (!S.sb || !S.uid || S.following.has(targetId)) return;
+      S.following.add(targetId);
+      btn.textContent = "Following";
+      btn.classList.add("is-on");
+      var r = await S.sb.from("follows").insert({ follower_id: S.uid, following_id: targetId });
+      if (r.error && r.error.code !== "23505") {
+        S.following.delete(targetId);
+        btn.textContent = "Follow back";
+        btn.classList.remove("is-on");
+      }
+    }
+
+    async function markAllRead() {
+      if (!S.open || !S.sb || !S.uid) return;
+      var any = S.items.some(function (n) { return !n.read_at; });
+      if (!any) return;
+      S.items.forEach(function (n) { if (!n.read_at) n.read_at = new Date().toISOString(); });
+      updateBadge(); // dot clears now, the "new" markers clear when the panel closes
+      try {
+        await S.sb.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", S.uid).is("read_at", null);
+      } catch (e) {}
+    }
+
+    // ---------- data ----------
+    var SEL = "id,created_at,read_at,actor:profiles!notifications_actor_id_fkey(id,username,display_name,avatar_url)";
+
+    async function loadNotifications() {
+      if (!S.sb || !S.uid) return;
+      try {
+        var res = await S.sb.from("notifications").select(SEL).eq("user_id", S.uid).eq("type", "follow").order("created_at", { ascending: false }).limit(30);
+        if (res.error) throw res.error;
+        S.items = res.data || [];
+        var ids = S.items.map(function (n) { return n.actor && n.actor.id; }).filter(Boolean);
+        S.following = new Set();
+        if (ids.length) {
+          var f = await S.sb.from("follows").select("following_id").eq("follower_id", S.uid).in("following_id", ids);
+          (f.data || []).forEach(function (r) { S.following.add(r.following_id); });
+        }
+        renderList();
+      } catch (e) { /* bell just stays empty */ }
+    }
+
+    var toastTimer = null;
+    function showToast(n) {
+      try {
+        var a = n.actor || {};
+        var old = document.querySelector(".nf-toast");
+        if (old) old.remove();
+        var t = mk("a", "nf-toast");
+        t.href = profileHref(a);
+        t.setAttribute("role", "status");
+        t.appendChild(avatarImg(a, "nf-av"));
+        var txt = mk("div", "nf-txt");
+        txt.appendChild(mk("b", "", nameOf(a)));
+        txt.appendChild(document.createTextNode(" started following you"));
+        t.appendChild(txt);
+        document.body.appendChild(t);
+        requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.add("show"); }); });
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          t.classList.remove("show");
+          setTimeout(function () { if (t.parentNode) t.remove(); }, 600);
+        }, 6000);
+        if (navigator.vibrate) navigator.vibrate(8);
+      } catch (e) {}
+    }
+
+    async function onInsert(row) {
+      try {
+        var res = await S.sb.from("notifications").select(SEL).eq("id", row.id).maybeSingle();
+        var n = res.data || { id: row.id, created_at: row.created_at, read_at: null, actor: null };
+        if (!n.actor) return;
+        S.items = [n].concat(S.items.filter(function (x) { return x.id !== n.id; })).slice(0, 30);
+        if (S.open) n.read_at = null;
+        renderList();
+        showToast(n);
+      } catch (e) {}
+    }
+
+    function subscribe() {
+      unsubscribe();
+      try {
+        S.channel = S.sb.channel("notif:" + S.uid)
+          .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: "user_id=eq." + S.uid }, function (p) { onInsert(p.new); })
+          .on("postgres_changes", { event: "DELETE", schema: "public", table: "notifications", filter: "user_id=eq." + S.uid }, function (p) {
+            var id = p.old && p.old.id;
+            if (id == null) return;
+            S.items = S.items.filter(function (x) { return x.id !== id; });
+            renderList();
+          })
+          .subscribe();
+      } catch (e) {}
+    }
+    function unsubscribe() {
+      try { if (S.channel && S.sb) S.sb.removeChannel(S.channel); } catch (e) {}
+      S.channel = null;
+    }
+
+    // ---------- bell interactions ----------
+    document.addEventListener("click", function (e) {
+      if (!bell) return;
+      if (e.target.closest(".notif-bell")) { setOpen(!S.open); return; }
+      if (S.open && !e.target.closest(".nf-panel")) setOpen(false);
+      else if (S.open && e.target.closest(".nf-row")) setOpen(false);
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && S.open) setOpen(false); });
+    window.addEventListener("resize", function () { if (S.open) positionPanel(); });
+    window.addEventListener("scroll", function () { if (S.open) positionPanel(); }, { passive: true });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden && S.uid) loadNotifications(); });
+
+    // ---------- "people you follow own this" on cards ----------
+    var cardTimer = null;
+    var cardCache = new Map(); // productId -> [profiles]
+
+    function clearCardAvatars() {
+      document.querySelectorAll(".friends-own").forEach(function (el) { el.remove(); });
+      document.querySelectorAll("[data-fo-done]").forEach(function (el) { el.removeAttribute("data-fo-done"); });
+      cardCache.clear();
+    }
+
+    function paintCard(card, list) {
+      var host = card.querySelector(".product-image") || card;
+      if (host.querySelector(".friends-own") || !list || !list.length) return;
+      var wrap = mk("span", "friends-own");
+      var who = list.map(nameOf);
+      wrap.setAttribute("role", "img");
+      wrap.setAttribute("aria-label", (who.length > 2 ? who[0] + " and " + (who.length - 1) + " others you follow" : who.join(" and ") + (who.length > 1 ? " (you follow them)" : " (you follow)")) + " own this");
+      wrap.title = who.length > 3 ? who.slice(0, 3).join(", ") + " +" + (who.length - 3) + " you follow own this" : who.join(", ") + " you follow own this";
+      list.slice(0, 3).forEach(function (p) { wrap.appendChild(avatarImg(p, "")); });
+      if (list.length > 3) wrap.appendChild(mk("span", "fo-n", "+" + (list.length - 3)));
+      else wrap.appendChild(mk("span", "fo-n", ""));
+      if (!wrap.lastChild.textContent) wrap.lastChild.remove();
+      host.appendChild(wrap);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { wrap.classList.add("in"); }); });
+    }
+
+    async function decorateCards() {
+      if (!S.sb || !S.uid) return;
+      var cards = Array.prototype.filter.call(document.querySelectorAll("a.product-card"), function (c) {
+        return !c.hasAttribute("data-fo-done") && c.querySelector(".wishlist-heart[data-heart-id]");
+      });
+      if (!cards.length) return;
+      var byId = new Map();
+      cards.forEach(function (c) {
+        c.setAttribute("data-fo-done", "1");
+        var id = Number(c.querySelector(".wishlist-heart").dataset.heartId);
+        if (!isFinite(id)) return;
+        if (!byId.has(id)) byId.set(id, []);
+        byId.get(id).push(c);
+      });
+      var need = Array.from(byId.keys()).filter(function (id) { return !cardCache.has(id); });
+      if (need.length) {
+        try {
+          var res = await S.sb.rpc("friends_owning", { p_ids: need });
+          if (res.error) throw res.error;
+          need.forEach(function (id) { cardCache.set(id, []); });
+          (res.data || []).forEach(function (r) {
+            var arr = cardCache.get(Number(r.product_id));
+            if (arr && !arr.some(function (p) { return p.user_id === r.user_id; })) arr.push(r);
+          });
+        } catch (e) { cards.forEach(function (c) { c.removeAttribute("data-fo-done"); }); return; }
+      }
+      if (!S.uid) return;
+      byId.forEach(function (els, id) { els.forEach(function (c) { if (c.isConnected) paintCard(c, cardCache.get(id)); }); });
+    }
+
+    function scheduleCards() {
+      clearTimeout(cardTimer);
+      cardTimer = setTimeout(decorateCards, 200);
+    }
+
+    if ("MutationObserver" in window) {
+      new MutationObserver(function (muts) {
+        if (!S.uid) return;
+        for (var i = 0; i < muts.length; i++) {
+          if (muts[i].addedNodes && muts[i].addedNodes.length) { scheduleCards(); return; }
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+
+    // ---------- session wiring ----------
+    async function onSession(user) {
+      var uid = user ? user.id : null;
+      if (uid === S.uid) { if (uid) { if (!bell) buildBell(); scheduleCards(); } return; }
+      S.uid = uid;
+      S.items = []; S.following = new Set();
+      if (!uid) {
+        unsubscribe(); destroyBell(); clearCardAvatars();
+        return;
+      }
+      if (!bell) buildBell();
+      await loadNotifications();
+      subscribe();
+      scheduleCards();
+    }
+
+    (async function boot() {
+      S.sb = await getClient();
+      if (!S.sb) return;
+      try {
+        var s = await S.sb.auth.getSession();
+        onSession(s && s.data && s.data.session ? s.data.session.user : null);
+      } catch (e) {}
+      S.sb.auth.onAuthStateChange(function (_ev, session) {
+        // never await supabase calls inside this callback (auth deadlock) — defer
+        setTimeout(function () { onSession(session ? session.user : null); }, 0);
+      });
+    })();
+  }
+
   function bindGlobalOnce() {
     if (globalBound) return;
     globalBound = true;
@@ -667,6 +1075,7 @@
     bindSpoiderScorePanels();
     bindAffiliateClickTracking();
     bindWishlistHearts();
+    bindSocial();
 
     // ---- Cursor-trail particles (fine-pointer / desktop only) ----
     if (supportsHoverFine && !prefersReducedMotion) {
