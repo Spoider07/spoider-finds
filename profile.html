@@ -651,6 +651,11 @@
       @keyframes pfBtnSheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
       @media (hover:hover){.pf-wrap .pf-btn.pf-follow:not(.is-on):hover{transform:translateY(-1px)}}
       @media (prefers-reduced-motion:reduce){.pf-cover-glow::after,.pf-wrap .pf-btn.pf-follow:not(.is-on)::after{animation:none}}
+
+      .pf-wrap .pf-btn.pf-notif{position:relative}
+      .pf-notif-dot{position:absolute;top:7px;left:25px;width:8px;height:8px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 0 2px var(--bg);opacity:0;transform:scale(.4);transition:opacity .25s var(--ease),transform .35s var(--ease-spring);pointer-events:none}
+      .pf-notif.has-unread .pf-notif-dot{opacity:1;transform:scale(1)}
+      @media (min-width:761px){.pf-wrap .pf-btn.pf-notif{display:none!important}}
 </style>
 
     <div class="pf-wrap" id="pfRoot" data-rank="0" data-accent="gold" data-frame="ring" data-font="serif">
@@ -690,6 +695,7 @@
             <button class="btn pf-btn" id="pfThemeBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg><span class="pf-btn-label">Customize</span></button>
             <button class="btn pf-btn pf-btn-iconm" id="pfEditBtn" type="button" aria-label="Edit profile" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span class="pf-btn-label">Edit</span></button>
             <button class="btn pf-btn pf-btn-iconm" id="pfShareBtn" type="button" aria-label="Share profile" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="pf-btn-label">Share</span></button>
+            <button class="btn pf-btn pf-btn-iconm pf-notif" id="pfNotifBtn" type="button" aria-label="Notifications" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 1112 0c0 5 2 6.5 2 6.5H4S6 14 6 9z"/><path d="M10 19a2 2 0 004 0"/></svg><span class="pf-btn-label">Alerts</span><i class="pf-notif-dot" aria-hidden="true"></i></button>
           </div>
         </div>
 
@@ -1264,7 +1270,7 @@
         function toggle(c) {
           var mo = box.querySelector('.pf-mo');
           if (!c || !mo) return;
-          var on = c.classList.contains('is-focus');
+var on = c.classList.contains('is-focus');
           [].forEach.call(mo.querySelectorAll('.is-focus'), function (x) { x.classList.remove('is-focus'); });
           if (!on) c.classList.add('is-focus');
           mo.classList.toggle('has-focus', !on);
@@ -1285,7 +1291,7 @@
         if (n < 2) {
           if (dnaIO) { dnaIO.disconnect(); dnaIO = null; }
           state.dnaSig = ''; state.dnaShown = false;
-if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="pf-dna-hint">Own 2 finds to unlock your Taste DNA.</p>'; box.hidden = false; }
+          if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="pf-dna-hint">Own 2 finds to unlock your Taste DNA.</p>'; box.hidden = false; }
           else box.hidden = true;
           return;
         }
@@ -1378,6 +1384,27 @@ if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="
         box.hidden = false;
         box.classList.remove('pf-rise'); void box.offsetWidth; box.classList.add('pf-rise');
       }
+      var notifOff = null, notifBound = false;
+      function bindNotif() {
+        var b = el('pfNotifBtn');
+        if (!b) return;
+        if (!notifBound) {
+          notifBound = true;
+          b.addEventListener('click', function () { if (window.SpoiderNotify) window.SpoiderNotify.openSheet(); });
+        }
+        var tries = 0;
+        (function hook() {
+          if (!alive) return;
+          if (window.SpoiderNotify) {
+            if (notifOff) notifOff();
+            notifOff = window.SpoiderNotify.onChange(function (n) { b.classList.toggle('has-unread', n > 0); });
+            if (location.hash === '#notifications') { history.replaceState(null, '', location.pathname + location.search); window.SpoiderNotify.openSheet(); }
+            return;
+          }
+          if (++tries < 40) later(hook, 150);
+        })();
+      }
+
       function showProfile() {
         el('pfSkeleton').hidden = true; el('pfSignin').hidden = true; el('pfProfile').hidden = false;
         el('pfWeb').removeAttribute('data-key');
@@ -1497,6 +1524,8 @@ if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="
         el('pfMeta').innerHTML = parts.join('');
         el('pfEditBtn').hidden = !isOwn || !el('pfEditForm').hidden;
         el('pfThemeBtn').hidden = !isOwn;
+        el('pfNotifBtn').hidden = !isOwn;
+        if (isOwn) bindNotif();
         el('pfShareBtn').hidden = !p.username;
       }
 
@@ -2279,6 +2308,7 @@ if (state.isOwn) { box.className = 'pf-dna is-hint'; box.innerHTML = '<p class="
       }
 
       function cleanup() {
+        if (notifOff) { notifOff(); notifOff = null; }
         alive = false;
         closeCert(true);
         closeSheet(true);
