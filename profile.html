@@ -1268,7 +1268,7 @@
           var r = t.getBoundingClientRect();
           t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
           t.style.setProperty('--my', (e.clientY - r.top) + 'px');
-}, { passive: true });
+        }, { passive: true });
         function toggle(c) {
           var mo = box.querySelector('.pf-mo');
           if (!c || !mo) return;
@@ -1443,6 +1443,20 @@
         return r2.data || null;
       }
 
+      // The address bar can change after this script has already booted (page transitions push the new
+      // ?u= after swapping content, or a link points at another profile on this same page).
+      // Keep the shown profile in step with the URL instead of staying on whoever loaded first.
+      var urlTimer = null, urlBusy = false;
+      function urlWatch() {
+        if (!alive) return;
+        var t = (new URLSearchParams(window.location.search).get('u') || '').trim().toLowerCase();
+        if (t !== state.bootTarget && !urlBusy) {
+          urlBusy = true;
+          boot().then(function () { urlBusy = false; }, function () { urlBusy = false; });
+        }
+        urlTimer = setTimeout(urlWatch, 250);
+      }
+
       // watchdog: if loading throws or hangs, show the reason instead of an endless skeleton
       async function boot() {
         try {
@@ -1465,6 +1479,7 @@
         showLoading();
         var sb = state.sb;
         var target = (new URLSearchParams(window.location.search).get('u') || '').trim().toLowerCase();
+        state.bootTarget = target;
         var sessionRes = await sb.auth.getSession();
         if (!alive || my !== bootSeq) return;
         var user = sessionRes.data && sessionRes.data.session ? sessionRes.data.session.user : null;
@@ -1583,7 +1598,7 @@
         p.display_name = display_name; p.username = username || null; p.bio = bio; p.location = location || null; p.social_url = social_url;
         var params = new URLSearchParams(window.location.search);
         if (params.get('u') && p.username) {
-          try { window.history.replaceState(window.history.state, '', window.location.pathname + '?u=' + encodeURIComponent(p.username)); } catch (e) {}
+          try { window.history.replaceState(window.history.state, '', window.location.pathname + '?u=' + encodeURIComponent(p.username)); state.bootTarget = String(p.username).trim().toLowerCase(); } catch (e) {}
         }
         renderHeader(); renderBadges(); closeEdit();
         say('Saved ✓', 2000);
@@ -2327,6 +2342,7 @@
       }
 
       function cleanup() {
+        clearTimeout(urlTimer);
         if (notifOff) { notifOff(); notifOff = null; }
         alive = false;
         closeCert(true);
@@ -2355,7 +2371,7 @@
           return;
         }
         state.sb = client;
-        boot().then(function () { if (alive) watchAuth(); });
+        boot().then(function () { if (alive) { watchAuth(); urlWatch(); } });
       });
     })();
     </script>
