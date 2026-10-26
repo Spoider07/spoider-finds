@@ -670,13 +670,13 @@
       .pf-fd-note{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
       .pf-fd-lead{font-family:var(--font-display);font-weight:500;font-size:1.7rem;line-height:1.15;letter-spacing:-.015em;margin:0 0 6px}
       .pf-fd-lead em{font-style:italic;color:var(--gold-bright)}
-      .pf-fd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));column-gap:20px;row-gap:34px;padding-top:46px;justify-items:start}
-      .pf-fd-cell{position:relative;z-index:1;width:100%;max-width:340px;min-width:0}
+      .pf-fd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;row-gap:34px;padding-top:46px;max-width:960px}
+      .pf-fd-cell{position:relative;z-index:1;width:100%;min-width:0}
       .pf-fd-cell.is-open{z-index:6}
       .pf-fd-cell > .gf-root{display:block;width:100%}
 
       /* ---------- the folder ---------- */
-      .gf-root{--gf-px:0;--gf-py:0;--gf-k:1;--gf-ease:cubic-bezier(.2,.8,.2,1);--gf-spring:cubic-bezier(.34,1.36,.5,1);--gf-hinge:0deg;--gf-lift:42px;--gf-spread:0px;--gf-fan:0deg;--gf-stack:15px;--gf-ink:#f5f4f0;--gf-ink-soft:rgba(245,244,240,.58);position:relative;display:block;isolation:isolate;-webkit-tap-highlight-color:transparent;aspect-ratio:340/326}
+      .gf-root{--gf-px:0;--gf-py:0;--gf-k:1;--gf-ease:cubic-bezier(.2,.8,.2,1);--gf-spring:cubic-bezier(.34,1.36,.5,1);--gf-hinge:0deg;--gf-lift:42px;--gf-spread:0px;--gf-fan:0deg;--gf-stack:15px;--gf-keyw:max(50px,calc(34px / var(--gf-k)));--gf-ink:#f5f4f0;--gf-ink-soft:rgba(245,244,240,.58);position:relative;display:block;isolation:isolate;-webkit-tap-highlight-color:transparent;aspect-ratio:340/326}
       @media (hover:hover){.gf-root:hover{--gf-hinge:-11deg;--gf-lift:-34px;--gf-spread:8px;--gf-fan:1.4deg;--gf-stack:10px}}
       .gf-root:has(.gf-hit:focus-visible){--gf-hinge:-11deg;--gf-lift:-34px;--gf-spread:8px;--gf-fan:1.4deg;--gf-stack:10px}
       .gf-root[data-open][data-open][data-open]{--gf-hinge:-24deg;--gf-lift:-96px;--gf-spread:30px;--gf-fan:4.2deg;--gf-stack:30px}
@@ -704,8 +704,8 @@
       .gf-sheet-img{position:absolute;left:0;top:0;width:272px;height:184px;max-width:none;object-fit:cover;object-position:50% 24%;display:block}
       .gf-sheet::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(8,7,6,.78) 0%,rgba(8,7,6,0) 46%);pointer-events:none}
       .gf-sheet-head{position:absolute;left:14px;right:14px;top:11px;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:10px;white-space:nowrap}
-      .gf-sheet-name{overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body);font-size:12.5px;font-weight:600;letter-spacing:-.005em;color:#f5f4f0}
-      .gf-sheet-go{flex:none;width:12px;height:12px;color:rgb(var(--ac2));opacity:.9}
+      .gf-sheet-name{overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body);font-size:max(12.5px,calc(10px / var(--gf-k)));font-weight:600;letter-spacing:-.005em;color:#f5f4f0}
+      .gf-sheet-go{flex:none;width:max(12px,calc(9px / var(--gf-k)));height:max(12px,calc(9px / var(--gf-k)));color:rgb(var(--ac2));opacity:.9}
       .gf-root[data-open] .gf-sheet:hover,.gf-root[data-open] .gf-sheet:focus-visible{transform:translate(calc(var(--gf-jx) + var(--gf-slot) * var(--gf-spread)),calc(var(--gf-lift) + var(--gf-depth) * var(--gf-stack) * -1 - 18px)) rotate(calc(var(--gf-slot) * var(--gf-fan) * .6));box-shadow:inset 0 0 0 1px rgba(var(--ac2),.5),0 22px 40px -12px rgba(0,0,0,.8);transition-delay:0s}
       .gf-sheet:focus-visible{outline:2px solid rgb(var(--ac2));outline-offset:2px}
 
@@ -718,16 +718,16 @@
       .gf-hit{all:unset;position:absolute;inset:0;z-index:1;cursor:pointer}
       .gf-hit:focus-visible ~ .gf-label .gf-title{text-decoration:underline;text-decoration-color:rgb(var(--ac2));text-decoration-thickness:1.5px;text-underline-offset:4px}
       .gf-front:has(.gf-hit:focus-visible) .gf-front-rim path{stroke-width:4}
-      .gf-label{position:absolute;z-index:2;left:28px;bottom:30px;display:flex;flex-direction:column;gap:6px;max-width:210px;pointer-events:none;color:var(--gf-ink)}
-      .gf-title{font-family:var(--font-display);font-size:22px;font-weight:500;line-height:1.1;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .gf-meta{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgb(var(--ac2));opacity:.82;white-space:nowrap}
+      .gf-label{position:absolute;z-index:2;left:28px;bottom:30px;display:flex;flex-direction:column;gap:6px;max-width:calc(340px - 28px - var(--gf-keyw) - 20px);pointer-events:none;color:var(--gf-ink)}
+      .gf-title{font-family:var(--font-display);font-size:max(22px,calc(13.5px / var(--gf-k)));font-weight:500;line-height:1.1;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .gf-meta{font-family:var(--font-mono);font-size:max(11px,calc(8.5px / var(--gf-k)));letter-spacing:.14em;text-transform:uppercase;color:rgb(var(--ac2));opacity:.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
       /* the key: opens the full list */
-      .gf-key{all:unset;box-sizing:border-box;position:absolute;right:22px;bottom:22px;z-index:12;width:50px;height:50px;border-radius:16px;display:grid;place-items:center;cursor:pointer;color:rgb(var(--ac2));background:radial-gradient(120% 90% at 50% 0%,#2b241a 0%,#12100c 58%,#070605 100%);box-shadow:inset 0 1px 0 rgba(var(--ac2),.28),inset 0 -3px 8px rgba(0,0,0,.7),0 0 0 1px rgba(var(--ac),.4),0 14px 22px -8px rgba(0,0,0,.6);transition:transform .35s var(--gf-spring),box-shadow .35s var(--gf-ease),opacity .6s var(--gf-ease) .7s,scale .7s var(--gf-spring) .7s}
+      .gf-key{all:unset;box-sizing:border-box;position:absolute;right:22px;bottom:22px;z-index:12;width:var(--gf-keyw);height:var(--gf-keyw);border-radius:calc(var(--gf-keyw) * .32);display:grid;place-items:center;cursor:pointer;color:rgb(var(--ac2));background:radial-gradient(120% 90% at 50% 0%,#2b241a 0%,#12100c 58%,#070605 100%);box-shadow:inset 0 1px 0 rgba(var(--ac2),.28),inset 0 -3px 8px rgba(0,0,0,.7),0 0 0 1px rgba(var(--ac),.4),0 14px 22px -8px rgba(0,0,0,.6);transition:transform .35s var(--gf-spring),box-shadow .35s var(--gf-ease),opacity .6s var(--gf-ease) .7s,scale .7s var(--gf-spring) .7s}
       .gf-key:hover{transform:translateY(-2px)}
       .gf-key:active{transform:translateY(0) scale(.93);transition-duration:.12s}
       .gf-key:focus-visible{outline:2px solid rgb(var(--ac2));outline-offset:3px}
-      .gf-glyph{display:block;width:22px;height:22px;max-width:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+      .gf-glyph{display:block;width:calc(var(--gf-keyw) * .44);height:calc(var(--gf-keyw) * .44);max-width:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
       /* the glass is always smoked, so inside it the accent keeps its bright (dark-theme) value in light mode too */
       html[data-theme="light"] .pf-wrap .gf-root:not([data-ghost]){--ac:201,168,118;--ac2:232,199,102}
@@ -745,8 +745,8 @@
       .gf-root[data-ghost] .gf-shadow{opacity:.35}
       .gf-root[data-ghost] .gf-meta{color:var(--text-secondary);opacity:1}
       .gf-root[data-ghost] .gf-title{color:var(--text-primary)}
-      .gf-plus{position:absolute;right:26px;bottom:26px;z-index:2;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:rgb(var(--ac2));border:1px solid rgba(var(--ac),.4);pointer-events:none}
-      .gf-plus svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+      .gf-plus{position:absolute;right:26px;bottom:26px;z-index:2;width:calc(var(--gf-keyw) * .84);height:calc(var(--gf-keyw) * .84);border-radius:calc(var(--gf-keyw) * .27);display:grid;place-items:center;color:rgb(var(--ac2));border:1px solid rgba(var(--ac),.4);pointer-events:none}
+      .gf-plus svg{width:44%;height:44%;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
 
       /* entrance: the folder assembles itself the first time it is on screen */
       .gf-root:not([data-entered]) .gf-back,.gf-root:not([data-entered]) .gf-back-rim{translate:0 22px;opacity:0}
@@ -779,13 +779,16 @@
         .pf-fd{margin:0 0 38px}
         .pf-fd-lead{font-size:2.2rem}
         .pf-fd-title{font-size:1.1rem}
-        .pf-fd-grid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));column-gap:26px;row-gap:40px}
+        .pf-fd-grid{column-gap:24px;row-gap:42px}
       }
       @media (prefers-reduced-motion:reduce){
         .gf-root *,.gf-root *::before,.gf-root *::after{transition-duration:0s!important;transition-delay:0s!important;animation:none!important}
         .gf-tilt{transform:none}
         .pf-fs-row{animation:none}
       }
+      /* very narrow folders: the key only appears once the folder is open, the label gets the room */
+      .gf-root[data-tiny] .gf-label{max-width:290px}
+      .gf-root[data-tiny]:not([data-open]) .gf-key{opacity:0;pointer-events:none}
       .gf-root:not([data-open]) .gf-sheet{pointer-events:none}
 </style>
 
@@ -1140,7 +1143,7 @@
           slotPts.push([tx, tyy]);
           nodes += '<g class="w-node" style="--d:' + Math.max(0, end - 0.12).toFixed(2) + 's"><circle class="w-slot" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="4"/><circle class="w-halo" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="8"/><circle class="w-dot" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="3"/></g>';
         }
-        svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--gl:0s;--ge:linear" d="' + tr + '"/>' + paths + forks + pulses +
+svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--gl:0s;--ge:linear" d="' + tr + '"/>' + paths + forks + pulses +
           '<path class="t-tpulse" pathLength="1" style="--pl:' + (GT + 0.4) + 's" d="' + tr + '"/>' + nodes +
           '<circle class="w-hub" cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="2.4"/>';
 
@@ -1148,7 +1151,7 @@
         var tok = svg._wt;
         if (reduce) { svg.classList.add('grown', 'settled'); return; }
         later(function () { if (svg._wt === tok) svg.classList.add('grown'); }, 380);
-later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.round((maxEnd + 0.9) * 1000) + 380);
+        later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.round((maxEnd + 0.9) * 1000) + 380);
       }
 
       function buildWeb() {
@@ -1864,7 +1867,6 @@ later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.r
           b.classList.remove('is-done');
         }, 1900);
       }
-
       // =============== social: follow, followers, following ===============
       var soc = { ok: false, counts: { followers: 0, following: 0 }, iFollow: false, followsMe: false, mine: {}, mutual: [], busy: false, seq: 0 };
       var sheetEl = null, sheetFocusBack = null, sheetTab = 'followers', sheetSeq = 0, sheetRows = 0, sheetCounts = false;
@@ -2635,7 +2637,7 @@ later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.r
           '<div class="gf-front" style="clip-path:path(\'' + GF_FRONT + '\')"><div class="gf-tint" aria-hidden="true"></div>' +
           '<svg class="gf-rim gf-front-rim" viewBox="0 0 340 198" aria-hidden="true"><defs><linearGradient id="gfr' + uid + '" x1="0" y1="0" x2="0" y2="1"><stop class="gf-rs0" offset="0"/><stop class="gf-rs1" offset=".35"/><stop class="gf-rs2" offset="1"/></linearGradient></defs><path d="' + GF_FRONT + '" stroke="url(#gfr' + uid + ')"/></svg>' +
           '<button type="button" class="gf-hit" data-fd-ghost aria-label="Start your first collection. Add a find you own."></button>' +
-          '<div class="gf-label"><span class="gf-title">First collection</span><span class="gf-meta">Own a find to begin</span></div>' +
+          '<div class="gf-label"><span class="gf-title">First collection</span><span class="gf-meta">Own a find</span></div>' +
           '<span class="gf-plus" aria-hidden="true">' + PLUS_SVG + '</span></div></div></div></div></div>';
       }
 
@@ -2657,7 +2659,7 @@ later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.r
         var list = foldersOf();
         for (var i = 0; i < list.length; i++) {
           var w = list[i].clientWidth;
-          if (w) list[i].style.setProperty('--gf-k', (w / GF_W).toFixed(4));
+          if (w) { var kk = w / GF_W; list[i].style.setProperty('--gf-k', kk.toFixed(4)); if (kk < 0.42) list[i].setAttribute('data-tiny', ''); else list[i].removeAttribute('data-tiny'); }
         }
       }
 
@@ -2677,7 +2679,7 @@ later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.r
 
         var grid = el('pfFdGrid'), sample = grid.clientWidth || box.clientWidth || 300;
         box.hidden = false;
-        var gw = grid.clientWidth || sample, cols = Math.max(1, Math.floor((gw + 20) / (270 + 20))), k = Math.min(1, ((gw - (cols - 1) * 20) / cols) / GF_W) || 0.8;
+        var gw = grid.clientWidth || sample, gap = window.innerWidth >= 900 ? 24 : 12, k = Math.max(0.3, ((gw - gap) / 2) / GF_W) || 0.5;
         grid.innerHTML = n ? groups.map(function (g, i) { return folderHTML(g, i, k); }).join('') : ghostHTML(k);
         el('pfFdNote').textContent = n ? groups.length + (groups.length === 1 ? ' folder' : ' folders') : 'Start here';
         fitFolders();
@@ -2738,7 +2740,6 @@ later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.r
         inp.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
         later(function () { inp.focus({ preventScroll: true }); }, reduce ? 0 : 350);
       }
-
       // =============== "view all" sheet ===============
       function openFolderSheet(key) {
         var g = findGroup(key);
@@ -2876,7 +2877,7 @@ later(function () { if (svg._wt === tok) svg.classList.add('settled'); }, Math.r
         el('pfFollowBtn').addEventListener('click', toggleFollowMain);
         el('pfFollowersBtn').addEventListener('click', function () { openSheet('followers'); });
         el('pfFollowingBtn').addEventListener('click', function () { openSheet('following'); });
-el('pfMutual').addEventListener('click', function () { openSheet('mutual'); });
+        el('pfMutual').addEventListener('click', function () { openSheet('mutual'); });
         el('pfThemeBtn').addEventListener('click', openTheme);
         el('pfThCancel').addEventListener('click', function () { closeTheme(true); });
         el('pfThSave').addEventListener('click', saveTheme);
