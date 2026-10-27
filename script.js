@@ -1929,3 +1929,178 @@
     initPage();
   });
 })();
+
+// ============================================================
+// Liquid-glass product cards — the light source.
+// CSS (style.css, "LIQUID GLASS PRODUCT CARDS") draws the glass;
+// this only feeds it three numbers per card:
+//   --mx / --my  where the light sits on the card
+//   --spec       how strongly it shines
+// Desktop: the light follows the cursor, with a little drag so it
+// feels like liquid, and eases home on leave. Touch: no hover, so
+// the light slides across each card as it travels up the screen;
+// a touch flashes it under the finger. Also copies each poster's
+// URL into --card-img so its colour can melt into the glass.
+// Delegated + observer based, so cards injected later (Supabase
+// loaders, page transitions) are picked up with no rebinding.
+// Only visible cards are ever touched; nothing runs while idle.
+// ============================================================
+(function () {
+  "use strict";
+  if (window.__sfGlass) return;
+  window.__sfGlass = true;
+
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var REST = { x: 24, y: 0, s: 0.38 };
+  var st = new WeakMap();
+  var live = new Set();
+  var visible = new Set();
+  var raf = 0;
+  var io = null;
+
+  function get(card) {
+    var s = st.get(card);
+    if (!s) { s = { x: REST.x, y: REST.y, s: REST.s, tx: REST.x, ty: REST.y, ts: REST.s, follow: false }; st.set(card, s); }
+    return s;
+  }
+  function paint(card, s) {
+    card.style.setProperty("--mx", s.x.toFixed(1) + "%");
+    card.style.setProperty("--my", s.y.toFixed(1) + "%");
+    card.style.setProperty("--spec", s.s.toFixed(3));
+  }
+  function loop() {
+    raf = 0;
+    live.forEach(function (card) {
+      var s = st.get(card);
+      if (!s || !card.isConnected) { live.delete(card); return; }
+      var k = s.follow ? 0.16 : 0.1;                        // a little drag = liquid
+      s.x += (s.tx - s.x) * k; s.y += (s.ty - s.y) * k; s.s += (s.ts - s.s) * 0.12;
+      paint(card, s);
+      if (Math.abs(s.tx - s.x) < 0.06 && Math.abs(s.ty - s.y) < 0.06 && Math.abs(s.ts - s.s) < 0.004) {
+        s.x = s.tx; s.y = s.ty; s.s = s.ts; paint(card, s); live.delete(card);
+      }
+    });
+    if (live.size) raf = requestAnimationFrame(loop);
+  }
+  function wake(card) { live.add(card); if (!raf) raf = requestAnimationFrame(loop); }
+
+  function aim(card, ev) {
+    var r = card.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var s = get(card);
+    s.tx = Math.max(-10, Math.min(110, (ev.clientX - r.left) / r.width * 100));
+    s.ty = Math.max(-10, Math.min(110, (ev.clientY - r.top) / r.height * 100));
+  }
+  function cardOf(t) { return t && t.closest ? t.closest(".product-card") : null; }
+
+  // ---- pointer (mouse / pen): follow while hovering ----
+  if (!reduce) {
+    document.addEventListener("pointermove", function (ev) {
+      if (ev.pointerType === "touch") return;
+      var card = cardOf(ev.target);
+      if (!card) return;
+      var s = get(card);
+      s.follow = true; s.ts = 0.95;
+      aim(card, ev); wake(card);
+    }, { passive: true });
+    document.addEventListener("pointerout", function (ev) {
+      if (ev.pointerType === "touch") return;
+      var card = cardOf(ev.target);
+      if (!card) return;
+      var to = cardOf(ev.relatedTarget);
+      if (to === card) return;
+      var s = get(card);
+      s.follow = false; s.tx = REST.x; s.ty = REST.y; s.ts = REST.s; wake(card);
+    }, { passive: true });
+    // touch: a flash of light right under the finger
+    document.addEventListener("pointerdown", function (ev) {
+      var card = cardOf(ev.target);
+      if (!card) return;
+      var s = get(card);
+      aim(card, ev); s.x = s.tx; s.y = s.ty; s.follow = true; s.ts = 1.1; wake(card);
+    }, { passive: true });
+    var release = function (ev) {
+      if (ev.pointerType !== "touch") return;
+      var card = cardOf(ev.target);
+      if (!card) return;
+      var s = get(card);
+      s.follow = false; s.ts = scrollSpec(card); wake(card);
+    };
+    document.addEventListener("pointerup", release, { passive: true });
+    document.addEventListener("pointercancel", release, { passive: true });
+  }
+
+  // ---- no hover (phones): the light travels with the scroll ----
+  var coarse = window.matchMedia("(hover: none)").matches;
+  function scrollPos(card) {
+    var r = card.getBoundingClientRect(), vh = window.innerHeight || 800;
+    var t = Math.max(0, Math.min(1, (r.top + r.height / 2) / vh));   // 0 top .. 1 bottom
+    return { x: 18 + 64 * (1 - t), y: -6 + 46 * (1 - t) };
+  }
+  function scrollSpec(card) { return coarse ? 0.55 : REST.s; }
+  var sRaf = 0;
+  function onScroll() {
+    if (sRaf) return;
+    sRaf = requestAnimationFrame(function () {
+      sRaf = 0;
+      visible.forEach(function (card) {
+        if (!card.isConnected) { visible.delete(card); return; }
+        var s = get(card);
+        if (s.follow) return;
+        var p = scrollPos(card);
+        s.tx = p.x; s.ty = p.y; s.ts = scrollSpec(card);
+        wake(card);
+      });
+    });
+  }
+  if (coarse && !reduce) {
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+  }
+
+  // ---- poster colour -> glass ----
+  function wash(card) {
+    var img = card.querySelector(".product-image img");
+    if (!img) return;
+    var src = img.currentSrc || img.getAttribute("src");
+    if (!src || !img.complete || !img.naturalWidth) return;
+    if (card.__sfWash === src) return;
+    card.__sfWash = src;
+    card.style.setProperty("--card-img", 'url("' + String(src).replace(/["\\\n\r]/g, "") + '")');
+    card.setAttribute("data-wash", "");
+  }
+  document.addEventListener("load", function (ev) {
+    var t = ev.target;
+    if (t && t.tagName === "IMG") { var c = cardOf(t); if (c) wash(c); }
+  }, true);
+
+  function adopt(card) {
+    if (card.__sfGlass) return;
+    card.__sfGlass = true;
+    wash(card);
+    if (io) io.observe(card);
+  }
+  function scan(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (root.matches && root.matches(".product-card")) adopt(root);
+    var list = root.querySelectorAll(".product-card");
+    for (var i = 0; i < list.length; i++) adopt(list[i]);
+  }
+  if ("IntersectionObserver" in window) {
+    io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting) { visible.add(e.target); if (coarse && !reduce) { var s = get(e.target), p = scrollPos(e.target); s.tx = p.x; s.ty = p.y; s.ts = scrollSpec(e.target); wake(e.target); } }
+        else { visible.delete(e.target); }
+      });
+    }, { rootMargin: "80px 0px" });
+  }
+  var pending = 0;
+  new MutationObserver(function (muts) {
+    if (pending) return;
+    pending = requestAnimationFrame(function () {
+      pending = 0;
+      scan(document);
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  scan(document);
+})();

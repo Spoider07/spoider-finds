@@ -3547,3 +3547,240 @@ html[data-theme="light"] .hero-mark-glint {
 @media (prefers-reduced-motion: reduce) {
   .pf-avatar-ring { animation: none; }
 }
+
+/* =========================================================
+   LIQUID GLASS PRODUCT CARDS  (appended last on purpose: it
+   layers over the older .product-card rules above, so deleting
+   this whole block brings the previous cards straight back)
+   - The poster pours its own colour into a frosted slab.
+   - A light source (cursor on desktop, scroll position on phones)
+     slides across the rim and the glass: --mx / --my / --spec,
+     driven by script.js.
+   - Hover/press = light + a soft spring, never a lift-and-shadow.
+   ========================================================= */
+.product-card {
+  --mx: 24%;
+  --my: 0%;
+  --spec: .38;
+  --card-img: none;
+  background: #0b0b0c;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  /* scale = press spring, translate = hover lift; both are separate
+     properties so they never fight the scroll-driven transform
+     that the Featured section sets inline. */
+  transition-property: opacity, scale, translate, box-shadow !important;
+  transition-duration: .45s, .55s, .5s, .5s !important;
+  transition-timing-function: var(--ease), var(--ease-spring), var(--ease), var(--ease) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .035);
+}
+.product-card:hover {
+  border-color: transparent;
+  transform: none;
+  translate: 0 -3px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .05), 0 30px 60px -38px rgba(0, 0, 0, .85);
+}
+.product-card:active {
+  border-color: transparent;
+  scale: .985;
+  translate: 0 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .06);
+  transition-duration: .16s, .16s, .2s, .2s !important;
+}
+
+/* rim: a 1px glass edge, brightest where the light is */
+.product-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  top: 0; left: 0; right: 0;
+  height: auto;
+  border-radius: inherit;
+  padding: 1px;
+  z-index: 6;
+  pointer-events: none;
+  transform: none;
+  opacity: 1;
+  background:
+    radial-gradient(260px circle at var(--mx) var(--my), rgba(255, 255, 255, calc(var(--spec) * 1.9)), rgba(255, 255, 255, 0) 62%),
+    linear-gradient(155deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .05) 36%, rgba(201, 168, 118, .08) 68%, rgba(201, 168, 118, .3));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  transition: none;
+}
+.product-card:hover::before { transform: none; opacity: 1; }
+
+/* glare: one wide soft reflection + the moving specular */
+.product-card::after {
+  inset: 0;
+  z-index: 5;
+  opacity: 1;
+  animation: none !important;
+  background:
+    radial-gradient(420px circle at var(--mx) var(--my), rgba(255, 255, 255, calc(var(--spec) * .34)), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(118deg, rgba(255, 255, 255, .075) 0%, rgba(255, 255, 255, 0) 24%),
+    linear-gradient(118deg, rgba(255, 255, 255, 0) 41%, rgba(255, 255, 255, .045) 44%, rgba(255, 255, 255, 0) 49%);
+  background-size: auto;
+  background-position: 0 0;
+  transition: none;
+}
+.product-card:hover::after { opacity: 1; animation: none !important; }
+.product-glow { display: none; }
+
+.product-image img { transition: transform .9s var(--ease), filter .9s var(--ease); }
+.product-card:hover .product-image img { transform: scale(1.04); filter: saturate(1.06) brightness(1.02); }
+
+/* the glass slab: laps over the foot of the poster and frosts it */
+.product-body {
+  position: relative;
+  z-index: 3;
+  margin-top: -30px;
+  padding: 46px 20px 20px;
+  isolation: isolate;
+  overflow: hidden;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: linear-gradient(180deg, rgba(12, 12, 13, .34) 0%, rgba(10, 10, 11, .66) 62%, rgba(9, 9, 10, .78) 100%);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 36px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 36px);
+}
+/* the poster's own colour, melted into the glass */
+.product-body::before {
+  content: "";
+  position: absolute;
+  inset: -36px;
+  z-index: -2;
+  background-image: var(--card-img);
+  background-size: 100% 300%;
+  background-position: 50% 100%;
+  filter: blur(22px) saturate(1.6) brightness(.72);
+  opacity: 0;
+  transition: opacity .8s var(--ease);
+  pointer-events: none;
+}
+.product-card[data-wash] .product-body::before { opacity: .62; }
+/* meniscus: the bright edge where liquid meets the surface */
+.product-body::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 29px;
+  height: 1px;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 4%, rgba(255, 255, 255, .34) 26%, rgba(255, 255, 255, .05) 62%, rgba(255, 255, 255, 0) 96%);
+  pointer-events: none;
+}
+
+.product-image { flex: none; }
+.product-body > * { max-width: 100%; }
+.product-body > p { margin-bottom: 18px; }
+.product-body > .product-link { margin-top: auto; }
+.product-tag {
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.product-body h3 { color: var(--text-primary); }
+.product-card:hover .product-body h3 { color: #fff4dc; }
+.product-body p { color: rgba(245, 244, 240, .62); }
+
+.product-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, .03));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  transition: border-color .3s var(--ease), background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
+}
+.product-card:hover .product-link {
+  color: #fff4dc;
+  transform: none;
+  border-color: rgba(232, 199, 102, .55);
+  background: linear-gradient(180deg, rgba(232, 199, 102, .2), rgba(232, 199, 102, .05));
+}
+
+/* chips floating over the poster become real glass (they sit on the image, so they refract it) */
+.spoider-badge {
+  background: rgba(10, 10, 11, .38);
+  border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  backdrop-filter: blur(10px) saturate(1.5);
+}
+.wishlist-heart {
+  background: rgba(10, 10, 11, .38);
+  border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  backdrop-filter: blur(10px) saturate(1.5);
+}
+/* the slab laps over the foot of the poster, so lift the corner controls clear of it */
+.wishlist-heart { bottom: 40px; }
+.spoider-score-trigger { bottom: 42px; }
+/* the score reveal is glass too, not a black sheet */
+.spoider-panel {
+  background: linear-gradient(180deg, rgba(10, 10, 11, 0) 0%, rgba(10, 10, 11, .72) 22%, rgba(8, 8, 9, .9) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+}
+
+/* ---- light theme: frosted milk-glass instead of smoked glass ---- */
+html[data-theme="light"] .product-card {
+  background: #fbfaf7;
+  box-shadow: 0 0 0 1px rgba(40, 30, 10, .06);
+}
+html[data-theme="light"] .product-card:hover {
+  box-shadow: 0 0 0 1px rgba(40, 30, 10, .08), 0 30px 54px -36px rgba(60, 45, 15, .4);
+}
+html[data-theme="light"] .product-card::before {
+  background:
+    radial-gradient(260px circle at var(--mx) var(--my), rgba(255, 255, 255, calc(var(--spec) * 2.4)), rgba(255, 255, 255, 0) 62%),
+    linear-gradient(155deg, rgba(255, 255, 255, .95), rgba(255, 255, 255, .5) 38%, rgba(184, 149, 85, .22) 70%, rgba(184, 149, 85, .5));
+}
+html[data-theme="light"] .product-card::after {
+  background:
+    radial-gradient(420px circle at var(--mx) var(--my), rgba(255, 255, 255, calc(var(--spec) * .5)), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(118deg, rgba(255, 255, 255, .22) 0%, rgba(255, 255, 255, 0) 24%);
+}
+html[data-theme="light"] .product-body {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .5) 0%, rgba(252, 250, 245, .88) 56%, rgba(250, 247, 240, .95) 100%);
+}
+html[data-theme="light"] .product-card[data-wash] .product-body::before { opacity: .3; filter: blur(22px) saturate(1.3) brightness(1.2); }
+html[data-theme="light"] .product-body::after { background: linear-gradient(90deg, rgba(255, 255, 255, 0) 4%, rgba(255, 255, 255, .95) 26%, rgba(255, 255, 255, .2) 62%, rgba(255, 255, 255, 0) 96%); }
+html[data-theme="light"] .product-body h3,
+html[data-theme="light"] .product-card:hover .product-body h3 { color: var(--text-primary); }
+html[data-theme="light"] .product-body p { color: var(--text-secondary); }
+html[data-theme="light"] .product-tag { background: rgba(255, 255, 255, .6); border-color: rgba(184, 149, 85, .35); box-shadow: inset 0 1px 0 #fff; }
+html[data-theme="light"] .product-link {
+  color: var(--text-primary);
+  border-color: rgba(60, 45, 15, .16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .4));
+  box-shadow: inset 0 1px 0 #fff;
+}
+html[data-theme="light"] .product-card:hover .product-link { color: var(--text-primary); border-color: rgba(184, 149, 85, .7); background: linear-gradient(180deg, rgba(232, 199, 102, .3), rgba(232, 199, 102, .08)); }
+html[data-theme="light"] .spoider-badge { background: rgba(14, 12, 8, .5); }
+html[data-theme="light"] .wishlist-heart { background: rgba(255, 255, 255, .55); border-color: rgba(255, 255, 255, .75); }
+
+/* no blur support: keep it readable */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .product-body { background: linear-gradient(180deg, rgba(12, 12, 13, .85), rgba(9, 9, 10, .95)); }
+  html[data-theme="light"] .product-body { background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(250, 247, 240, .96)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card { transition-duration: .01ms !important; }
+  .product-card:hover { translate: 0 0; }
+  .product-card:active { scale: 1; }
+}
