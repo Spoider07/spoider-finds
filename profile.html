@@ -2882,7 +2882,7 @@
       }
 
       // =============== storm cover (WebGL2 liquid particles) ===============
-      // The profile's web is drawn once to a canvas; ~15-40k GPU particles are sampled from its
+      // The cover's sculpture (silk streams + an eclipse, one lit star per find) is drawn once to a canvas; ~15-40k GPU particles are sampled from its
       // pixels. The cursor (or a finger) turns the web liquid, then it settles back into the crisp
       // image. Runs only while Storm is the chosen cover AND the cover is on screen.
       var ST_NOISE = [
@@ -3493,106 +3493,91 @@
         return self;
       }
 
-      // the source "sculpture": an orb-weaver's web in the accent, one lit node per owned find
+      // the source "sculpture": gold silk streams bending around an eclipse; one lit star per owned find
       function stormArt(cw, ch, accent, lit, seedStr) {
         var TW = Math.min(1800, Math.max(900, Math.round(cw * 2))), TH = Math.max(1, Math.round(TW * ch / cw)), s = TW / 1000, H = TH / s;
         var c = document.createElement('canvas');
         c.width = TW; c.height = TH;
         var g = c.getContext('2d'), R = prng(hashStr(seedStr + '|storm')), sw = SWATCH[accent] || SWATCH.gold;
         var a = sw[0].split(',').map(Number), b = sw[1].split(',').map(Number);
-        var hot = [Math.round(b[0] + (255 - b[0]) * 0.55), Math.round(b[1] + (255 - b[1]) * 0.55), Math.round(b[2] + (255 - b[2]) * 0.55)];
+        var hot = [Math.round(b[0] + (255 - b[0]) * 0.6), Math.round(b[1] + (255 - b[1]) * 0.6), Math.round(b[2] + (255 - b[2]) * 0.6)];
         function rgb(col, k) { return 'rgb(' + Math.round(col[0] * k) + ',' + Math.round(col[1] * k) + ',' + Math.round(col[2] * k) + ')'; }
         function rgba(col, k, al) { return 'rgba(' + Math.round(col[0] * k) + ',' + Math.round(col[1] * k) + ',' + Math.round(col[2] * k) + ',' + al + ')'; }
+        function sstep(e0, e1, x) { var t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); }
         g.scale(s, s);
         g.lineCap = 'round'; g.lineJoin = 'round';
-        var hx = 1000 * (0.6 + R() * 0.12), hy = H * (0.46 + R() * 0.1), sx = 2.1 + R() * 0.5;
-        var reach = Math.max(hx, 1000 - hx) / sx + H * 0.6;
-        var N = 15 + Math.floor(R() * 4), off = R() * 6.28, ang = [], i, j;
-        for (i = 0; i < N; i++) ang.push(off + i * Math.PI * 2 / N + (R() - 0.5) * 0.16);
-        function P(an, r) { return [hx + Math.cos(an) * r * sx, hy + Math.sin(an) * r]; }
-        function fall(r) { return Math.max(0.28, 1 - r / reach * 0.78); }   // brightest at the hub, thinning outward
+        var hx = 1000 * (0.62 + R() * 0.12), hy = H * (0.48 + (R() - 0.5) * 0.1), rad = Math.min(H * 0.3, 120);
+        var ph1 = R() * 6.28, ph2 = R() * 6.28, f1 = 0.0042 + R() * 0.002, f2 = 0.011 + R() * 0.004;
 
-        // 1 bloom: a soft pool of light behind the hub (becomes a haze of dust)
-        var bl = g.createRadialGradient(hx, hy, 0, hx, hy, H * 1.5);
-        bl.addColorStop(0, rgba(b, 1, 0.26)); bl.addColorStop(0.28, rgba(a, 0.9, 0.1)); bl.addColorStop(1, rgba(a, 0.5, 0));
-        g.save(); g.translate(hx, hy); g.scale(sx * 0.62, 1); g.translate(-hx, -hy); g.fillStyle = bl; g.fillRect(hx - 1600, hy - H * 2, 3200, H * 4); g.restore();
+        // 1 bloom behind the eclipse
+        var bl = g.createRadialGradient(hx, hy, rad * 0.6, hx, hy, H * 1.35);
+        bl.addColorStop(0, rgba(b, 1, 0.26)); bl.addColorStop(0.3, rgba(a, 0.9, 0.1)); bl.addColorStop(1, rgba(a, 0.5, 0));
+        g.save(); g.translate(hx, hy); g.scale(2.3, 1); g.translate(-hx, -hy); g.fillStyle = bl; g.fillRect(hx - 1400, hy - H * 2, 2800, H * 4); g.restore();
 
-        // 2 spokes: tapered, bright at the hub, pale at the rim
-        for (i = 0; i < N; i++) {
-          var e = P(ang[i], reach), bend = (R() - 0.5) * 22;
-          var gr = g.createLinearGradient(hx, hy, e[0], e[1]);
-          gr.addColorStop(0, rgb(b, 0.95)); gr.addColorStop(0.5, rgb(a, 0.78)); gr.addColorStop(1, rgb(a, 0.42));
-          g.strokeStyle = gr; g.lineWidth = 1.7;
-          g.beginPath(); g.moveTo(hx, hy);
-          g.quadraticCurveTo((hx + e[0]) / 2 + bend, (hy + e[1]) / 2 - bend * 0.4, e[0], e[1]); g.stroke();
+        // 2 silk streams: flow lines squeezed through a lens at the eclipse
+        var NR = 34, ribs = [], i, k, x;
+        function yAt(kk, x, tilt) {
+          var d = Math.abs(x - hx) / 560, f = 0.2 + 0.8 * sstep(0, 1, d);
+          var wave = Math.sin(x * f1 + ph1 + kk * 2.1) * H * 0.1 + Math.sin(x * f2 + ph2 + kk * 3.7) * H * 0.028;
+          return hy + kk * H * 0.72 * f + wave * f + tilt * (x - hx) * 0.04;
         }
-        // 3 capture spiral: ONE continuous thread winding out, sagging between spokes
-        var cross = [], r0 = H * 0.045, turns = 0, rr = r0, ai = Math.floor(R() * N), ring = 0;
-        var gap0 = H * 0.085, grow = 1.16;
-        g.lineWidth = 1.15;
-        while (rr < reach && ring < N * 16) {
-          var a0 = ang[ai % N], a1 = ang[(ai + 1) % N] + ((ai % N) === N - 1 ? Math.PI * 2 : 0);
-          var r1 = rr + gap0 * Math.pow(grow, Math.floor(ring / N)) / N;
-          var p0 = P(a0, rr), p1 = P(a1, r1), mid = P((a0 + a1) / 2, (rr + r1) / 2 * 0.9);
-          var k = fall(rr);
-          g.strokeStyle = rgb(ring % 3 === 0 ? b : a, 0.5 + 0.5 * k);
-          g.beginPath(); g.moveTo(p0[0], p0[1]); g.quadraticCurveTo(mid[0], mid[1], p1[0], p1[1]); g.stroke();
-          if (ring > N * 1.5 && ring % 2 === 0 && p0[0] > 50 && p0[0] < 950 && p0[1] > H * 0.14 && p0[1] < H * 0.86) cross.push(p0);
-          rr = r1; ai++; ring++;
-        }
-        // 4 inner hub mesh: tight rings, the dense "eye"
-        g.lineWidth = 1.05;
-        for (j = 1; j <= 4; j++) {
-          var ri = H * 0.03 * j * 1.15; g.strokeStyle = rgb(b, 0.9 - j * 0.12);
+        for (i = 0; i < NR; i++) ribs.push({ k: (i / (NR - 1)) * 2 - 1 + (R() - 0.5) * 0.04, w: 0.7 + R() * 1.5, hot: R() < 0.22, tilt: (R() - 0.5) * 0.5 });
+        ribs.forEach(function (r) {
+          var gr = g.createLinearGradient(0, 0, 1000, 0), e = Math.abs(r.k);
+          var base = r.hot ? b : a, fade = 1 - e * 0.55;
+          gr.addColorStop(0, rgba(base, 0.5 * fade, 0.0)); gr.addColorStop(Math.max(0.05, hx / 1000 - 0.38), rgba(base, 0.75 * fade, 0.7));
+          gr.addColorStop(hx / 1000, rgba(r.hot ? hot : b, fade, 1)); gr.addColorStop(Math.min(0.97, hx / 1000 + 0.3), rgba(base, 0.7 * fade, 0.65)); gr.addColorStop(1, rgba(base, 0.5 * fade, 0));
+          g.strokeStyle = gr; g.lineWidth = r.w * (1.15 - e * 0.4);
           g.beginPath();
-          for (i = 0; i <= N; i++) { var q = P(ang[i % N] + (i === N ? Math.PI * 2 : 0), ri * (i % 2 ? 0.93 : 1)); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }
+          for (x = -10; x <= 1010; x += 8) { var y = yAt(r.k, x, r.tilt); if (x === -10) g.moveTo(x, y); else g.lineTo(x, y); }
           g.stroke();
+        });
+        // 3 carve the eclipse out of the streams, then give it a rim of light
+        g.save(); g.globalCompositeOperation = 'destination-out';
+        var cut = g.createRadialGradient(hx, hy, rad * 0.96, hx, hy, rad * 1.5);
+        cut.addColorStop(0, 'rgba(0,0,0,1)'); cut.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = cut; g.beginPath(); g.arc(hx, hy, rad * 1.5, 0, 6.2832); g.fill(); g.restore();
+        for (i = 0; i < 16; i++) {                                           // corona: many thin concentric arcs, brighter toward the lit side
+          var rr = rad * (1 + i * 0.018), lit0 = -2.35 + (R() - 0.5) * 0.2, span = 2.4 - i * 0.1;
+          g.strokeStyle = rgba(i < 3 ? hot : b, 1 - i * 0.05, Math.max(0.12, 1 - i * 0.07)); g.lineWidth = i < 3 ? 2.4 - i * 0.5 : 1;
+          g.beginPath(); g.arc(hx, hy, rr, lit0 - span * 0.5, lit0 + span * 0.5); g.stroke();
         }
-        // 5 anchor guy-lines to the cover edges
-        g.lineWidth = 1.3;
-        for (i = 0; i < 5; i++) {
-          var ea = R() * 6.28, ex = hx + Math.cos(ea) * 2400, ey = hy + Math.sin(ea) * 2400;
-          var gl2 = g.createLinearGradient(hx, hy, ex, ey); gl2.addColorStop(0, rgb(b, 0.8)); gl2.addColorStop(0.35, rgb(a, 0.55)); gl2.addColorStop(1, rgb(a, 0.2));
-          g.strokeStyle = gl2; g.beginPath(); g.moveTo(hx, hy); g.lineTo(ex, ey); g.stroke();
-        }
-        // 6 slots: crossings spread across the whole cover
-        for (i = cross.length - 1; i > 0; i--) { j = Math.floor(R() * (i + 1)); var t = cross[i]; cross[i] = cross[j]; cross[j] = t; }
-        var slots = [];
-        for (i = 0; i < cross.length && slots.length < SLOTS; i++) {
+        g.strokeStyle = rgb(a, 0.8); g.lineWidth = 1.2; g.beginPath(); g.arc(hx, hy, rad * 0.99, 0, 6.2832); g.stroke();
+        g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 26; g.strokeStyle = rgb(hot, 1); g.lineWidth = 2.6;
+        g.beginPath(); g.arc(hx, hy, rad, -2.35 - 0.9, -2.35 + 0.9); g.stroke(); g.restore();
+        // light flare at the brightest point of the rim
+        var fx = hx + Math.cos(-2.35) * rad, fy = hy + Math.sin(-2.35) * rad;
+        g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 24; g.fillStyle = rgb(hot, 1); g.beginPath(); g.arc(fx, fy, 4.6, 0, 6.2832); g.fill(); g.restore();
+        g.strokeStyle = rgb(hot, 0.95); g.lineWidth = 1.1;
+        g.beginPath(); g.moveTo(fx - 38, fy); g.lineTo(fx + 38, fy); g.moveTo(fx, fy - 26); g.lineTo(fx, fy + 26); g.stroke();
+
+        // 4 stars: one per owned find, riding the streams
+        var slots = [], tries = 0;
+        while (slots.length < SLOTS && tries++ < 400) {
+          var rb = ribs[1 + Math.floor(R() * (NR - 2))], sxp = 70 + R() * 860, syp = yAt(rb.k, sxp, rb.tilt);
+          if (syp < 14 || syp > H - 14) continue;
+          var dxh = (sxp - hx) / 1.5, dyh = syp - hy; if (dxh * dxh + dyh * dyh < (rad * 1.5) * (rad * 1.5)) continue;
           var okd = true;
-          for (j = 0; j < slots.length; j++) { var dx = (cross[i][0] - slots[j][0]) / 1.4, dy = cross[i][1] - slots[j][1]; if (dx * dx + dy * dy < 34 * 34) { okd = false; break; } }
-          if (okd) slots.push(cross[i]);
+          for (k = 0; k < slots.length; k++) { var dx = (sxp - slots[k][0]) / 1.6, dy = syp - slots[k][1]; if (dx * dx + dy * dy < 46 * 46) { okd = false; break; } }
+          if (okd) slots.push([sxp, syp]);
         }
         for (i = 0; i < slots.length; i++) {
           var sp = slots[i];
           if (i < lit) {
-            var cx = (hx + sp[0]) / 2 + (R() - 0.5) * 40, cy = (hy + sp[1]) / 2 + (R() - 0.5) * 40;
-            g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 14;                       // glow = a halo of drifting dust
-            g.strokeStyle = rgb(b, 1); g.lineWidth = 2.2; g.beginPath(); g.moveTo(hx, hy); g.quadraticCurveTo(cx, cy, sp[0], sp[1]); g.stroke(); g.restore();
-            g.strokeStyle = rgb(hot, 1); g.lineWidth = 0.8; g.beginPath(); g.moveTo(hx, hy); g.quadraticCurveTo(cx, cy, sp[0], sp[1]); g.stroke();
-            g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 22;
-            g.fillStyle = rgb(hot, 1); g.beginPath(); g.arc(sp[0], sp[1], 6.4, 0, 6.2832); g.fill(); g.restore();
-            g.strokeStyle = rgb(b, 0.9); g.lineWidth = 1.5; g.beginPath(); g.arc(sp[0], sp[1], 14, 0, 6.2832); g.stroke();
-            g.strokeStyle = rgba(b, 0.7, 0.5); g.lineWidth = 1; g.beginPath(); g.arc(sp[0], sp[1], 23, 0, 6.2832); g.stroke();
+            g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 24; g.fillStyle = rgb(hot, 1); g.beginPath(); g.arc(sp[0], sp[1], 5.4, 0, 6.2832); g.fill(); g.restore();
+            g.strokeStyle = rgb(hot, 0.95); g.lineWidth = 1.2;
+            g.beginPath(); g.moveTo(sp[0] - 21, sp[1]); g.lineTo(sp[0] + 21, sp[1]); g.moveTo(sp[0], sp[1] - 15); g.lineTo(sp[0], sp[1] + 15); g.stroke();
+            g.strokeStyle = rgba(b, 0.9, 0.6); g.lineWidth = 1; g.beginPath(); g.arc(sp[0], sp[1], 12, 0, 6.2832); g.stroke();
           } else {
-            g.strokeStyle = rgb(a, 0.75); g.lineWidth = 1.3; g.beginPath(); g.arc(sp[0], sp[1], 4.8, 0, 6.2832); g.stroke();
-            g.fillStyle = rgb(a, 0.5); g.beginPath(); g.arc(sp[0], sp[1], 1.4, 0, 6.2832); g.fill();
+            g.strokeStyle = rgb(a, 0.7); g.lineWidth = 1.2; g.beginPath(); g.arc(sp[0], sp[1], 4, 0, 6.2832); g.stroke();
           }
         }
-        // 7 dew on the spiral
-        for (i = 0; i < Math.min(cross.length, 70); i++) {
-          var dp = cross[i]; if (R() < 0.5) continue;
-          g.fillStyle = rgb(hot, 0.95); g.beginPath(); g.arc(dp[0] + (R() - 0.5) * 6, dp[1] + (R() - 0.5) * 6, 1.1 + R() * 1.7, 0, 6.2832); g.fill();
+        // 5 dust
+        for (i = 0; i < 260; i++) {
+          var dxp = R() * 1000, dyp = R() * H, near = 1 - Math.min(1, Math.abs(dxp - hx) / 700);
+          if (R() > 0.25 + near * 0.75) continue;
+          g.fillStyle = rgba(R() < 0.3 ? b : a, 0.9, 0.3 + R() * 0.6); g.beginPath(); g.arc(dxp, dyp, 0.7 + R() * 1.5, 0, 6.2832); g.fill();
         }
-        // 8 drifting dust, denser toward the light
-        for (i = 0; i < 230; i++) {
-          var da = R() * 6.28, dd = Math.pow(R(), 1.7) * reach * 1.1, dpx = P(da, dd);
-          if (dpx[0] < 6 || dpx[0] > 994 || dpx[1] < 4 || dpx[1] > H - 4) continue;
-          g.fillStyle = rgba(R() < 0.3 ? b : a, 0.9, 0.35 + R() * 0.6); g.beginPath(); g.arc(dpx[0], dpx[1], 0.7 + R() * 1.5, 0, 6.2832); g.fill();
-        }
-        // 9 hub: white-hot core, soft ring
-        g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 30; g.fillStyle = rgb(hot, 1); g.beginPath(); g.arc(hx, hy, 6.2, 0, 6.2832); g.fill(); g.restore();
-        g.strokeStyle = rgb(b, 0.95); g.lineWidth = 1.4; g.beginPath(); g.arc(hx, hy, 12.5, 0, 6.2832); g.stroke();
         return c;
       }
 
