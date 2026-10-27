@@ -3228,17 +3228,22 @@
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(src, 0, 0, gw, gh);
           var data = ctx.getImageData(0, 0, gw, gh).data, home = [], col = [], x, y;
+          // budget: solid thread pixels first, glow / haze pixels share whatever is left
+          var CAP = lowPower ? 20000 : 34000, solid = 0, soft = 0, q;
+          for (q = 3; q < data.length; q += 4) { if (data[q] >= 153) solid++; else if (data[q] >= 31) soft++; }
+          var keepSolid = solid > CAP ? CAP / solid : 1, keepSoft = soft ? stClamp((CAP - Math.min(solid, CAP)) / soft, 0, 1) : 0;
           for (y = 0; y < gh; y++) {
             for (x = 0; x < gw; x++) {
               var i = (y * gw + x) * 4, a = data[i + 3] / 255;
               if (a < 0.12) continue;
-              if (a < 0.5 && Math.random() > a * 2) continue;
+              if (a >= 0.6) { if (keepSolid < 1 && Math.random() > keepSolid) continue; }
+              else { if (Math.random() > keepSoft) continue; if (a < 0.5 && Math.random() > a * 2) continue; }
               var jx = (Math.random() - 0.5) * 0.6, jy = (Math.random() - 0.5) * 0.6;
               home.push((x + 0.5 + jx) / gw, (y + 0.5 + jy) / gh, Math.random(), 0.85 + Math.random() * 0.3);
               col.push(data[i], data[i + 1], data[i + 2], 255);
             }
           }
-          n = home.length / 4;
+          n = home.length / 4; self.count = n;
           texH = Math.max(1, Math.ceil(n / TEX_W));
           var total = TEX_W * texH, homeArr = new Float32Array(total * 4), colArr = new Uint8Array(total * 4);
           homeArr.set(home); colArr.set(col);
@@ -3488,62 +3493,106 @@
         return self;
       }
 
-      // the source "sculpture": this profile's own web, drawn in the accent, one lit node per owned find
+      // the source "sculpture": an orb-weaver's web in the accent, one lit node per owned find
       function stormArt(cw, ch, accent, lit, seedStr) {
         var TW = Math.min(1800, Math.max(900, Math.round(cw * 2))), TH = Math.max(1, Math.round(TW * ch / cw)), s = TW / 1000, H = TH / s;
         var c = document.createElement('canvas');
         c.width = TW; c.height = TH;
         var g = c.getContext('2d'), R = prng(hashStr(seedStr + '|storm')), sw = SWATCH[accent] || SWATCH.gold;
         var a = sw[0].split(',').map(Number), b = sw[1].split(',').map(Number);
+        var hot = [Math.round(b[0] + (255 - b[0]) * 0.55), Math.round(b[1] + (255 - b[1]) * 0.55), Math.round(b[2] + (255 - b[2]) * 0.55)];
         function rgb(col, k) { return 'rgb(' + Math.round(col[0] * k) + ',' + Math.round(col[1] * k) + ',' + Math.round(col[2] * k) + ')'; }
+        function rgba(col, k, al) { return 'rgba(' + Math.round(col[0] * k) + ',' + Math.round(col[1] * k) + ',' + Math.round(col[2] * k) + ',' + al + ')'; }
         g.scale(s, s);
         g.lineCap = 'round'; g.lineJoin = 'round';
-        var hx = 1000 * (0.64 + R() * 0.1), hy = H * (0.44 + R() * 0.14), sx = 1.9 + R() * 0.5;
-        var N = 8 + Math.floor(R() * 4), off = R() * 6.28, ang = [], i, j;
-        for (i = 0; i < N; i++) ang.push(off + i * Math.PI * 2 / N + (R() - 0.5) * 0.18);
-        var step = H * (0.17 + R() * 0.03), rings = Math.ceil(1000 * 1.4 / (step * sx)) + 1;
+        var hx = 1000 * (0.6 + R() * 0.12), hy = H * (0.46 + R() * 0.1), sx = 2.1 + R() * 0.5;
+        var reach = Math.max(hx, 1000 - hx) / sx + H * 0.6;
+        var N = 15 + Math.floor(R() * 4), off = R() * 6.28, ang = [], i, j;
+        for (i = 0; i < N; i++) ang.push(off + i * Math.PI * 2 / N + (R() - 0.5) * 0.16);
         function P(an, r) { return [hx + Math.cos(an) * r * sx, hy + Math.sin(an) * r]; }
-        // spokes
-        g.strokeStyle = rgb(a, 0.62); g.lineWidth = 1.5;
-        for (i = 0; i < N; i++) { var e = P(ang[i], step * (rings + 1)); g.beginPath(); g.moveTo(hx, hy); g.lineTo(e[0], e[1]); g.stroke(); }
-        // rings: slack threads that sag toward the hub between spokes
+        function fall(r) { return Math.max(0.28, 1 - r / reach * 0.78); }   // brightest at the hub, thinning outward
+
+        // 1 bloom: a soft pool of light behind the hub (becomes a haze of dust)
+        var bl = g.createRadialGradient(hx, hy, 0, hx, hy, H * 1.5);
+        bl.addColorStop(0, rgba(b, 1, 0.26)); bl.addColorStop(0.28, rgba(a, 0.9, 0.1)); bl.addColorStop(1, rgba(a, 0.5, 0));
+        g.save(); g.translate(hx, hy); g.scale(sx * 0.62, 1); g.translate(-hx, -hy); g.fillStyle = bl; g.fillRect(hx - 1600, hy - H * 2, 3200, H * 4); g.restore();
+
+        // 2 spokes: tapered, bright at the hub, pale at the rim
+        for (i = 0; i < N; i++) {
+          var e = P(ang[i], reach), bend = (R() - 0.5) * 22;
+          var gr = g.createLinearGradient(hx, hy, e[0], e[1]);
+          gr.addColorStop(0, rgb(b, 0.95)); gr.addColorStop(0.5, rgb(a, 0.78)); gr.addColorStop(1, rgb(a, 0.42));
+          g.strokeStyle = gr; g.lineWidth = 1.7;
+          g.beginPath(); g.moveTo(hx, hy);
+          g.quadraticCurveTo((hx + e[0]) / 2 + bend, (hy + e[1]) / 2 - bend * 0.4, e[0], e[1]); g.stroke();
+        }
+        // 3 capture spiral: ONE continuous thread winding out, sagging between spokes
+        var cross = [], r0 = H * 0.045, turns = 0, rr = r0, ai = Math.floor(R() * N), ring = 0;
+        var gap0 = H * 0.085, grow = 1.16;
         g.lineWidth = 1.15;
-        var cross = [];
-        for (j = 1; j <= rings; j++) {
-          var rr = step * j * (0.94 + R() * 0.1);
-          g.strokeStyle = rgb(a, 0.4 + 0.16 * (j % 2));
-          for (i = 0; i < N; i++) {
-            var a0 = ang[i], a1 = ang[(i + 1) % N] + (i === N - 1 ? Math.PI * 2 : 0), p0 = P(a0, rr), p1 = P(a1, rr);
-            var mid = P((a0 + a1) / 2, rr * 0.9);
-            g.beginPath(); g.moveTo(p0[0], p0[1]); g.quadraticCurveTo(mid[0], mid[1], p1[0], p1[1]); g.stroke();
-          }
-          for (i = 0; i < N; i++) cross.push([P(ang[i], rr), j]);
+        while (rr < reach && ring < N * 16) {
+          var a0 = ang[ai % N], a1 = ang[(ai + 1) % N] + ((ai % N) === N - 1 ? Math.PI * 2 : 0);
+          var r1 = rr + gap0 * Math.pow(grow, Math.floor(ring / N)) / N;
+          var p0 = P(a0, rr), p1 = P(a1, r1), mid = P((a0 + a1) / 2, (rr + r1) / 2 * 0.9);
+          var k = fall(rr);
+          g.strokeStyle = rgb(ring % 3 === 0 ? b : a, 0.5 + 0.5 * k);
+          g.beginPath(); g.moveTo(p0[0], p0[1]); g.quadraticCurveTo(mid[0], mid[1], p1[0], p1[1]); g.stroke();
+          if (ring > N * 1.5 && ring % 2 === 0 && p0[0] > 50 && p0[0] < 950 && p0[1] > H * 0.14 && p0[1] < H * 0.86) cross.push(p0);
+          rr = r1; ai++; ring++;
         }
-        // slots: unique ring / spoke crossings, kept inside the cover
-        var ok = cross.filter(function (q) { return q[0][0] > 60 && q[0][0] < 940 && q[0][1] > H * 0.16 && q[0][1] < H * 0.84; });
-        for (i = ok.length - 1; i > 0; i--) { j = Math.floor(R() * (i + 1)); var t = ok[i]; ok[i] = ok[j]; ok[j] = t; }
-        var slots = ok.slice(0, SLOTS).map(function (q) { return q[0]; });
-        // threads from the hub to lit nodes, then the nodes themselves
+        // 4 inner hub mesh: tight rings, the dense "eye"
+        g.lineWidth = 1.05;
+        for (j = 1; j <= 4; j++) {
+          var ri = H * 0.03 * j * 1.15; g.strokeStyle = rgb(b, 0.9 - j * 0.12);
+          g.beginPath();
+          for (i = 0; i <= N; i++) { var q = P(ang[i % N] + (i === N ? Math.PI * 2 : 0), ri * (i % 2 ? 0.93 : 1)); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }
+          g.stroke();
+        }
+        // 5 anchor guy-lines to the cover edges
+        g.lineWidth = 1.3;
+        for (i = 0; i < 5; i++) {
+          var ea = R() * 6.28, ex = hx + Math.cos(ea) * 2400, ey = hy + Math.sin(ea) * 2400;
+          var gl2 = g.createLinearGradient(hx, hy, ex, ey); gl2.addColorStop(0, rgb(b, 0.8)); gl2.addColorStop(0.35, rgb(a, 0.55)); gl2.addColorStop(1, rgb(a, 0.2));
+          g.strokeStyle = gl2; g.beginPath(); g.moveTo(hx, hy); g.lineTo(ex, ey); g.stroke();
+        }
+        // 6 slots: crossings spread across the whole cover
+        for (i = cross.length - 1; i > 0; i--) { j = Math.floor(R() * (i + 1)); var t = cross[i]; cross[i] = cross[j]; cross[j] = t; }
+        var slots = [];
+        for (i = 0; i < cross.length && slots.length < SLOTS; i++) {
+          var okd = true;
+          for (j = 0; j < slots.length; j++) { var dx = (cross[i][0] - slots[j][0]) / 1.4, dy = cross[i][1] - slots[j][1]; if (dx * dx + dy * dy < 34 * 34) { okd = false; break; } }
+          if (okd) slots.push(cross[i]);
+        }
         for (i = 0; i < slots.length; i++) {
-          var sp = slots[i], isLit = i < lit;
-          if (isLit) {
-            g.strokeStyle = rgb(b, 0.95); g.lineWidth = 2.1;
-            g.beginPath(); g.moveTo(hx, hy);
-            g.quadraticCurveTo((hx + sp[0]) / 2 + (R() - 0.5) * 36, (hy + sp[1]) / 2 + (R() - 0.5) * 36, sp[0], sp[1]); g.stroke();
-            g.fillStyle = rgb(b, 1); g.beginPath(); g.arc(sp[0], sp[1], 6.2, 0, 6.2832); g.fill();
-            g.strokeStyle = rgb(b, 0.7); g.lineWidth = 1.4; g.beginPath(); g.arc(sp[0], sp[1], 13, 0, 6.2832); g.stroke();
+          var sp = slots[i];
+          if (i < lit) {
+            var cx = (hx + sp[0]) / 2 + (R() - 0.5) * 40, cy = (hy + sp[1]) / 2 + (R() - 0.5) * 40;
+            g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 14;                       // glow = a halo of drifting dust
+            g.strokeStyle = rgb(b, 1); g.lineWidth = 2.2; g.beginPath(); g.moveTo(hx, hy); g.quadraticCurveTo(cx, cy, sp[0], sp[1]); g.stroke(); g.restore();
+            g.strokeStyle = rgb(hot, 1); g.lineWidth = 0.8; g.beginPath(); g.moveTo(hx, hy); g.quadraticCurveTo(cx, cy, sp[0], sp[1]); g.stroke();
+            g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 22;
+            g.fillStyle = rgb(hot, 1); g.beginPath(); g.arc(sp[0], sp[1], 6.4, 0, 6.2832); g.fill(); g.restore();
+            g.strokeStyle = rgb(b, 0.9); g.lineWidth = 1.5; g.beginPath(); g.arc(sp[0], sp[1], 14, 0, 6.2832); g.stroke();
+            g.strokeStyle = rgba(b, 0.7, 0.5); g.lineWidth = 1; g.beginPath(); g.arc(sp[0], sp[1], 23, 0, 6.2832); g.stroke();
           } else {
-            g.strokeStyle = rgb(a, 0.6); g.lineWidth = 1.3; g.beginPath(); g.arc(sp[0], sp[1], 4.6, 0, 6.2832); g.stroke();
+            g.strokeStyle = rgb(a, 0.75); g.lineWidth = 1.3; g.beginPath(); g.arc(sp[0], sp[1], 4.8, 0, 6.2832); g.stroke();
+            g.fillStyle = rgb(a, 0.5); g.beginPath(); g.arc(sp[0], sp[1], 1.4, 0, 6.2832); g.fill();
           }
         }
-        // dew: a few bright drops along the threads
-        g.fillStyle = rgb(b, 0.95);
-        for (i = 0; i < 46; i++) {
-          var da = ang[Math.floor(R() * N)], dr = step * (1 + R() * (rings - 1)), dp = P(da + (R() - 0.5) * 0.3, dr);
-          if (dp[0] < 10 || dp[0] > 990 || dp[1] < 6 || dp[1] > H - 6) continue;
-          g.beginPath(); g.arc(dp[0], dp[1], 1.2 + R() * 1.5, 0, 6.2832); g.fill();
+        // 7 dew on the spiral
+        for (i = 0; i < Math.min(cross.length, 70); i++) {
+          var dp = cross[i]; if (R() < 0.5) continue;
+          g.fillStyle = rgb(hot, 0.95); g.beginPath(); g.arc(dp[0] + (R() - 0.5) * 6, dp[1] + (R() - 0.5) * 6, 1.1 + R() * 1.7, 0, 6.2832); g.fill();
         }
-        g.fillStyle = rgb(b, 1); g.beginPath(); g.arc(hx, hy, 4.4, 0, 6.2832); g.fill();
+        // 8 drifting dust, denser toward the light
+        for (i = 0; i < 230; i++) {
+          var da = R() * 6.28, dd = Math.pow(R(), 1.7) * reach * 1.1, dpx = P(da, dd);
+          if (dpx[0] < 6 || dpx[0] > 994 || dpx[1] < 4 || dpx[1] > H - 4) continue;
+          g.fillStyle = rgba(R() < 0.3 ? b : a, 0.9, 0.35 + R() * 0.6); g.beginPath(); g.arc(dpx[0], dpx[1], 0.7 + R() * 1.5, 0, 6.2832); g.fill();
+        }
+        // 9 hub: white-hot core, soft ring
+        g.save(); g.shadowColor = rgb(b, 1); g.shadowBlur = 30; g.fillStyle = rgb(hot, 1); g.beginPath(); g.arc(hx, hy, 6.2, 0, 6.2832); g.fill(); g.restore();
+        g.strokeStyle = rgb(b, 0.95); g.lineWidth = 1.4; g.beginPath(); g.arc(hx, hy, 12.5, 0, 6.2832); g.stroke();
         return c;
       }
 
