@@ -790,6 +790,14 @@
       .gf-root[data-tiny] .gf-label{max-width:290px}
       .gf-root[data-tiny]:not([data-open]) .gf-key{opacity:0;pointer-events:none}
       .gf-root:not([data-open]) .gf-sheet{pointer-events:none}
+      /* ---------- Storm cover (WebGL2 particles) ---------- */
+      .pf-cover.is-storm{background:#0a0908}
+      .pf-cover.is-storm .pf-web,.pf-cover.is-storm .pf-cover-glow{display:none}
+      html[data-theme="light"] .pf-cover.is-storm{background:#0a0908;border-color:rgba(255,255,255,.08)}
+      .pf-storm{position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block;touch-action:pan-y;opacity:0;transition:opacity .9s var(--ease);cursor:crosshair}
+      .pf-storm.is-live{opacity:1}
+      .pf-cover.is-storm .pf-web-cap{color:rgba(255,255,255,.7)}
+      @media (prefers-reduced-motion:reduce){.pf-storm{transition:none}}
 </style>
 
     <div class="pf-wrap" id="pfRoot" data-rank="0" data-accent="gold" data-frame="ring" data-font="serif">
@@ -812,7 +820,7 @@
 
       <section class="pf-profile" id="pfProfile" hidden>
 
-        <div class="pf-cover pf-rise" style="--i:0" aria-hidden="true">
+        <div class="pf-cover pf-rise" id="pfCover" style="--i:0" aria-hidden="true">
           <div class="pf-cover-glow"></div>
           <svg class="pf-web" id="pfWeb" viewBox="0 0 400 128" preserveAspectRatio="xMaxYMid slice"></svg>
           <span class="pf-web-cap" id="pfWebCap"></span>
@@ -991,7 +999,7 @@
         accent: [['gold', 'Gold', 0], ['silver', 'Silver', 0], ['bone', 'Bone', 1], ['copper', 'Copper', 1], ['emerald', 'Emerald', 2], ['ink', 'Ink', 2]],
         frame: [['ring', 'Ring', 0], ['double', 'Double', 1], ['hex', 'Hex', 2]],
         font: [['serif', 'Serif', 0], ['sans', 'Sans', 0], ['mono', 'Mono', 1]],
-        web: [['radial', 'Radial', 0], ['orb', 'Orb', 1], ['drift', 'Timeline', 3]],
+        web: [['radial', 'Radial', 0], ['orb', 'Orb', 1], ['drift', 'Timeline', 3], ['storm', 'Storm', 4]],
         layout: [['grid', 'Grid', 0], ['ledger', 'Ledger', 1], ['wall', 'Wall', 2]]
       };
       var SWATCH = { gold: ['201,168,118', '232,199,102'], silver: ['176,184,198', '226,232,242'], bone: ['214,206,190', '244,238,224'], copper: ['201,128,96', '238,168,128'], emerald: ['92,176,140', '138,222,182'], ink: ['112,150,214', '160,192,244'] };
@@ -1143,7 +1151,7 @@
           slotPts.push([tx, tyy]);
           nodes += '<g class="w-node" style="--d:' + Math.max(0, end - 0.12).toFixed(2) + 's"><circle class="w-slot" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="4"/><circle class="w-halo" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="8"/><circle class="w-dot" cx="' + tx.toFixed(1) + '" cy="' + tyy.toFixed(1) + '" r="3"/></g>';
         }
-svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--gl:0s;--ge:linear" d="' + tr + '"/>' + paths + forks + pulses +
+        svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--gl:0s;--ge:linear" d="' + tr + '"/>' + paths + forks + pulses +
           '<path class="t-tpulse" pathLength="1" style="--pl:' + (GT + 0.4) + 's" d="' + tr + '"/>' + nodes +
           '<circle class="w-hub" cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="2.4"/>';
 
@@ -1157,7 +1165,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
       function buildWeb() {
         var svg = el('pfWeb');
         if (!svg || !state.profile) return;
-        var pat = (state.view || state.theme || {}).web || 'radial';
+        var pat = effWeb();
         var seedStr = String(state.profile.username || state.profile.id || 'spoider');
         var key = pat + '|' + seedStr;
         if (svg.getAttribute('data-key') === key) return;
@@ -1165,6 +1173,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
         svg._wt = (svg._wt || 0) + 1;
         svg.classList.remove('grown', 'settled');
         svg.classList.toggle('tree', pat === 'drift');
+        if (pat === 'storm') { svg.innerHTML = ''; slotPts = []; return; }
         var sd = hashStr(seedStr), R = prng(sd), h = '', hx, hy, i, ang, r, x, y;
         slotPts = [];
 
@@ -1212,6 +1221,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
       function renderWeb() {
         var svg = el('pfWeb');
         if (!svg) return;
+        if (effWeb() === 'storm') stormSync(); else stormOff();
         var lit = Math.min(state.owned.length, SLOTS);
         var cap = el('pfWebCap');
         if (cap) cap.textContent = lit ? lit + ' of ' + SLOTS + ' threads woven' : (state.isOwn ? 'Own a find to weave your first thread' : 'No threads yet');
@@ -1561,6 +1571,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
           console.error('[profile] load items failed', e);
         }).then(function () {
           if (!alive) return;
+          state.loaded = true;
           derived();
           later(function () { root.classList.add('rk-ready'); renderRank(); }, 60);
           loadSuggest();
@@ -1616,6 +1627,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
         closeCert(true);
         closeSheet(true);
         resetFolders();
+        stormOff(); state.loaded = false; state.stormFail = false;
         showLoading();
         var sb = state.sb;
         var target = (new URLSearchParams(window.location.search).get('u') || '').trim().toLowerCase();
@@ -1867,6 +1879,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
           b.classList.remove('is-done');
         }, 1900);
       }
+
       // =============== social: follow, followers, following ===============
       var soc = { ok: false, counts: { followers: 0, following: 0 }, iFollow: false, followsMe: false, mine: {}, mutual: [], busy: false, seq: 0 };
       var sheetEl = null, sheetFocusBack = null, sheetTab = 'followers', sheetSeq = 0, sheetRows = 0, sheetCounts = false;
@@ -2540,7 +2553,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
       function gfPaint(recipe, seed, w, h, key) {
         if (fdCache[key]) return fdCache[key];
         var p = new Promise(function (done) {
-          fdQueue.push({ job: gfArtJob(w, h, recipe, seed), done: function (c) { fdDone[key] = c; done(c); } });
+          fdQueue.push({ job: gfArtJob(w, h, recipe, seed), key: key, done: function (c) { fdDone[key] = c; done(c); } });
           gfPump();
         });
         fdCache[key] = p; fdKeys.push(key);
@@ -2574,9 +2587,21 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
           draw(src, false);
         });
       }
+      // jobs still waiting for an accent the profile has already left are dropped, not painted
+      function dropStale(accent) {
+        for (var i = fdQueue.length - 1; i > 0; i--) {
+          var q = fdQueue[i];
+          if (q.key.indexOf(accent + '|') === 0) continue;
+          fdQueue.splice(i, 1);
+          delete fdCache[q.key];
+          var at = fdKeys.indexOf(q.key);
+          if (at > -1) fdKeys.splice(at, 1);
+        }
+      }
       function repaintFolderArt() {
         clearTimeout(fdRepaintT);
         fdRepaintT = later(function () {
+          dropStale(root.getAttribute('data-accent') || 'gold');
           var list = document.querySelectorAll('#pfFolders canvas.gf-art');
           for (var i = 0; i < list.length; i++) mountArt(list[i]);
         }, 160);
@@ -2740,6 +2765,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
         inp.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
         later(function () { inp.focus({ preventScroll: true }); }, reduce ? 0 : 350);
       }
+
       // =============== "view all" sheet ===============
       function openFolderSheet(key) {
         var g = findGroup(key);
@@ -2855,6 +2881,751 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
         document.removeEventListener('keydown', onFdKey);
       }
 
+      // =============== storm cover (WebGL2 liquid particles) ===============
+      // The profile's web is drawn once to a canvas; ~15-40k GPU particles are sampled from its
+      // pixels. The cursor (or a finger) turns the web liquid, then it settles back into the crisp
+      // image. Runs only while Storm is the chosen cover AND the cover is on screen.
+      var ST_NOISE = [
+        'float hash(vec2 p){ p = fract(p*vec2(123.34,456.21)); p += dot(p,p+45.32); return fract(p.x*p.y); }',
+        'float vnoise(vec2 p){ vec2 i=floor(p); vec2 f=fract(p); vec2 u=f*f*f*(f*(f*6.0-15.0)+10.0);',
+        '  return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),u.x), mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),u.x), u.y); }',
+        'vec2 ambientField(vec2 uv, float t){',
+        '  vec2 q = uv*vec2(3.2,1.7);',
+        '  vec2 a = vec2(vnoise(q+vec2(t*0.11,0.0))-0.5, vnoise(q+vec2(5.2,t*0.08)+3.1)-0.5);',
+        '  vec2 q2 = uv*vec2(7.5,4.0) + vec2(-t*0.19, t*0.13);',
+        '  vec2 b = vec2(vnoise(q2+1.7)-0.5, vnoise(q2+9.3)-0.5);',
+        '  return a + b*0.45;',
+        '}'
+      ].join('\n');
+      var ST_ENERGY = [
+        'float energyAt(vec2 rectPx, vec2 mouse, float radius, float presence, float wakeEnergy){',
+        '  vec2 d = rectPx - mouse;',
+        '  float f = exp(-dot(d,d)/(radius*radius))*presence;',
+        '  return smoothstep(0.06, 0.5, f*1.15 + wakeEnergy*1.7);',
+        '}'
+      ].join('\n');
+      var ST_QUAD_VS = [
+        '#version 300 es',
+        'layout(location=0) in vec2 aPos;',
+        'out vec2 vUv;',
+        'void main(){ vUv = aPos*0.5+0.5; gl_Position = vec4(aPos,0.0,1.0); }'
+      ].join('\n');
+      var ST_FLOW_FS = [
+        '#version 300 es',
+        'precision highp float;',
+        'in vec2 vUv;',
+        'out vec4 o;',
+        'uniform sampler2D uPrev;',
+        'uniform vec2 uTexel;',
+        'uniform vec2 uMouse;',
+        'uniform vec2 uVel;',
+        'uniform vec2 uSize;',
+        'uniform float uRadius;',
+        'uniform float uPresence;',
+        'uniform float uDecay;',
+        'vec2 decV(vec4 c){ return (c.rg*255.0-128.0)/127.0; }',
+        'void main(){',
+        '  vec2 v0 = decV(texture(uPrev, vUv));',
+        '  vec2 uv = vUv - v0*uTexel*2.5;',
+        '  vec4 c = texture(uPrev, uv)*0.52',
+        '    + 0.12*(texture(uPrev, uv+vec2(uTexel.x,0.0)) + texture(uPrev, uv-vec2(uTexel.x,0.0))',
+        '          + texture(uPrev, uv+vec2(0.0,uTexel.y)) + texture(uPrev, uv-vec2(0.0,uTexel.y)));',
+        '  vec2 v = decV(c);',
+        '  float p = c.b;',
+        '  vec2 d = (vUv-uMouse)*uSize;',
+        '  float f = exp(-dot(d,d)/(uRadius*uRadius))*uPresence;',
+        '  float sp = clamp(length(uVel)*2.5, 0.0, 1.0);',
+        '  v += uVel*f*0.22;',
+        '  p = max(p, f*sp);',
+        '  v *= uDecay;',
+        '  p *= uDecay;',
+        '  v = sign(v)*max(abs(v)-1.2/127.0, 0.0);',
+        '  p = max(p-1.2/255.0, 0.0);',
+        '  v = clamp(v, -1.0, 1.0);',
+        '  o = vec4((v*127.0+128.0)/255.0, p, 1.0);',
+        '}'
+      ].join('\n');
+      var ST_SIM_FS = [
+        '#version 300 es',
+        'precision highp float;',
+        'out vec4 o;',
+        'uniform sampler2D uState;',
+        'uniform sampler2D uHome;',
+        'uniform sampler2D uFlow;',
+        'uniform vec2 uSize;',
+        'uniform vec2 uMouse;',
+        'uniform float uRadius;',
+        'uniform float uPresence;',
+        'uniform float uStrength;',
+        'uniform float uSpread;',
+        'uniform float uTurb;',
+        'uniform float uReturn;',
+        'uniform float uTime;',
+        'uniform float uDt;',
+        'uniform float uIntro;',
+        ST_NOISE,
+        'vec2 curl(vec2 p){',
+        '  const float e = 0.35;',
+        '  float a = vnoise(p+vec2(0.0,e)) - vnoise(p-vec2(0.0,e));',
+        '  float b = vnoise(p+vec2(e,0.0)) - vnoise(p-vec2(e,0.0));',
+        '  return vec2(a, -b)/(2.0*e);',
+        '}',
+        'void main(){',
+        '  ivec2 ij = ivec2(gl_FragCoord.xy);',
+        '  vec4 hm = texelFetch(uHome, ij, 0);',
+        '  if(hm.w <= 0.0){ o = vec4(0.0); return; }',
+        '  vec4 st = texelFetch(uState, ij, 0);',
+        '  vec2 off = st.xy;',
+        '  vec2 vel = st.zw;',
+        '  float sd = hm.z;',
+        '  float light = 0.45 + sd*1.1;',
+        '  vec2 p = hm.xy*uSize + off;',
+        '  vec4 fl = texture(uFlow, clamp(p/uSize, 0.0, 1.0));',
+        '  vec2 wake = (fl.rg*255.0-128.0)/127.0;',
+        '  float pr = fl.b;',
+        '  vec2 toM = p - uMouse;',
+        '  float r2 = dot(toM,toM);',
+        '  float f = exp(-r2/(uRadius*uRadius))*uPresence;',
+        '  vec2 n = toM*inversesqrt(r2+1.0);',
+        '  float e = clamp(pr*2.0 + f, 0.0, 1.0);',
+        '  vec2 acc = vec2(0.0);',
+        '  acc += n*f*1.25*uStrength*uSpread*light;',
+        '  acc += vec2(-n.y, n.x)*f*1.45*uStrength*uSpread*(0.4+sd);',
+        '  acc += (wake*42.0*uSpread*light - vel)*e*0.08;',
+        '  vec2 q = p*0.0095 + vec2(uTime*0.35, -uTime*0.2);',
+        '  vec2 c = curl(q) + 0.5*curl(q*2.3 + 7.1);',
+        '  acc += c*(e*1.2*uSpread + uIntro*1.5)*uTurb*light;',
+        '  float k = (0.006 + 0.02*uReturn)*(0.65+sd*0.7)*(1.0 - uIntro*0.75);',
+        '  acc -= off*k;',
+        '  vel += acc*uDt;',
+        '  vel *= pow(mix(0.93, 0.955, e), uDt);',
+        '  off += vel*uDt;',
+        '  if(dot(off,off) < 0.0004 && dot(vel,vel) < 0.0004){ off = vec2(0.0); vel = vec2(0.0); }',
+        '  o = vec4(off, vel);',
+        '}'
+      ].join('\n');
+      var ST_PART_VS = [
+        '#version 300 es',
+        'precision highp float;',
+        'layout(location=0) in vec2 aCorner;',
+        'uniform sampler2D uState;',
+        'uniform sampler2D uHome;',
+        'uniform sampler2D uCol;',
+        'uniform sampler2D uFlow;',
+        'uniform int uTexW;',
+        'uniform vec4 uRect;',
+        'uniform vec2 uRes;',
+        'uniform vec2 uMouse;',
+        'uniform float uRadius;',
+        'uniform float uPresence;',
+        'uniform float uDot;',
+        'uniform float uTime;',
+        'uniform float uAmbient;',
+        'uniform float uStreak;',
+        'uniform float uIntroVis;',
+        'uniform float uRest;',
+        'out vec2 vLocal;',
+        'out float vHalfLen;',
+        'out float vR;',
+        'out vec3 vCol;',
+        'out float vA;',
+        ST_NOISE,
+        ST_ENERGY,
+        'void main(){',
+        '  int id = gl_InstanceID;',
+        '  ivec2 ij = ivec2(id % uTexW, id / uTexW);',
+        '  vec4 hm = texelFetch(uHome, ij, 0);',
+        '  vec4 st = texelFetch(uState, ij, 0);',
+        '  vec4 cl = texelFetch(uCol, ij, 0);',
+        '  float wakeE = texture(uFlow, hm.xy).b;',
+        '  float E = energyAt(hm.xy*uRect.zw, uMouse, uRadius, uPresence, wakeE);',
+        '  float lift = smoothstep(0.35, 2.5, length(st.xy));',
+        '  float a = max(max(E, lift), max(uRest, 1.0-uIntroVis));',
+        '  if(a < 0.01 || hm.w <= 0.0){ gl_Position = vec4(2.0,2.0,2.0,1.0); return; }',
+        '  vec2 base = uRect.xy + hm.xy*uRect.zw + st.xy;',
+        '  base -= ambientField(hm.xy, uTime)*10.0*uAmbient;',
+        '  vec2 v = st.zw;',
+        '  float sp = length(v);',
+        '  vec2 dir = sp > 0.001 ? v/sp : vec2(1.0,0.0);',
+        '  float r = uDot*hm.w*0.5;',
+        '  float len = min(sp*1.25, 18.0)*uStreak;',
+        '  vec2 lc = aCorner*vec2(r + len*0.5 + 1.0, r + 1.0);',
+        '  vec2 center = base - dir*len*0.5;',
+        '  vec2 world = center + dir*lc.x + vec2(-dir.y, dir.x)*lc.y;',
+        '  vec2 clip = world/uRes*2.0-1.0;',
+        '  gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);',
+        '  vLocal = lc;',
+        '  vHalfLen = len*0.5;',
+        '  vR = r;',
+        '  vec3 col = cl.rgb;',
+        '  float glint = smoothstep(2.0, 16.0, sp);',
+        '  col = mix(col, min(col*1.18 + vec3(0.07,0.075,0.085), vec3(1.0)), glint*0.75);',
+        '  vCol = col;',
+        '  vA = a;',
+        '}'
+      ].join('\n');
+      var ST_PART_FS = [
+        '#version 300 es',
+        'precision highp float;',
+        'in vec2 vLocal;',
+        'in float vHalfLen;',
+        'in float vR;',
+        'in vec3 vCol;',
+        'in float vA;',
+        'uniform float uDpr;',
+        'out vec4 o;',
+        'void main(){',
+        '  vec2 q = vec2(max(abs(vLocal.x)-vHalfLen, 0.0), vLocal.y);',
+        '  float d = length(q) - vR;',
+        '  float a = clamp(0.5 - d*uDpr, 0.0, 1.0);',
+        '  float tail = vHalfLen > 0.0 ? clamp(0.5 - vLocal.x/(2.0*(vHalfLen+vR)), 0.0, 1.0) : 0.0;',
+        '  a *= 1.0 - tail*0.55;',
+        '  a *= vA;',
+        '  if(a < 0.004) discard;',
+        '  o = vec4(vCol*a, a);',
+        '}'
+      ].join('\n');
+      var ST_IMAGE_FS = [
+        '#version 300 es',
+        'precision highp float;',
+        'out vec4 o;',
+        'uniform sampler2D uImg;',
+        'uniform sampler2D uFlow;',
+        'uniform vec2 uRes;',
+        'uniform float uDpr;',
+        'uniform vec4 uRect;',
+        'uniform vec2 uMouse;',
+        'uniform float uPresence;',
+        'uniform float uRadius;',
+        'uniform float uStrength;',
+        'uniform float uTime;',
+        'uniform float uAmbient;',
+        'uniform float uIntroVis;',
+        'uniform float uRest;',
+        ST_NOISE,
+        ST_ENERGY,
+        'void main(){',
+        '  vec2 px = vec2(gl_FragCoord.x, uRes.y*uDpr - gl_FragCoord.y)/uDpr;',
+        '  vec2 size = uRect.zw;',
+        '  vec2 uv = (px-uRect.xy)/size;',
+        '  if(uv.x < -0.05 || uv.x > 1.05 || uv.y < -0.12 || uv.y > 1.12){ o = vec4(0.0); return; }',
+        '  vec4 fl = texture(uFlow, clamp(uv,0.0,1.0));',
+        '  vec2 vel = (fl.rg*255.0-128.0)/127.0;',
+        '  vec2 rp = uv*size;',
+        '  vec2 toM = rp - uMouse;',
+        '  float fall = exp(-dot(toM,toM)/(uRadius*uRadius))*uPresence;',
+        '  vec2 disp = -toM*0.22*uStrength*fall - vel*10.0*uStrength;',
+        '  disp += ambientField(uv, uTime)*10.0*uAmbient;',
+        '  vec2 suv = uv + disp/size;',
+        '  vec4 tx = texture(uImg, suv);',
+        '  vec2 e = smoothstep(vec2(0.0), vec2(0.004,0.01), suv) * smoothstep(vec2(1.0), vec2(0.996,0.99), suv);',
+        '  float k = tx.a*e.x*e.y;',
+        '  float E = energyAt(rp, uMouse, uRadius, uPresence, fl.b);',
+        '  float show = (1.0 - max(E, uRest))*uIntroVis;',
+        '  float A = k*show;',
+        '  o = vec4(tx.rgb*A, A);',
+        '}'
+      ].join('\n');
+
+      function stClamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+      function stCompile(gl, vs, fs) {
+        function make(type, src) {
+          var sh = gl.createShader(type);
+          gl.shaderSource(sh, src);
+          gl.compileShader(sh);
+          if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { var log = gl.getShaderInfoLog(sh); gl.deleteShader(sh); throw new Error('Shader: ' + log); }
+          return sh;
+        }
+        var p = gl.createProgram(), v = make(gl.VERTEX_SHADER, vs), f = make(gl.FRAGMENT_SHADER, fs);
+        gl.attachShader(p, v); gl.attachShader(p, f);
+        gl.bindAttribLocation(p, 0, 'aPos');
+        gl.linkProgram(p);
+        gl.deleteShader(v); gl.deleteShader(f);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error('Link: ' + gl.getProgramInfoLog(p));
+        var u = {}, cnt = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+        for (var i = 0; i < cnt; i++) { var info = gl.getActiveUniform(p, i); if (info) u[info.name] = gl.getUniformLocation(p, info.name); }
+        return { p: p, u: u };
+      }
+
+      // opts: { strength, radius, density, dotSize, spread, turbulence, returnSpeed, streaks, ambient, ambientIntensity, speed, intro, liquid, reducedMotion }
+      function createStorm(canvas, opts, onFail) {
+        var gl = canvas.getContext('webgl2', { alpha: true, antialias: false, depth: false, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+        if (!gl) throw new Error('WebGL2 unavailable');
+        var TEX_W = 1024, SETTLE = 270;
+        var lowPower = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4 || window.matchMedia('(pointer: coarse)').matches;
+        var pFlow, pSim, pPart, pImg, vao, quad;
+        var imgTex = null, flowTex = [], flowFb = [], flowW = 256, flowH = 104, flowIdx = 0, flowDirty = false;
+        var homeTex = null, colTex = null, stateTex = [], stateFb = [], stateIdx = 0, texH = 1, n = 0, gridW = 1, stateDirty = false, homeData = null;
+        var flowing = 0, aspect = 2.5, rect = { x: 0, y: 0, w: 1, h: 1 }, cssW = 1, cssH = 1;
+        var target = { x: -9999, y: -9999 }, mouse = { x: -9999, y: -9999 }, prevMouse = { x: -9999, y: -9999 }, mvel = { x: 0, y: 0 };
+        var presence = 0, presenceTarget = 0, burst = 0, settle = 1e9, touchRelease = 0;
+        var time = 0, introT = 1, raf = 0, running = false, last = 0, skip = 0, visible = true, ready = false, destroyed = false, lost = false;
+        var self = { onFirstFrame: null };
+
+        var full = gl.getExtension('EXT_color_buffer_float'), half = full ? null : gl.getExtension('EXT_color_buffer_half_float');
+        if (!full && !half) throw new Error('No float render targets');
+        pFlow = stCompile(gl, ST_QUAD_VS, ST_FLOW_FS);
+        pSim = stCompile(gl, ST_QUAD_VS, ST_SIM_FS);
+        pPart = stCompile(gl, ST_PART_VS, ST_PART_FS);
+        pImg = stCompile(gl, ST_QUAD_VS, ST_IMAGE_FS);
+        vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+        quad = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+        function makeTex(internal, w, h, format, type, data, filter) {
+          var t = gl.createTexture();
+          gl.bindTexture(gl.TEXTURE_2D, t);
+          gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+          gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, data);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          return t;
+        }
+        function clearFlow() {
+          for (var i = 0; i < flowFb.length; i++) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, flowFb[i]);
+            gl.viewport(0, 0, flowW, flowH);
+            gl.clearColor(128 / 255, 128 / 255, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+          }
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          flowDirty = false;
+        }
+        function clearState() {
+          for (var i = 0; i < stateFb.length; i++) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, stateFb[i]);
+            gl.viewport(0, 0, TEX_W, texH);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+          }
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          stateDirty = false;
+        }
+        for (var fi = 0; fi < 2; fi++) {
+          var ft = makeTex(gl.RGBA8, flowW, flowH, gl.RGBA, gl.UNSIGNED_BYTE, null, gl.LINEAR), ffb = gl.createFramebuffer();
+          gl.bindFramebuffer(gl.FRAMEBUFFER, ffb);
+          gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, ft, 0);
+          flowTex.push(ft); flowFb.push(ffb);
+        }
+        clearFlow();
+        canvas.addEventListener('webglcontextlost', onLost, false);
+        function onLost(e) { e.preventDefault(); lost = true; stop(); onFail(); }
+
+        // one particle per material pixel of a grid laid over the source canvas
+        function buildParticles(src) {
+          var baseGrid = lowPower ? 640 : 1000;
+          var gw = Math.round(baseGrid * Math.sqrt(stClamp(opts.density, 0.15, 2))), gh = Math.max(1, Math.round(gw / aspect));
+          gridW = gw;
+          var c = document.createElement('canvas');
+          c.width = gw; c.height = gh;
+          var ctx = c.getContext('2d', { willReadFrequently: true });
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(src, 0, 0, gw, gh);
+          var data = ctx.getImageData(0, 0, gw, gh).data, home = [], col = [], x, y;
+          for (y = 0; y < gh; y++) {
+            for (x = 0; x < gw; x++) {
+              var i = (y * gw + x) * 4, a = data[i + 3] / 255;
+              if (a < 0.12) continue;
+              if (a < 0.5 && Math.random() > a * 2) continue;
+              var jx = (Math.random() - 0.5) * 0.6, jy = (Math.random() - 0.5) * 0.6;
+              home.push((x + 0.5 + jx) / gw, (y + 0.5 + jy) / gh, Math.random(), 0.85 + Math.random() * 0.3);
+              col.push(data[i], data[i + 1], data[i + 2], 255);
+            }
+          }
+          n = home.length / 4;
+          texH = Math.max(1, Math.ceil(n / TEX_W));
+          var total = TEX_W * texH, homeArr = new Float32Array(total * 4), colArr = new Uint8Array(total * 4);
+          homeArr.set(home); colArr.set(col);
+          var olds = [homeTex, colTex].concat(stateTex), j;
+          for (j = 0; j < olds.length; j++) if (olds[j]) gl.deleteTexture(olds[j]);
+          for (j = 0; j < stateFb.length; j++) gl.deleteFramebuffer(stateFb[j]);
+          stateTex = []; stateFb = [];
+          homeTex = makeTex(gl.RGBA32F, TEX_W, texH, gl.RGBA, gl.FLOAT, homeArr, gl.NEAREST);
+          colTex = makeTex(gl.RGBA8, TEX_W, texH, gl.RGBA, gl.UNSIGNED_BYTE, colArr, gl.NEAREST);
+          for (j = 0; j < 2; j++) {
+            var t = makeTex(gl.RGBA16F, TEX_W, texH, gl.RGBA, gl.HALF_FLOAT, null, gl.NEAREST), fb = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+            if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw new Error('Float FBO incomplete');
+            stateTex.push(t); stateFb.push(fb);
+          }
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          homeData = homeArr;
+          clearState();
+        }
+        function startIntro() {
+          if (!homeData) return;
+          var w = rect.w > 10 ? rect.w : 900, st = new Float32Array(TEX_W * texH * 4);
+          for (var i = 0; i < n; i++) {
+            var hx = homeData[i * 4] - 0.5, hy = homeData[i * 4 + 1] - 0.5, sd = homeData[i * 4 + 2];
+            var ang = (Math.random() - 0.5) * 0.9 + (hx > 0 ? 0 : Math.PI);
+            var dist = w * (0.04 + Math.random() * 0.14) * (0.5 + Math.abs(hx) * 1.4);
+            st[i * 4] = Math.cos(ang) * dist + hx * w * 0.25 * sd;
+            st[i * 4 + 1] = Math.sin(ang) * dist * 0.55 + hy * 120 * (Math.random() - 0.5);
+          }
+          gl.bindTexture(gl.TEXTURE_2D, stateTex[stateIdx]);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, TEX_W, texH, 0, gl.RGBA, gl.FLOAT, st);
+          introT = 0; stateDirty = true;
+        }
+
+        // src: a canvas whose pixels (with alpha) are the sculpture
+        self.setSource = function (src, withIntro) {
+          if (destroyed || lost) return;
+          aspect = src.width / src.height || 2.5;
+          flowH = Math.max(32, Math.round(flowW / aspect));
+          for (var i = 0; i < flowTex.length; i++) {
+            gl.bindTexture(gl.TEXTURE_2D, flowTex[i]);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, flowW, flowH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+          }
+          clearFlow();
+          if (imgTex) gl.deleteTexture(imgTex);
+          imgTex = gl.createTexture();
+          gl.bindTexture(gl.TEXTURE_2D, imgTex);
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+          gl.generateMipmap(gl.TEXTURE_2D);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          buildParticles(src);
+          ready = true;
+          if (withIntro && opts.intro && !opts.reducedMotion) startIntro(); else introT = 1;
+          wake();
+        };
+        self.resize = function (w, h, r) {
+          cssW = Math.max(1, w); cssH = Math.max(1, h); rect = r;
+          var dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1.5 : 2), px = cssW * cssH * dpr * dpr;
+          if (px > 4.5e6) dpr = Math.max(1, Math.sqrt(4.5e6 / (cssW * cssH)));
+          var cw = Math.round(cssW * dpr), ch = Math.round(cssH * dpr);
+          if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+          draw();
+        };
+        self.setVisible = function (v) { visible = v; if (v) wake(); else stop(); };
+        self.pointer = function (type, x, y, touch) {
+          if (lost) return;
+          var now = performance.now();
+          if (type === 'leave' || type === 'up') {
+            if (touch) touchRelease = now + 260; else presenceTarget = 0;
+            wake();
+            return;
+          }
+          if (mouse.x < -9000 || type === 'down') { mouse.x = prevMouse.x = x; mouse.y = prevMouse.y = y; }
+          target.x = x; target.y = y;
+          presenceTarget = 1; settle = 0;
+          if (type === 'down') { burst = 1; touchRelease = 0; }
+          wake();
+        };
+        self.destroy = function () {
+          destroyed = true; stop();
+          canvas.removeEventListener('webglcontextlost', onLost);
+          if (!lost) {
+            gl.deleteBuffer(quad); gl.deleteVertexArray(vao);
+            var ts = flowTex.concat(stateTex, [imgTex, homeTex, colTex]), k;
+            for (k = 0; k < ts.length; k++) if (ts[k]) gl.deleteTexture(ts[k]);
+            var fbs = flowFb.concat(stateFb);
+            for (k = 0; k < fbs.length; k++) gl.deleteFramebuffer(fbs[k]);
+            var ps = [pFlow, pSim, pPart, pImg];
+            for (k = 0; k < ps.length; k++) if (ps[k]) gl.deleteProgram(ps[k].p);
+          }
+          var lose = gl.getExtension('WEBGL_lose_context');
+          if (lose) lose.loseContext();
+        };
+
+        function wake() {
+          if (!ready || running || !visible || destroyed || lost) { if (ready && !running) draw(); return; }
+          running = true; last = performance.now();
+          raf = requestAnimationFrame(frame);
+        }
+        function stop() { running = false; cancelAnimationFrame(raf); }
+        function radiusPx() { return opts.radius * stClamp(rect.w / 1400, 0.6, 1.25); }
+        function strength() { return opts.strength * (opts.reducedMotion ? 0.5 : 1); }
+        function firstFrame() {
+          if (self.onFirstFrame) { var cb = self.onFirstFrame; self.onFirstFrame = null; requestAnimationFrame(function () { cb(); }); }
+        }
+        function frame(now) {
+          if (!running) return;
+          var rawMs = now - last, dt = stClamp(rawMs / 16.6667, 0.25, 3);
+          last = now;
+          var ambientOn = opts.ambient && !opts.reducedMotion;
+          if (touchRelease && now > touchRelease) { presenceTarget = 0; touchRelease = 0; }
+          var ease = 1 - Math.pow(1 - 0.22, dt);
+          mouse.x += (target.x - mouse.x) * ease; mouse.y += (target.y - mouse.y) * ease;
+          var vx = (mouse.x - prevMouse.x) / dt, vy = (mouse.y - prevMouse.y) / dt;
+          prevMouse.x = mouse.x; prevMouse.y = mouse.y;
+          mvel.x += (stClamp(vx, -60, 60) - mvel.x) * 0.5; mvel.y += (stClamp(vy, -60, 60) - mvel.y) * 0.5;
+          var pk = presenceTarget > presence ? 0.1 : 0.035;
+          presence += (presenceTarget - presence) * (1 - Math.pow(1 - pk, dt));
+          if (presence < 0.001 && presenceTarget === 0) presence = 0;
+          var fk = presenceTarget > flowing ? 0.05 : 0.018;
+          flowing += (presenceTarget - flowing) * (1 - Math.pow(1 - fk, dt));
+          if (flowing < 0.002 && presenceTarget === 0) flowing = 0;
+          if (introT < 1) introT = Math.min(1, introT + Math.min(rawMs, 100) / 3200);
+          var interacting = presence > 0.001 || burst > 0;
+          settle = interacting ? 0 : settle + dt;
+          var active = interacting || settle < SETTLE || introT < 1;
+          if (!active) {
+            if (flowDirty) clearFlow();
+            if (stateDirty) clearState();
+            if (!ambientOn) { draw(); firstFrame(); stop(); return; }
+            raf = requestAnimationFrame(frame);
+            if (skip++ % 2) return;
+            time += (dt * 2 * opts.speed) / 60;
+            draw(); firstFrame();
+            return;
+          }
+          raf = requestAnimationFrame(frame);
+          time += (dt * opts.speed * (1 + flowing * 1.6)) / 60;
+          stepFlow(dt); stepSim(dt);
+          burst = Math.max(0, burst - 0.1 * dt);
+          draw(); firstFrame();
+        }
+        function stepFlow(dt) {
+          var P = pFlow, dst = 1 - flowIdx;
+          gl.bindFramebuffer(gl.FRAMEBUFFER, flowFb[dst]);
+          gl.viewport(0, 0, flowW, flowH);
+          gl.disable(gl.BLEND);
+          gl.useProgram(P.p);
+          gl.bindVertexArray(vao);
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, flowTex[flowIdx]);
+          gl.uniform1i(P.u.uPrev, 0);
+          gl.uniform2f(P.u.uTexel, 1 / flowW, 1 / flowH);
+          gl.uniform2f(P.u.uMouse, (mouse.x - rect.x) / rect.w, (mouse.y - rect.y) / rect.h);
+          gl.uniform2f(P.u.uVel, stClamp(mvel.x / 40, -1, 1), stClamp(mvel.y / 40, -1, 1));
+          gl.uniform2f(P.u.uSize, rect.w, rect.h);
+          gl.uniform1f(P.u.uRadius, radiusPx());
+          gl.uniform1f(P.u.uPresence, Math.max(presence, burst));
+          gl.uniform1f(P.u.uDecay, Math.pow(0.968, dt));
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          flowIdx = dst; flowDirty = true;
+        }
+        function stepSim(dt) {
+          if (!n) return;
+          var P = pSim, dst = 1 - stateIdx, intro = opts.reducedMotion || !opts.intro ? 0 : Math.pow(1 - introT, 2);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, stateFb[dst]);
+          gl.viewport(0, 0, TEX_W, texH);
+          gl.disable(gl.BLEND);
+          gl.useProgram(P.p);
+          gl.bindVertexArray(vao);
+          gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, stateTex[stateIdx]); gl.uniform1i(P.u.uState, 0);
+          gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, homeTex); gl.uniform1i(P.u.uHome, 1);
+          gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, flowTex[flowIdx]); gl.uniform1i(P.u.uFlow, 2);
+          gl.uniform2f(P.u.uSize, rect.w, rect.h);
+          gl.uniform2f(P.u.uMouse, mouse.x - rect.x, mouse.y - rect.y);
+          gl.uniform1f(P.u.uRadius, radiusPx());
+          gl.uniform1f(P.u.uPresence, Math.max(presence, burst));
+          gl.uniform1f(P.u.uStrength, strength() * (1 + burst * 1.5));
+          gl.uniform1f(P.u.uSpread, stClamp(opts.spread, 0, 2));
+          gl.uniform1f(P.u.uTurb, stClamp(opts.turbulence, 0, 2) * (opts.reducedMotion ? 0.3 : 1));
+          gl.uniform1f(P.u.uReturn, stClamp(opts.returnSpeed, 0, 2));
+          gl.uniform1f(P.u.uTime, time);
+          gl.uniform1f(P.u.uDt, dt);
+          gl.uniform1f(P.u.uIntro, intro);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          stateIdx = dst; stateDirty = true;
+        }
+        function draw() {
+          if (!ready || lost || destroyed) return;
+          var rm = opts.reducedMotion, introVis = rm || !opts.intro ? 1 : Math.pow(introT, 2.2);
+          var base = opts.ambient && !rm ? stClamp(opts.ambientIntensity, 0, 2) : 0;
+          var amb = base + flowing * 0.85 * stClamp(opts.liquid, 0, 2) * (rm ? 0.3 : 1);
+          var dpr = canvas.width / cssW, pres = Math.max(presence, burst), mx = mouse.x - rect.x, my = mouse.y - rect.y;
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.viewport(0, 0, canvas.width, canvas.height);
+          gl.bindVertexArray(vao);
+          gl.disable(gl.BLEND);
+          var I = pImg;
+          gl.useProgram(I.p);
+          gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, imgTex); gl.uniform1i(I.u.uImg, 0);
+          gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, flowTex[flowIdx]); gl.uniform1i(I.u.uFlow, 1);
+          gl.uniform2f(I.u.uRes, cssW, cssH);
+          gl.uniform1f(I.u.uDpr, dpr);
+          gl.uniform4f(I.u.uRect, rect.x, rect.y, rect.w, rect.h);
+          gl.uniform2f(I.u.uMouse, mx, my);
+          gl.uniform1f(I.u.uPresence, pres);
+          gl.uniform1f(I.u.uRadius, radiusPx());
+          gl.uniform1f(I.u.uStrength, strength());
+          gl.uniform1f(I.u.uTime, time);
+          gl.uniform1f(I.u.uAmbient, amb);
+          gl.uniform1f(I.u.uIntroVis, introVis);
+          gl.uniform1f(I.u.uRest, 0);
+          gl.clearColor(0, 0, 0, 0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          // particles are invisible at rest: skip them entirely
+          if (!n || (!stateDirty && introVis >= 1)) return;
+          var P = pPart;
+          gl.useProgram(P.p);
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+          gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, stateTex[stateIdx]); gl.uniform1i(P.u.uState, 0);
+          gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, homeTex); gl.uniform1i(P.u.uHome, 1);
+          gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, colTex); gl.uniform1i(P.u.uCol, 2);
+          gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, flowTex[flowIdx]); gl.uniform1i(P.u.uFlow, 3);
+          gl.uniform1i(P.u.uTexW, TEX_W);
+          gl.uniform4f(P.u.uRect, rect.x, rect.y, rect.w, rect.h);
+          gl.uniform2f(P.u.uRes, cssW, cssH);
+          gl.uniform2f(P.u.uMouse, mx, my);
+          gl.uniform1f(P.u.uRadius, radiusPx());
+          gl.uniform1f(P.u.uPresence, pres);
+          gl.uniform1f(P.u.uDot, (rect.w / gridW) * 1.45 * stClamp(opts.dotSize, 0.2, 3));
+          gl.uniform1f(P.u.uTime, time);
+          gl.uniform1f(P.u.uAmbient, amb);
+          gl.uniform1f(P.u.uStreak, (opts.streaks ? 1 : 0) * (0.45 + 0.55 * introVis));
+          gl.uniform1f(P.u.uIntroVis, introVis);
+          gl.uniform1f(P.u.uRest, 0);
+          gl.uniform1f(P.u.uDpr, dpr);
+          gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n);
+          gl.disable(gl.BLEND);
+        }
+        return self;
+      }
+
+      // the source "sculpture": this profile's own web, drawn in the accent, one lit node per owned find
+      function stormArt(cw, ch, accent, lit, seedStr) {
+        var TW = Math.min(1800, Math.max(900, Math.round(cw * 2))), TH = Math.max(1, Math.round(TW * ch / cw)), s = TW / 1000, H = TH / s;
+        var c = document.createElement('canvas');
+        c.width = TW; c.height = TH;
+        var g = c.getContext('2d'), R = prng(hashStr(seedStr + '|storm')), sw = SWATCH[accent] || SWATCH.gold;
+        var a = sw[0].split(',').map(Number), b = sw[1].split(',').map(Number);
+        function rgb(col, k) { return 'rgb(' + Math.round(col[0] * k) + ',' + Math.round(col[1] * k) + ',' + Math.round(col[2] * k) + ')'; }
+        g.scale(s, s);
+        g.lineCap = 'round'; g.lineJoin = 'round';
+        var hx = 1000 * (0.64 + R() * 0.1), hy = H * (0.44 + R() * 0.14), sx = 1.9 + R() * 0.5;
+        var N = 8 + Math.floor(R() * 4), off = R() * 6.28, ang = [], i, j;
+        for (i = 0; i < N; i++) ang.push(off + i * Math.PI * 2 / N + (R() - 0.5) * 0.18);
+        var step = H * (0.17 + R() * 0.03), rings = Math.ceil(1000 * 1.4 / (step * sx)) + 1;
+        function P(an, r) { return [hx + Math.cos(an) * r * sx, hy + Math.sin(an) * r]; }
+        // spokes
+        g.strokeStyle = rgb(a, 0.62); g.lineWidth = 1.5;
+        for (i = 0; i < N; i++) { var e = P(ang[i], step * (rings + 1)); g.beginPath(); g.moveTo(hx, hy); g.lineTo(e[0], e[1]); g.stroke(); }
+        // rings: slack threads that sag toward the hub between spokes
+        g.lineWidth = 1.15;
+        var cross = [];
+        for (j = 1; j <= rings; j++) {
+          var rr = step * j * (0.94 + R() * 0.1);
+          g.strokeStyle = rgb(a, 0.4 + 0.16 * (j % 2));
+          for (i = 0; i < N; i++) {
+            var a0 = ang[i], a1 = ang[(i + 1) % N] + (i === N - 1 ? Math.PI * 2 : 0), p0 = P(a0, rr), p1 = P(a1, rr);
+            var mid = P((a0 + a1) / 2, rr * 0.9);
+            g.beginPath(); g.moveTo(p0[0], p0[1]); g.quadraticCurveTo(mid[0], mid[1], p1[0], p1[1]); g.stroke();
+          }
+          for (i = 0; i < N; i++) cross.push([P(ang[i], rr), j]);
+        }
+        // slots: unique ring / spoke crossings, kept inside the cover
+        var ok = cross.filter(function (q) { return q[0][0] > 60 && q[0][0] < 940 && q[0][1] > H * 0.16 && q[0][1] < H * 0.84; });
+        for (i = ok.length - 1; i > 0; i--) { j = Math.floor(R() * (i + 1)); var t = ok[i]; ok[i] = ok[j]; ok[j] = t; }
+        var slots = ok.slice(0, SLOTS).map(function (q) { return q[0]; });
+        // threads from the hub to lit nodes, then the nodes themselves
+        for (i = 0; i < slots.length; i++) {
+          var sp = slots[i], isLit = i < lit;
+          if (isLit) {
+            g.strokeStyle = rgb(b, 0.95); g.lineWidth = 2.1;
+            g.beginPath(); g.moveTo(hx, hy);
+            g.quadraticCurveTo((hx + sp[0]) / 2 + (R() - 0.5) * 36, (hy + sp[1]) / 2 + (R() - 0.5) * 36, sp[0], sp[1]); g.stroke();
+            g.fillStyle = rgb(b, 1); g.beginPath(); g.arc(sp[0], sp[1], 6.2, 0, 6.2832); g.fill();
+            g.strokeStyle = rgb(b, 0.7); g.lineWidth = 1.4; g.beginPath(); g.arc(sp[0], sp[1], 13, 0, 6.2832); g.stroke();
+          } else {
+            g.strokeStyle = rgb(a, 0.6); g.lineWidth = 1.3; g.beginPath(); g.arc(sp[0], sp[1], 4.6, 0, 6.2832); g.stroke();
+          }
+        }
+        // dew: a few bright drops along the threads
+        g.fillStyle = rgb(b, 0.95);
+        for (i = 0; i < 46; i++) {
+          var da = ang[Math.floor(R() * N)], dr = step * (1 + R() * (rings - 1)), dp = P(da + (R() - 0.5) * 0.3, dr);
+          if (dp[0] < 10 || dp[0] > 990 || dp[1] < 6 || dp[1] > H - 6) continue;
+          g.beginPath(); g.arc(dp[0], dp[1], 1.2 + R() * 1.5, 0, 6.2832); g.fill();
+        }
+        g.fillStyle = rgb(b, 1); g.beginPath(); g.arc(hx, hy, 4.4, 0, 6.2832); g.fill();
+        return c;
+      }
+
+      // ---- storm cover lifecycle ----
+      var storm = { eng: null, cv: null, key: '', io: null, ro: null, rz: null, art: 0 };
+      var STORM_OPTS = { strength: 1.1, radius: 96, density: 0.8, dotSize: 1.25, spread: 1, turbulence: 1, returnSpeed: 1, streaks: true, ambient: true, ambientIntensity: 0.32, speed: 0.6, intro: true, liquid: 1 };
+
+      function effWeb() {
+        var w = (state.view || state.theme || {}).web || 'radial';
+        return (w === 'storm' && state.stormFail) ? 'radial' : w;
+      }
+      function stormOff() {
+        clearTimeout(storm.rz);
+        if (storm.io) { try { storm.io.disconnect(); } catch (e) {} storm.io = null; }
+        if (storm.ro) { try { storm.ro.disconnect(); } catch (e) {} storm.ro = null; }
+        if (storm.eng) { try { storm.eng.destroy(); } catch (e) {} storm.eng = null; }
+        if (storm.cv && storm.cv.parentNode) storm.cv.parentNode.removeChild(storm.cv);
+        storm.cv = null; storm.key = '';
+        var cov = el('pfCover');
+        if (cov) cov.classList.remove('is-storm');
+      }
+      function stormFallback() {
+        state.stormFail = true;
+        stormOff();
+        var svg = el('pfWeb');
+        if (svg) svg.removeAttribute('data-key');
+        buildWeb(); renderWeb();
+      }
+      function stormKey(cov, lit) {
+        return (root.getAttribute('data-accent') || 'gold') + '|' + (state.profile ? (state.profile.username || state.profile.id) : '') + '|' + lit + '|' + Math.round(cov.clientWidth / cov.clientHeight * 20);
+      }
+      function stormPaint(withIntro) {
+        var cov = el('pfCover');
+        if (!storm.eng || !cov || !cov.clientWidth || !cov.clientHeight) return;
+        var w = cov.clientWidth, h = cov.clientHeight, lit = Math.min(state.owned.length, SLOTS);
+        var art = stormArt(w, h, root.getAttribute('data-accent') || 'gold', lit, String(state.profile.username || state.profile.id || 'spoider'));
+        storm.eng.resize(w, h, { x: 0, y: 0, w: w, h: h });
+        storm.eng.setSource(art, withIntro);
+        storm.key = stormKey(cov, lit);
+      }
+      function stormSync() {
+        var cov = el('pfCover');
+        if (!cov || !state.loaded || !state.profile) return;
+        cov.classList.add('is-storm');
+        if (!cov.clientWidth || !cov.clientHeight) return;
+        var lit = Math.min(state.owned.length, SLOTS);
+        if (storm.eng) { if (storm.key !== stormKey(cov, lit)) { try { stormPaint(false); } catch (e) { stormFallback(); } } return; }
+        var cv = document.createElement('canvas');
+        cv.className = 'pf-storm';
+        cv.setAttribute('aria-hidden', 'true');
+        cov.insertBefore(cv, el('pfWebCap'));
+        storm.cv = cv;
+        try {
+          storm.eng = createStorm(cv, { strength: STORM_OPTS.strength, radius: STORM_OPTS.radius, density: STORM_OPTS.density, dotSize: STORM_OPTS.dotSize, spread: STORM_OPTS.spread, turbulence: STORM_OPTS.turbulence, returnSpeed: STORM_OPTS.returnSpeed, streaks: STORM_OPTS.streaks, ambient: STORM_OPTS.ambient, ambientIntensity: STORM_OPTS.ambientIntensity, speed: STORM_OPTS.speed, intro: STORM_OPTS.intro, liquid: STORM_OPTS.liquid, reducedMotion: reduce }, function () { if (alive) stormFallback(); });
+          storm.eng.onFirstFrame = function () { if (cv.isConnected) cv.classList.add('is-live'); };
+          stormPaint(true);
+        } catch (e) { stormFallback(); return; }
+        function xy(ev) { var r = cv.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
+        cv.addEventListener('pointermove', function (ev) { if (!storm.eng) return; var p = xy(ev); storm.eng.pointer('move', p[0], p[1], ev.pointerType === 'touch'); });
+        cv.addEventListener('pointerdown', function (ev) { if (!storm.eng) return; var p = xy(ev); storm.eng.pointer('down', p[0], p[1], ev.pointerType === 'touch'); });
+        cv.addEventListener('pointerup', function (ev) { if (storm.eng) storm.eng.pointer('up', 0, 0, ev.pointerType === 'touch'); });
+        cv.addEventListener('pointercancel', function (ev) { if (storm.eng) storm.eng.pointer('leave', 0, 0, ev.pointerType === 'touch'); });
+        cv.addEventListener('pointerleave', function (ev) { if (storm.eng && ev.pointerType !== 'touch') storm.eng.pointer('leave', 0, 0, false); });
+        if ('IntersectionObserver' in window) {
+          storm.io = new IntersectionObserver(function (es) { if (storm.eng && es[0]) storm.eng.setVisible(es[0].isIntersecting); }, { threshold: 0.05 });
+          storm.io.observe(cov);
+        }
+        if ('ResizeObserver' in window) {
+          storm.ro = new ResizeObserver(function () {
+            clearTimeout(storm.rz);
+            storm.rz = setTimeout(function () {
+              if (!alive || !storm.eng) return;
+              var c2 = el('pfCover');
+              if (!c2 || !c2.clientWidth) return;
+              try { if (storm.key !== stormKey(c2, Math.min(state.owned.length, SLOTS))) stormPaint(false); else storm.eng.resize(c2.clientWidth, c2.clientHeight, { x: 0, y: 0, w: c2.clientWidth, h: c2.clientHeight }); } catch (e2) { stormFallback(); }
+            }, 160);
+          });
+          storm.ro.observe(cov);
+        }
+      }
+
+
       // =============== one-time bindings ===============
       // sticky sidebar: if it is taller than the screen, stick it by its bottom so everything stays reachable
       var sideRO = null;
@@ -2943,6 +3714,7 @@ svg.innerHTML = '<path class="t-trunk" pathLength="1" style="--gd:' + GT + 's;--
         closeCert(true);
         closeSheet(true);
         cleanupFolders();
+        stormOff();
         timers.forEach(clearTimeout);
         if (dnaIO) { try { dnaIO.disconnect(); } catch (e) {} dnaIO = null; }
         window.removeEventListener('resize', onResize);
