@@ -1931,19 +1931,22 @@
 })();
 
 // ============================================================
-// Liquid-glass product cards — the light source.
+// Liquid-glass product cards - the light source.
 // CSS (style.css, "LIQUID GLASS PRODUCT CARDS") draws the glass;
-// this only feeds it three numbers per card:
-//   --mx / --my  where the light sits on the card
-//   --spec       how strongly it shines
-// Desktop: the light follows the cursor, with a little drag so it
-// feels like liquid, and eases home on leave. Touch: no hover, so
-// the light slides across each card as it travels up the screen;
-// a touch flashes it under the finger. Also copies each poster's
-// URL into --card-img so its colour can melt into the glass.
+// this moves three tiny light layers inside each card using only
+// transform + opacity, so nothing repaints while it animates:
+//   .sf-glare  soft specular on the poster / glass
+//   .sf-rim i  the same light, seen only on the 1px edge
+//   .sf-sweep  one slow sheen when a card first scrolls in
+// Desktop: the light follows the cursor with a little drag (so it
+// feels like liquid), the poster drifts a few px the other way for
+// depth, and it eases home on leave. Touch: no hover, so the light
+// slides across each card as it travels up the screen, and a press
+// sends a ripple out from under the finger. It also copies each
+// poster's URL into --card-img so its colour melts into the glass.
 // Delegated + observer based, so cards injected later (Supabase
-// loaders, page transitions) are picked up with no rebinding.
-// Only visible cards are ever touched; nothing runs while idle.
+// loaders, page transitions) are picked up with no rebinding. Only
+// visible cards are touched; nothing runs while idle.
 // ============================================================
 (function () {
   "use strict";
@@ -1951,49 +1954,67 @@
   window.__sfGlass = true;
 
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var REST = { x: 24, y: 0, s: 0.38 };
+  var coarse = window.matchMedia("(hover: none)").matches;
+  var REST = { x: 0.24, y: 0.0, s: 0.4 };
   var st = new WeakMap();
+  var size = new WeakMap();
   var live = new Set();
   var visible = new Set();
-  var raf = 0;
-  var io = null;
+  var raf = 0, io = null, ro = null;
 
   function get(card) {
     var s = st.get(card);
-    if (!s) { s = { x: REST.x, y: REST.y, s: REST.s, tx: REST.x, ty: REST.y, ts: REST.s, follow: false }; st.set(card, s); }
+    if (!s) {
+      s = { x: REST.x, y: REST.y, s: REST.s, tx: REST.x, ty: REST.y, ts: REST.s, follow: false, cold: true,
+            glare: card.querySelector(".sf-glare"), glint: card.querySelector(".sf-rim i"), img: card.querySelector(".product-image img") };
+      st.set(card, s);
+    }
     return s;
   }
   function paint(card, s) {
-    card.style.setProperty("--mx", s.x.toFixed(1) + "%");
-    card.style.setProperty("--my", s.y.toFixed(1) + "%");
-    card.style.setProperty("--spec", s.s.toFixed(3));
+    var d = size.get(card);
+    if (!d || !s.glare) return;
+    var px = s.x * d.w, py = s.y * d.h;
+    s.glare.style.transform = "translate3d(" + (px - 310).toFixed(1) + "px," + (py - 310).toFixed(1) + "px,0)";
+    s.glare.style.opacity = Math.min(1, s.s).toFixed(3);
+    if (s.glint) {
+      s.glint.style.transform = "translate3d(" + (px - 160).toFixed(1) + "px," + (py - 160).toFixed(1) + "px,0)";
+      s.glint.style.opacity = Math.min(1, s.s * 1.15).toFixed(3);
+    }
+    if (s.img && s.follow && !coarse) {
+      s.img.style.translate = ((0.5 - s.x) * 9).toFixed(2) + "px " + ((0.5 - s.y) * 9).toFixed(2) + "px";
+    }
   }
   function loop() {
     raf = 0;
     live.forEach(function (card) {
       var s = st.get(card);
       if (!s || !card.isConnected) { live.delete(card); return; }
-      var k = s.follow ? 0.16 : 0.1;                        // a little drag = liquid
+      var k = s.follow ? 0.17 : 0.09;                       // a little drag = liquid
       s.x += (s.tx - s.x) * k; s.y += (s.ty - s.y) * k; s.s += (s.ts - s.s) * 0.12;
       paint(card, s);
-      if (Math.abs(s.tx - s.x) < 0.06 && Math.abs(s.ty - s.y) < 0.06 && Math.abs(s.ts - s.s) < 0.004) {
-        s.x = s.tx; s.y = s.ty; s.s = s.ts; paint(card, s); live.delete(card);
+      if (Math.abs(s.tx - s.x) < 0.0008 && Math.abs(s.ty - s.y) < 0.0008 && Math.abs(s.ts - s.s) < 0.003) {
+        s.x = s.tx; s.y = s.ty; s.s = s.ts; paint(card, s);
+        if (!s.follow && s.img) s.img.style.translate = "";
+        live.delete(card);
       }
     });
     if (live.size) raf = requestAnimationFrame(loop);
   }
   function wake(card) { live.add(card); if (!raf) raf = requestAnimationFrame(loop); }
 
-  function aim(card, ev) {
-    var r = card.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    var s = get(card);
-    s.tx = Math.max(-10, Math.min(110, (ev.clientX - r.left) / r.width * 100));
-    s.ty = Math.max(-10, Math.min(110, (ev.clientY - r.top) / r.height * 100));
-  }
   function cardOf(t) { return t && t.closest ? t.closest(".product-card") : null; }
+  function aim(card, ev, snap) {
+    var d = size.get(card), r = card.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    if (!d) size.set(card, d = { w: r.width, h: r.height });
+    var s = get(card);
+    s.tx = Math.max(-0.1, Math.min(1.1, (ev.clientX - r.left) / r.width));
+    s.ty = Math.max(-0.1, Math.min(1.1, (ev.clientY - r.top) / r.height));
+    if (snap) { s.x = s.tx; s.y = s.ty; }
+  }
 
-  // ---- pointer (mouse / pen): follow while hovering ----
+  // ---- pointer (mouse / pen) ----
   if (!reduce) {
     document.addEventListener("pointermove", function (ev) {
       if (ev.pointerType === "touch") return;
@@ -2001,56 +2022,59 @@
       if (!card) return;
       var s = get(card);
       s.follow = true; s.ts = 0.95;
-      aim(card, ev); wake(card);
+      aim(card, ev, s.cold); s.cold = false; wake(card);
     }, { passive: true });
     document.addEventListener("pointerout", function (ev) {
       if (ev.pointerType === "touch") return;
       var card = cardOf(ev.target);
-      if (!card) return;
-      var to = cardOf(ev.relatedTarget);
-      if (to === card) return;
+      if (!card || cardOf(ev.relatedTarget) === card) return;
       var s = get(card);
-      s.follow = false; s.tx = REST.x; s.ty = REST.y; s.ts = REST.s; wake(card);
+      s.follow = false; s.cold = true; s.tx = REST.x; s.ty = REST.y; s.ts = REST.s; wake(card);
     }, { passive: true });
-    // touch: a flash of light right under the finger
+    // press: light jumps under the finger / cursor and a ripple rolls out
     document.addEventListener("pointerdown", function (ev) {
       var card = cardOf(ev.target);
       if (!card) return;
       var s = get(card);
-      aim(card, ev); s.x = s.tx; s.y = s.ty; s.follow = true; s.ts = 1.1; wake(card);
+      aim(card, ev, true); s.follow = true; s.ts = 1.1; wake(card);
+      var host = card.querySelector(".sf-light"), r = card.getBoundingClientRect();
+      if (host) {
+        var rp = document.createElement("i");
+        rp.className = "sf-ripple";
+        rp.style.left = (ev.clientX - r.left) + "px";
+        rp.style.top = (ev.clientY - r.top) + "px";
+        rp.addEventListener("animationend", function () { if (rp.parentNode) rp.parentNode.removeChild(rp); });
+        host.appendChild(rp);
+      }
     }, { passive: true });
     var release = function (ev) {
       if (ev.pointerType !== "touch") return;
       var card = cardOf(ev.target);
       if (!card) return;
       var s = get(card);
-      s.follow = false; s.ts = scrollSpec(card); wake(card);
+      s.follow = false; s.ts = REST.s; wake(card);
     };
     document.addEventListener("pointerup", release, { passive: true });
     document.addEventListener("pointercancel", release, { passive: true });
   }
 
-  // ---- no hover (phones): the light travels with the scroll ----
-  var coarse = window.matchMedia("(hover: none)").matches;
-  function scrollPos(card) {
-    var r = card.getBoundingClientRect(), vh = window.innerHeight || 800;
-    var t = Math.max(0, Math.min(1, (r.top + r.height / 2) / vh));   // 0 top .. 1 bottom
-    return { x: 18 + 64 * (1 - t), y: -6 + 46 * (1 - t) };
-  }
-  function scrollSpec(card) { return coarse ? 0.55 : REST.s; }
+  // ---- phones: the light travels with the scroll ----
   var sRaf = 0;
   function onScroll() {
     if (sRaf) return;
     sRaf = requestAnimationFrame(function () {
       sRaf = 0;
-      visible.forEach(function (card) {
-        if (!card.isConnected) { visible.delete(card); return; }
-        var s = get(card);
-        if (s.follow) return;
-        var p = scrollPos(card);
-        s.tx = p.x; s.ty = p.y; s.ts = scrollSpec(card);
-        wake(card);
-      });
+      var vh = window.innerHeight || 800, list = [], i, r;
+      visible.forEach(function (card) { if (card.isConnected) list.push(card); else visible.delete(card); });
+      var rects = list.map(function (c) { return c.getBoundingClientRect(); });   // all reads first
+      for (i = 0; i < list.length; i++) {
+        var s = get(list[i]);
+        if (s.follow) continue;
+        r = rects[i];
+        var t = Math.max(0, Math.min(1, (r.top + r.height / 2) / vh));
+        s.tx = 0.18 + 0.64 * (1 - t); s.ty = -0.06 + 0.46 * (1 - t); s.ts = 0.58;
+        wake(list[i]);
+      }
     });
   }
   if (coarse && !reduce) {
@@ -2074,10 +2098,30 @@
     if (t && t.tagName === "IMG") { var c = cardOf(t); if (c) wash(c); }
   }, true);
 
+  // ---- entrance: one slow sheen the first time a card scrolls in ----
+  function sweep(card) {
+    if (reduce || card.__sfSwept) return;
+    card.__sfSwept = true;
+    var el = card.querySelector(".sf-sweep");
+    if (!el || !el.animate) return;
+    el.animate(
+      [{ transform: "translate3d(-130%,0,0) skewX(-14deg)", opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: "translate3d(330%,0,0) skewX(-14deg)", opacity: 0 }],
+      { duration: 1300, easing: "cubic-bezier(.22,1,.36,1)", delay: 140 }
+    );
+  }
+
   function adopt(card) {
     if (card.__sfGlass) return;
     card.__sfGlass = true;
+    var L = document.createElement("div");
+    L.className = "sf-light"; L.setAttribute("aria-hidden", "true");
+    L.innerHTML = '<i class="sf-glare"></i><i class="sf-sweep"></i>';
+    var R = document.createElement("div");
+    R.className = "sf-rim"; R.setAttribute("aria-hidden", "true");
+    R.innerHTML = "<i></i>";
+    card.appendChild(L); card.appendChild(R);
     wash(card);
+    if (ro) ro.observe(card);
     if (io) io.observe(card);
   }
   function scan(root) {
@@ -2086,21 +2130,30 @@
     var list = root.querySelectorAll(".product-card");
     for (var i = 0; i < list.length; i++) adopt(list[i]);
   }
+  if ("ResizeObserver" in window) {
+    ro = new ResizeObserver(function (es) {
+      es.forEach(function (e) {
+        size.set(e.target, { w: e.contentRect.width, h: e.contentRect.height });
+        var s = st.get(e.target);
+        if (s) paint(e.target, s); else { var s0 = get(e.target); paint(e.target, s0); }
+      });
+    });
+  }
   if ("IntersectionObserver" in window) {
     io = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
-        if (e.isIntersecting) { visible.add(e.target); if (coarse && !reduce) { var s = get(e.target), p = scrollPos(e.target); s.tx = p.x; s.ty = p.y; s.ts = scrollSpec(e.target); wake(e.target); } }
-        else { visible.delete(e.target); }
+        if (e.isIntersecting) {
+          visible.add(e.target);
+          sweep(e.target);
+          if (coarse && !reduce) onScroll();
+        } else { visible.delete(e.target); }
       });
     }, { rootMargin: "80px 0px" });
   }
   var pending = 0;
-  new MutationObserver(function (muts) {
+  new MutationObserver(function () {
     if (pending) return;
-    pending = requestAnimationFrame(function () {
-      pending = 0;
-      scan(document);
-    });
+    pending = requestAnimationFrame(function () { pending = 0; scan(document); });
   }).observe(document.documentElement, { childList: true, subtree: true });
   scan(document);
 })();
