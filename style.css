@@ -3560,6 +3560,7 @@ html[data-theme="light"] .hero-mark-glint {
    - every moving light is a tiny layer moved with transform/opacity
      only (compositor), driven by script.js - no repaint per frame.
    ========================================================= */
+:root { --sf-h: 42; }
 .product-card {
   --card-img: none;
   background: #0b0b0c;
@@ -3624,9 +3625,9 @@ html[data-theme="light"] .hero-mark-glint {
 .sf-rim i {
   position: absolute;
   left: 0; top: 0;
-  width: 320px; height: 320px;
+  width: 340px; height: 340px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, .95), rgba(255, 255, 255, .35) 45%, rgba(255, 255, 255, 0));
+  background: radial-gradient(closest-side, #fff 0, hsl(var(--sf-h) 100% 74%) 14%, hsl(var(--sf-h) 100% 56% / .85) 42%, hsl(var(--sf-h) 100% 50% / 0));
   opacity: .4;
   transform: translate3d(-9999px, 0, 0);
   will-change: transform, opacity;
@@ -3657,10 +3658,27 @@ html[data-theme="light"] .hero-mark-glint {
 .sf-glare {
   position: absolute;
   left: 0; top: 0;
-  width: 620px; height: 620px;
+  width: 640px; height: 640px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, .26), rgba(255, 255, 255, .08) 55%, rgba(255, 255, 255, 0));
+  background: radial-gradient(closest-side, hsl(var(--sf-h) 100% 64% / .34), hsl(var(--sf-h) 100% 56% / .11) 52%, hsl(var(--sf-h) 100% 50% / 0));
   opacity: .4;
+  transform: translate3d(-9999px, 0, 0);
+  will-change: transform, opacity;
+}
+/* holo foil: fine gold / white bands that slide with the light (masked to a soft disc) */
+.sf-foil {
+  position: absolute;
+  left: 0; top: 0;
+  width: 560px; height: 560px;
+  background: repeating-linear-gradient(118deg,
+    rgba(255, 255, 255, 0) 0 15px,
+    hsl(var(--sf-h) 100% 68% / .24) 19px,
+    rgba(255, 255, 255, .3) 23px,
+    hsl(calc(var(--sf-h) + 14) 100% 62% / .18) 27px,
+    rgba(255, 255, 255, 0) 34px);
+  -webkit-mask-image: radial-gradient(closest-side, #000 0, rgba(0, 0, 0, .55) 45%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 0, rgba(0, 0, 0, .55) 45%, transparent 100%);
+  opacity: 0;
   transform: translate3d(-9999px, 0, 0);
   will-change: transform, opacity;
 }
@@ -3678,7 +3696,7 @@ html[data-theme="light"] .hero-mark-glint {
   width: 260px; height: 260px;
   margin: -130px 0 0 -130px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0) 56%, rgba(255, 255, 255, .34) 76%, rgba(255, 255, 255, 0));
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0) 52%, hsl(var(--sf-h) 100% 70% / .5) 74%, rgba(255, 255, 255, 0));
   transform: scale(.12);
   opacity: 0;
   animation: sfRipple .9s cubic-bezier(.22, 1, .36, 1) forwards;
@@ -3694,6 +3712,41 @@ html[data-theme="light"] .hero-mark-glint {
 @media (hover: hover) {
   .product-card:hover .product-image img { will-change: transform, translate; }
 }
+
+
+/* liquid meniscus: a thin living wave where the poster meets the glass.
+   The svg slides sideways forever (transform only); script.js scales the
+   wrapper taller when the pointer / scroll gets lively. */
+.sf-wave {
+  position: absolute;
+  left: 0; right: 0;
+  top: 22px;
+  height: 16px;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: .95;
+  transform: scaleY(.35);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 72%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 72%, transparent);
+}
+.sf-wave svg {
+  display: block;
+  width: 200%;
+  height: 16px;
+  color: hsl(var(--sf-h) 100% 80%);
+  animation: sfWave 9s linear infinite;
+  will-change: transform;
+}
+.sf-wave path { fill: none; stroke: currentColor; stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+@keyframes sfWave { to { transform: translate3d(-50%, 0, 0); } }
+.product-card:not(.sf-vis) .sf-wave svg { animation-play-state: paused; }
+/* only cards on screen get promoted layers for the depth shift */
+.product-card.sf-vis .spoider-badge,
+.product-card.sf-vis .wishlist-heart,
+.product-card.sf-vis .product-tag,
+.product-card.sf-vis .product-body h3,
+.product-card.sf-vis .product-link { will-change: translate; }
 
 /* the glass slab: laps over the foot of the poster */
 .product-body {
@@ -3804,12 +3857,13 @@ html[data-theme="light"] .product-card::before {
 html[data-theme="light"] .product-card::after {
   background: linear-gradient(118deg, rgba(255, 255, 255, .24) 0%, rgba(255, 255, 255, 0) 24%);
 }
-html[data-theme="light"] .sf-glare { background: radial-gradient(closest-side, rgba(255, 255, 255, .5), rgba(255, 255, 255, .14) 55%, rgba(255, 255, 255, 0)); }
+html[data-theme="light"] .sf-glare { background: radial-gradient(closest-side, hsl(var(--sf-h) 100% 66% / .5), hsl(var(--sf-h) 100% 60% / .16) 55%, hsl(var(--sf-h) 100% 55% / 0)); }
+html[data-theme="light"] .sf-wave svg { color: hsl(var(--sf-h) 90% 46%); }
 html[data-theme="light"] .product-body {
   background: linear-gradient(180deg, rgba(255, 255, 255, .5) 0%, rgba(252, 250, 245, .88) 56%, rgba(250, 247, 240, .95) 100%);
 }
 html[data-theme="light"] .product-card[data-wash] .product-body::before { opacity: .3; filter: blur(22px) saturate(1.3) brightness(1.2); }
-html[data-theme="light"] .product-body::after { border-top-color: rgba(255, 255, 255, .9); }
+html[data-theme="light"] .product-body::after { border-top-color: rgba(255, 255, 255, .9); opacity: .5; -webkit-mask-image: linear-gradient(to bottom, #000 10%, transparent 92%); mask-image: linear-gradient(to bottom, #000 10%, transparent 92%); }
 html[data-theme="light"] .product-body h3,
 html[data-theme="light"] .product-card:hover .product-body h3 { color: var(--text-primary); }
 html[data-theme="light"] .product-body p { color: var(--text-secondary); }
@@ -3828,5 +3882,6 @@ html[data-theme="light"] .wishlist-heart { background: linear-gradient(180deg, r
   .product-card { transition-duration: .01ms !important; }
   .product-card:hover { translate: 0 0; }
   .product-card:active { scale: 1; }
-  .sf-ripple, .sf-sweep { display: none; }
+  .sf-ripple, .sf-sweep, .sf-foil { display: none; }
+  .sf-wave svg { animation: none; }
 }

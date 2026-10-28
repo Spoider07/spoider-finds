@@ -1931,22 +1931,24 @@
 })();
 
 // ============================================================
-// Liquid-glass product cards - the light source.
+// Liquid-glass product cards - the light, the depth, the liquid.
 // CSS (style.css, "LIQUID GLASS PRODUCT CARDS") draws the glass;
-// this moves three tiny light layers inside each card using only
-// transform + opacity, so nothing repaints while it animates:
-//   .sf-glare  soft specular on the poster / glass
+// this moves a handful of tiny layers inside each card using only
+// transform / translate / opacity, so nothing repaints per frame:
+//   .sf-glare  saturated gold spotlight on poster + glass
 //   .sf-rim i  the same light, seen only on the 1px edge
+//   .sf-foil   holo foil bands that slide with the light
+//   .sf-wave   the liquid line where poster meets glass
 //   .sf-sweep  one slow sheen when a card first scrolls in
-// Desktop: the light follows the cursor with a little drag (so it
-// feels like liquid), the poster drifts a few px the other way for
-// depth, and it eases home on leave. Touch: no hover, so the light
-// slides across each card as it travels up the screen, and a press
-// sends a ripple out from under the finger. It also copies each
-// poster's URL into --card-img so its colour melts into the glass.
-// Delegated + observer based, so cards injected later (Supabase
-// loaders, page transitions) are picked up with no rebinding. Only
-// visible cards are touched; nothing runs while idle.
+// Desktop: ONE cursor lights EVERY nearby card edge (cards next to
+// the pointer glow too), the hue drifts gold -> champagne with the
+// cursor's x, layers shift at different depths, the wave lifts when
+// you move fast. Phones: tilting the phone moves the light and the
+// layers (gyroscope, where the browser allows it); otherwise the light
+// travels with the scroll; a press sends a ripple + a tiny haptic tick.
+// Delegated + observer based: cards injected later (Supabase loaders,
+// page transitions) are picked up with no rebinding. Only visible
+// cards are touched; nothing runs while idle.
 // ============================================================
 (function () {
   "use strict";
@@ -1956,46 +1958,72 @@
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var coarse = window.matchMedia("(hover: none)").matches;
   var REST = { x: 0.24, y: 0.0, s: 0.4 };
-  var st = new WeakMap();
-  var size = new WeakMap();
-  var live = new Set();
-  var visible = new Set();
+  var WAVE0 = 0.35;
+  var st = new WeakMap(), size = new WeakMap();
+  var live = new Set(), visible = new Set();
   var raf = 0, io = null, ro = null;
+  var root = document.documentElement;
 
   function get(card) {
     var s = st.get(card);
     if (!s) {
       s = { x: REST.x, y: REST.y, s: REST.s, tx: REST.x, ty: REST.y, ts: REST.s, follow: false, cold: true,
-            glare: card.querySelector(".sf-glare"), glint: card.querySelector(".sf-rim i"), img: card.querySelector(".product-image img") };
+            dep: 0, tdep: 0, amp: WAVE0, tamp: WAVE0,
+            glare: card.querySelector(".sf-glare"), foil: card.querySelector(".sf-foil"), glint: card.querySelector(".sf-rim i"),
+            wave: card.querySelector(".sf-wave"), img: card.querySelector(".product-image img"), fg: null };
+      var fgSel = [[".spoider-badge", 0.9], [".wishlist-heart", 0.9], [".product-tag", 0.55], [".product-body h3", 0.7], [".product-link", 0.4]];
+      s.fg = [];
+      fgSel.forEach(function (p) { var e = card.querySelector(p[0]); if (e) s.fg.push([e, p[1]]); });
       st.set(card, s);
     }
     return s;
   }
+
   function paint(card, s) {
     var d = size.get(card);
     if (!d || !s.glare) return;
     var px = s.x * d.w, py = s.y * d.h;
-    s.glare.style.transform = "translate3d(" + (px - 310).toFixed(1) + "px," + (py - 310).toFixed(1) + "px,0)";
+    s.glare.style.transform = "translate3d(" + (px - 320).toFixed(1) + "px," + (py - 320).toFixed(1) + "px,0)";
     s.glare.style.opacity = Math.min(1, s.s).toFixed(3);
     if (s.glint) {
-      s.glint.style.transform = "translate3d(" + (px - 160).toFixed(1) + "px," + (py - 160).toFixed(1) + "px,0)";
-      s.glint.style.opacity = Math.min(1, s.s * 1.15).toFixed(3);
+      s.glint.style.transform = "translate3d(" + (px - 170).toFixed(1) + "px," + (py - 170).toFixed(1) + "px,0)";
+      s.glint.style.opacity = Math.min(1, s.s * 1.2).toFixed(3);
     }
-    if (s.img && s.follow && !coarse) {
-      s.img.style.translate = ((0.5 - s.x) * 9).toFixed(2) + "px " + ((0.5 - s.y) * 9).toFixed(2) + "px";
+    if (s.foil) {
+      s.foil.style.transform = "translate3d(" + (px * 0.8 + d.w * 0.1 - 280).toFixed(1) + "px," + (py * 0.8 + d.h * 0.1 - 280).toFixed(1) + "px,0)";
+      s.foil.style.opacity = Math.max(0, Math.min(0.7, (s.s - 0.3) * 0.9)).toFixed(3);
+    }
+    if (s.wave) s.wave.style.transform = "scaleY(" + s.amp.toFixed(3) + ")";
+    if (s.dep > 0.01) {
+      var ox = (0.5 - s.x) * s.dep, oy = (0.5 - s.y) * s.dep;
+      if (s.img) s.img.style.translate = (ox * 11).toFixed(2) + "px " + (oy * 11).toFixed(2) + "px";
+      for (var i = 0; i < s.fg.length; i++) {
+        s.fg[i][0].style.translate = (-ox * 9 * s.fg[i][1]).toFixed(2) + "px " + (-oy * 9 * s.fg[i][1]).toFixed(2) + "px";
+      }
     }
   }
+  function clearDepth(s) {
+    if (s.img) s.img.style.translate = "";
+    for (var i = 0; i < s.fg.length; i++) s.fg[i][0].style.translate = "";
+  }
+
   function loop() {
     raf = 0;
     live.forEach(function (card) {
       var s = st.get(card);
       if (!s || !card.isConnected) { live.delete(card); return; }
       var k = s.follow ? 0.17 : 0.09;                       // a little drag = liquid
-      s.x += (s.tx - s.x) * k; s.y += (s.ty - s.y) * k; s.s += (s.ts - s.s) * 0.12;
+      s.x += (s.tx - s.x) * k; s.y += (s.ty - s.y) * k;
+      s.s += (s.ts - s.s) * 0.12;
+      s.dep += (s.tdep - s.dep) * 0.1;
+      s.amp += (s.tamp - s.amp) * 0.1;
+      s.tamp += (WAVE0 - s.tamp) * 0.05;                    // waves settle on their own
       paint(card, s);
-      if (Math.abs(s.tx - s.x) < 0.0008 && Math.abs(s.ty - s.y) < 0.0008 && Math.abs(s.ts - s.s) < 0.003) {
-        s.x = s.tx; s.y = s.ty; s.s = s.ts; paint(card, s);
-        if (!s.follow && s.img) s.img.style.translate = "";
+      if (Math.abs(s.tx - s.x) < 0.0008 && Math.abs(s.ty - s.y) < 0.0008 && Math.abs(s.ts - s.s) < 0.003 &&
+          Math.abs(s.tdep - s.dep) < 0.004 && Math.abs(s.tamp - s.amp) < 0.004 && Math.abs(WAVE0 - s.tamp) < 0.004) {
+        s.x = s.tx; s.y = s.ty; s.s = s.ts; s.amp = s.tamp = WAVE0;
+        if (s.tdep === 0) { s.dep = 0; clearDepth(s); }
+        paint(card, s);
         live.delete(card);
       }
     });
@@ -2004,40 +2032,71 @@
   function wake(card) { live.add(card); if (!raf) raf = requestAnimationFrame(loop); }
 
   function cardOf(t) { return t && t.closest ? t.closest(".product-card") : null; }
-  function aim(card, ev, snap) {
-    var d = size.get(card), r = card.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    if (!d) size.set(card, d = { w: r.width, h: r.height });
-    var s = get(card);
-    s.tx = Math.max(-0.1, Math.min(1.1, (ev.clientX - r.left) / r.width));
-    s.ty = Math.max(-0.1, Math.min(1.1, (ev.clientY - r.top) / r.height));
-    if (snap) { s.x = s.tx; s.y = s.ty; }
+  function rest(s) { s.follow = false; s.cold = true; s.tx = REST.x; s.ty = REST.y; s.ts = REST.s; s.tdep = 0; }
+
+  // hue drifts gold -> champagne with the pointer's x (like the spotlight cards, but kept in our one colour family)
+  var hue = 42;
+  function setHue(xFrac) {
+    var h = Math.round(36 + Math.max(0, Math.min(1, xFrac)) * 18);
+    if (h !== hue) { hue = h; root.style.setProperty("--sf-h", h); }
   }
 
-  // ---- pointer (mouse / pen) ----
-  if (!reduce) {
+  // ---- mouse / pen: one cursor lights every nearby card ----
+  var mx = 0, my = 0, pmx = 0, pmy = 0, mRaf = 0, mouseIn = false;
+  function mouseFrame() {
+    mRaf = 0;
+    var speed = Math.min(60, Math.hypot(mx - pmx, my - pmy));
+    pmx = mx; pmy = my;
+    var list = [], rects = [];
+    visible.forEach(function (c) { if (c.isConnected) { list.push(c); rects.push(c.getBoundingClientRect()); } else visible.delete(c); });
+    for (var i = 0; i < list.length; i++) {
+      var r = rects[i], s = get(list[i]);
+      if (!r.width || !r.height) continue;
+      if (!size.get(list[i])) size.set(list[i], { w: r.width, h: r.height });
+      var dx = mx < r.left ? r.left - mx : (mx > r.right ? mx - r.right : 0);
+      var dy = my < r.top ? r.top - my : (my > r.bottom ? my - r.bottom : 0);
+      var dist = Math.hypot(dx, dy), inten = Math.max(0, 1 - dist / 300);
+      if (inten <= 0) { if (s.follow) { rest(s); wake(list[i]); } continue; }
+      var inside = dist === 0;
+      s.follow = true;
+      s.tx = Math.max(-0.6, Math.min(1.6, (mx - r.left) / r.width));
+      s.ty = Math.max(-0.6, Math.min(1.6, (my - r.top) / r.height));
+      if (s.cold) { s.x = s.tx; s.y = s.ty; s.cold = false; }
+      s.ts = inside ? 1.0 : 0.3 + 0.62 * inten;
+      s.tdep = inside ? 1 : 0.45 * inten;
+      s.tamp = Math.max(s.tamp, Math.min(1.3, WAVE0 + speed * 0.028 * inten));
+      wake(list[i]);
+    }
+  }
+  function resetAll() {
+    visible.forEach(function (c) { var s = st.get(c); if (s && s.follow) { rest(s); wake(c); } });
+  }
+  if (!reduce && !coarse) {
     document.addEventListener("pointermove", function (ev) {
       if (ev.pointerType === "touch") return;
-      var card = cardOf(ev.target);
-      if (!card) return;
-      var s = get(card);
-      s.follow = true; s.ts = 0.95;
-      aim(card, ev, s.cold); s.cold = false; wake(card);
+      mx = ev.clientX; my = ev.clientY; mouseIn = true;
+      setHue(mx / (window.innerWidth || 1200));
+      if (!mRaf) mRaf = requestAnimationFrame(mouseFrame);
     }, { passive: true });
-    document.addEventListener("pointerout", function (ev) {
-      if (ev.pointerType === "touch") return;
-      var card = cardOf(ev.target);
-      if (!card || cardOf(ev.relatedTarget) === card) return;
-      var s = get(card);
-      s.follow = false; s.cold = true; s.tx = REST.x; s.ty = REST.y; s.ts = REST.s; wake(card);
-    }, { passive: true });
-    // press: light jumps under the finger / cursor and a ripple rolls out
+    document.documentElement.addEventListener("pointerleave", function () { mouseIn = false; resetAll(); }, { passive: true });
+    window.addEventListener("blur", resetAll);
+    window.addEventListener("scroll", function () { if (mouseIn && !mRaf) mRaf = requestAnimationFrame(mouseFrame); }, { passive: true });
+  }
+
+  // ---- press: light jumps under the finger / cursor, a ripple rolls out, a tiny haptic tick ----
+  if (!reduce) {
     document.addEventListener("pointerdown", function (ev) {
       var card = cardOf(ev.target);
       if (!card) return;
-      var s = get(card);
-      aim(card, ev, true); s.follow = true; s.ts = 1.1; wake(card);
-      var host = card.querySelector(".sf-light"), r = card.getBoundingClientRect();
+      var r = card.getBoundingClientRect(), s = get(card);
+      if (r.width && r.height) {
+        if (!size.get(card)) size.set(card, { w: r.width, h: r.height });
+        s.tx = s.x = (ev.clientX - r.left) / r.width; s.ty = s.y = (ev.clientY - r.top) / r.height;
+      }
+      s.follow = true; s.cold = false; s.ts = 1.1; s.tdep = ev.pointerType === "touch" ? 0.7 : 1; s.tamp = 1.25;
+      setHue(ev.clientX / (window.innerWidth || 400));
+      wake(card);
+      var host = card.querySelector(".sf-light");
       if (host) {
         var rp = document.createElement("i");
         rp.className = "sf-ripple";
@@ -2046,40 +2105,60 @@
         rp.addEventListener("animationend", function () { if (rp.parentNode) rp.parentNode.removeChild(rp); });
         host.appendChild(rp);
       }
+      if (ev.pointerType === "touch" && navigator.vibrate) { try { navigator.vibrate(8); } catch (e) {} }
     }, { passive: true });
     var release = function (ev) {
       if (ev.pointerType !== "touch") return;
       var card = cardOf(ev.target);
       if (!card) return;
       var s = get(card);
-      s.follow = false; s.ts = REST.s; wake(card);
+      s.follow = false; s.ts = tiltOn ? 0.62 : 0.58; s.tdep = tiltOn ? 0.8 : 0; wake(card);
     };
     document.addEventListener("pointerup", release, { passive: true });
     document.addEventListener("pointercancel", release, { passive: true });
   }
 
-  // ---- phones: the light travels with the scroll ----
+  // ---- phones: tilt the phone (gyro) and/or scroll, the light + layers follow ----
+  var tiltOn = false, tiltX = 0, tiltY = 0, b0 = null, g0 = null, lastScrollY = window.scrollY || 0, scrollV = 0;
   var sRaf = 0;
-  function onScroll() {
-    if (sRaf) return;
-    sRaf = requestAnimationFrame(function () {
-      sRaf = 0;
-      var vh = window.innerHeight || 800, list = [], i, r;
-      visible.forEach(function (card) { if (card.isConnected) list.push(card); else visible.delete(card); });
-      var rects = list.map(function (c) { return c.getBoundingClientRect(); });   // all reads first
-      for (i = 0; i < list.length; i++) {
-        var s = get(list[i]);
-        if (s.follow) continue;
-        r = rects[i];
-        var t = Math.max(0, Math.min(1, (r.top + r.height / 2) / vh));
-        s.tx = 0.18 + 0.64 * (1 - t); s.ty = -0.06 + 0.46 * (1 - t); s.ts = 0.58;
-        wake(list[i]);
-      }
-    });
+  function phoneFrame() {
+    sRaf = 0;
+    var vh = window.innerHeight || 800, list = [], i, r;
+    visible.forEach(function (card) { if (card.isConnected) list.push(card); else visible.delete(card); });
+    var rects = list.map(function (c) { return c.getBoundingClientRect(); });    // all reads first
+    var v = Math.min(1, Math.abs(scrollV) / 60);
+    for (i = 0; i < list.length; i++) {
+      var s = get(list[i]);
+      if (s.follow) continue;
+      r = rects[i];
+      var t = Math.max(0, Math.min(1, (r.top + r.height / 2) / vh));
+      var bx = 0.18 + 0.64 * (1 - t), by = -0.06 + 0.46 * (1 - t);
+      if (tiltOn) { s.tx = Math.max(-0.2, Math.min(1.2, 0.5 * bx + 0.25 + tiltX * 0.55)); s.ty = Math.max(-0.2, Math.min(1.2, 0.5 * by + 0.18 + tiltY * 0.5)); s.tdep = 0.8; s.ts = 0.66; }
+      else { s.tx = bx; s.ty = by; s.ts = 0.58; s.tdep = 0; }
+      s.tamp = Math.max(s.tamp, WAVE0 + v * 0.8);
+      wake(list[i]);
+    }
   }
+  function kickPhone() { if (!sRaf) sRaf = requestAnimationFrame(phoneFrame); }
   if (coarse && !reduce) {
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("scroll", function () {
+      var y = window.scrollY || 0; scrollV = y - lastScrollY; lastScrollY = y; kickPhone();
+    }, { passive: true });
+    window.addEventListener("resize", kickPhone);
+    // gyroscope: Android browsers deliver it on https with no prompt; iOS needs a permission we deliberately don't ask for
+    var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if ("DeviceOrientationEvent" in window && !isIOS) {
+      window.addEventListener("deviceorientation", function (e) {
+        if (e.gamma == null || e.beta == null) return;
+        if (b0 === null) { b0 = e.beta; g0 = e.gamma; }
+        // slowly re-centre so any comfortable holding angle becomes "neutral"
+        b0 += (e.beta - b0) * 0.004; g0 += (e.gamma - g0) * 0.004;
+        tiltX = Math.max(-1, Math.min(1, (e.gamma - g0) / 22));
+        tiltY = Math.max(-1, Math.min(1, (e.beta - b0) / 22));
+        tiltOn = true;
+        kickPhone();
+      }, { passive: true });
+    }
   }
 
   // ---- poster colour -> glass ----
@@ -2110,32 +2189,39 @@
     );
   }
 
+  var WAVE_SVG = '<svg viewBox="0 0 800 16" preserveAspectRatio="none" focusable="false"><path d="M0 8 q50 -12 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/></svg>';
   function adopt(card) {
     if (card.__sfGlass) return;
     card.__sfGlass = true;
     var L = document.createElement("div");
     L.className = "sf-light"; L.setAttribute("aria-hidden", "true");
-    L.innerHTML = '<i class="sf-glare"></i><i class="sf-sweep"></i>';
+    L.innerHTML = '<i class="sf-glare"></i><i class="sf-foil"></i><i class="sf-sweep"></i>';
     var R = document.createElement("div");
     R.className = "sf-rim"; R.setAttribute("aria-hidden", "true");
     R.innerHTML = "<i></i>";
     card.appendChild(L); card.appendChild(R);
+    var body = card.querySelector(".product-body");
+    if (body) {
+      var W = document.createElement("div");
+      W.className = "sf-wave"; W.setAttribute("aria-hidden", "true");
+      W.innerHTML = WAVE_SVG;
+      body.appendChild(W);
+    }
     wash(card);
     if (ro) ro.observe(card);
     if (io) io.observe(card);
   }
-  function scan(root) {
-    if (!root || !root.querySelectorAll) return;
-    if (root.matches && root.matches(".product-card")) adopt(root);
-    var list = root.querySelectorAll(".product-card");
+  function scan(rootEl) {
+    if (!rootEl || !rootEl.querySelectorAll) return;
+    if (rootEl.matches && rootEl.matches(".product-card")) adopt(rootEl);
+    var list = rootEl.querySelectorAll(".product-card");
     for (var i = 0; i < list.length; i++) adopt(list[i]);
   }
   if ("ResizeObserver" in window) {
     ro = new ResizeObserver(function (es) {
       es.forEach(function (e) {
         size.set(e.target, { w: e.contentRect.width, h: e.contentRect.height });
-        var s = st.get(e.target);
-        if (s) paint(e.target, s); else { var s0 = get(e.target); paint(e.target, s0); }
+        paint(e.target, get(e.target));
       });
     });
   }
@@ -2143,10 +2229,14 @@
     io = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
         if (e.isIntersecting) {
-          visible.add(e.target);
+          visible.add(e.target); e.target.classList.add("sf-vis");
           sweep(e.target);
-          if (coarse && !reduce) onScroll();
-        } else { visible.delete(e.target); }
+          if (coarse && !reduce) kickPhone();
+        } else {
+          visible.delete(e.target); e.target.classList.remove("sf-vis");
+          var s = st.get(e.target);
+          if (s && s.dep) { s.dep = s.tdep = 0; clearDepth(s); }
+        }
       });
     }, { rootMargin: "80px 0px" });
   }
