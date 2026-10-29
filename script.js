@@ -1960,20 +1960,21 @@
     var s = st.get(card);
     if (!s) {
       s = { x: REST.x, y: REST.y, s: 0, tx: REST.x, ty: REST.y, ts: 0, follow: false, cold: true,
-            glare: card.querySelector(".sf-glare"), glint: card.querySelector(".sf-rim i") };
+            glare: card.querySelector(".sf-glare"), glints: card.querySelectorAll(".sf-rim i") };
       st.set(card, s);
     }
     return s;
   }
   function paint(card, s) {
     var d = size.get(card);
-    if (!d || !s.glint) return;
+    if (!d || !s.glints || !s.glints.length) return;
     var px = s.x * d.w, py = s.y * d.h;
-    s.glint.style.transform = "translate3d(" + (px - 320).toFixed(1) + "px," + (py - 320).toFixed(1) + "px,0)";
-    s.glint.style.opacity = Math.max(0, Math.min(1, s.s)).toFixed(3);
+    var tr = "translate3d(" + (px - 320).toFixed(1) + "px," + (py - 320).toFixed(1) + "px,0)";
+    var op = Math.max(0, Math.min(1, s.s)).toFixed(3);
+    for (var i = 0; i < s.glints.length; i++) { s.glints[i].style.transform = tr; s.glints[i].style.opacity = op; }
     if (s.glare) {
       s.glare.style.transform = "translate3d(" + (px - 260).toFixed(1) + "px," + (py - (d.bt || 0) - 260).toFixed(1) + "px,0)";
-      s.glare.style.opacity = Math.max(0, Math.min(1, s.s)).toFixed(3);
+      s.glare.style.opacity = op;
     }
   }
   function loop() {
@@ -2106,6 +2107,219 @@
     }
   }
 
+  // ============================================================
+  // FLIP: grab a card and turn it over; the back is the Spoider Score.
+  // Tap = Amazon (untouched). Horizontal drag = the card follows the
+  // finger / mouse in 3D, then springs to the nearest face (a flick
+  // carries it over). Vertical drag stays a normal scroll.
+  // ============================================================
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function buildFlip(card, panel) {
+    var numEl = panel.querySelector(".spoider-num");
+    var score = numEl ? parseFloat(numEl.textContent) : NaN;
+    if (!isFinite(score)) return null;
+    var noteEl = panel.querySelector(".spoider-note");
+    var note = noteEl ? noteEl.textContent.trim() : "";
+    var rows = [];
+    panel.querySelectorAll(".spoider-bar-row").forEach(function (r) {
+      var lab = r.querySelector(".spoider-bar-label"), val = r.querySelector(".spoider-bar-val");
+      if (!lab || !val) return;
+      var v = parseFloat(val.textContent) || 0;
+      rows.push({ label: lab.textContent.trim(), val: v });
+    });
+
+    var front = el("div", "sf-face sf-front");
+    Array.prototype.slice.call(card.childNodes).forEach(function (n) {
+      if (n === panel) return;
+      if (n.nodeType === 1 && n.classList.contains("product-glow")) return;
+      front.appendChild(n);
+    });
+    panel.remove();
+
+    var back = el("div", "sf-face sf-back");
+    var inn = el("div", "sf-back-in");
+    inn.appendChild(el("span", "sf-b-eyebrow", "Spoider Score"));
+    var g = el("div", "sf-b-gauge");
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("aria-hidden", "true");
+    var c1 = document.createElementNS(SVGNS, "circle"), c2 = document.createElementNS(SVGNS, "circle");
+    [c1, c2].forEach(function (c) { c.setAttribute("cx", "50"); c.setAttribute("cy", "50"); c.setAttribute("r", "46"); });
+    c1.setAttribute("class", "sf-b-track"); c2.setAttribute("class", "sf-b-arc");
+    svg.appendChild(c1); svg.appendChild(c2);
+    g.appendChild(svg);
+    var num = el("span", "sf-b-num", score.toFixed(1));
+    g.appendChild(num);
+    inn.appendChild(g);
+    if (note) inn.appendChild(el("p", "sf-b-note", note));
+    var bars = el("div", "sf-b-bars");
+    rows.forEach(function (r, i) {
+      var row = el("div", "sf-b-row");
+      row.style.setProperty("--i", i);
+      row.style.setProperty("--f", Math.max(0, Math.min(1, r.val / 10)).toFixed(3));
+      row.appendChild(el("span", "sf-b-label", r.label));
+      var t = el("span", "sf-b-track2"); t.appendChild(el("span", "sf-b-fill"));
+      row.appendChild(t);
+      row.appendChild(el("span", "sf-b-val", r.val.toFixed(1)));
+      bars.appendChild(row);
+    });
+    inn.appendChild(bars);
+    inn.appendChild(el("span", "sf-b-foot", "View on Amazon →"));
+    back.appendChild(inn);
+
+    var flip = el("div", "sf-flip");
+    flip.appendChild(front); flip.appendChild(back);
+    card.appendChild(flip);
+    card.classList.add("sf-flippable");
+    card.style.setProperty("--sf-off", (289 * (1 - Math.max(0, Math.min(10, score)) / 10)).toFixed(1));
+    card.__sf = { flip: flip, num: num, score: score, ry: 0, v: 0, target: 0, raf: 0, face: 0, last: 0, countRaf: 0 };
+    return [front, back];
+  }
+
+  function applyRy(card) {
+    var f = card.__sf, a = f.ry * Math.PI / 180;
+    var lift = Math.abs(Math.sin(a)) * 46;
+    f.flip.style.transform = "perspective(1100px) translateZ(" + lift.toFixed(1) + "px) rotateY(" + f.ry.toFixed(2) + "deg)";
+  }
+  function countUp(card, on) {
+    var f = card.__sf;
+    cancelAnimationFrame(f.countRaf);
+    if (!on) { f.num.textContent = f.score.toFixed(1); return; }
+    if (reduce) { f.num.textContent = f.score.toFixed(1); return; }
+    var t0 = performance.now(), dur = 1100;
+    (function tick(now) {
+      var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      f.num.textContent = (f.score * e).toFixed(1);
+      if (k < 1) f.countRaf = requestAnimationFrame(tick);
+    })(t0);
+  }
+  function setFace(card, face) {
+    var f = card.__sf;
+    if (f.face === face) return;
+    f.face = face;
+    if (face === 1) {
+      card.classList.add("sf-on");
+      f.num.textContent = "0.0";
+      countUp(card, true);
+      if (navigator.vibrate && !reduce) { try { navigator.vibrate(6); } catch (e) {} }
+    } else {
+      card.classList.remove("sf-on");
+      countUp(card, false);
+    }
+  }
+  // critically-damped-ish spring toward the target angle, carrying the finger's speed
+  function spring(card) {
+    var f = card.__sf;
+    if (f.raf) return;
+    f.last = performance.now();
+    (function step(now) {
+      var dt = Math.min(0.032, (now - f.last) / 1000); f.last = now;
+      var k = 150, c = 21;
+      f.v += (-k * (f.ry - f.target) - c * f.v) * dt;
+      f.ry += f.v * dt;
+      applyRy(card);
+      if (Math.abs(f.ry - f.target) < 0.15 && Math.abs(f.v) < 2) {
+        f.ry = f.target; f.v = 0; f.raf = 0;
+        var n = ((Math.round(f.target / 180) % 2) + 2) % 2;      // fold back to 0 / 180 so it never winds up
+        f.ry = f.target = n * 180; applyRy(card);
+        card.classList.remove("sf-flipping");
+        return;
+      }
+      f.raf = requestAnimationFrame(step);
+    })(f.last);
+  }
+  function settle(card, vel) {
+    var f = card.__sf, start = f.startRy;
+    var proj = f.ry + vel * 0.16;                       // vel in deg/s, a flick carries it ~0.16s further
+    var t = Math.round(proj / 180) * 180;
+    t = Math.max(start - 180, Math.min(start + 180, t));
+    f.target = t;
+    f.v = reduce ? 0 : vel * 0.35;
+    setFace(card, ((Math.round(t / 180) % 2) + 2) % 2);
+    if (reduce) { f.ry = t; applyRy(card); var n = ((Math.round(t / 180) % 2) + 2) % 2; f.ry = f.target = n * 180; applyRy(card); card.classList.remove("sf-flipping"); return; }
+    spring(card);
+  }
+
+  var drag = null, swallow = 0;
+  function dragStart(ev) {
+    if (ev.pointerType === "mouse" && ev.button !== 0) return;
+    if (ev.target.closest && ev.target.closest(".wishlist-heart")) return;
+    var card = cardOf(ev.target);
+    if (!card || !card.__sf) return;
+    var f = card.__sf;
+    if (f.raf) { cancelAnimationFrame(f.raf); f.raf = 0; f.startRy = f.ry; }
+    drag = { card: card, id: ev.pointerId, x: ev.clientX, y: ev.clientY, mode: "wait", w: card.getBoundingClientRect().width || 320,
+             startRy: f.ry, lx: ev.clientX, lt: performance.now(), vel: 0 };
+    f.startRy = f.ry;
+  }
+  function dragMove(ev) {
+    if (!drag || ev.pointerId !== drag.id) return;
+    var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (drag.mode === "wait") {
+      if (Math.abs(dy) > 9 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }       // it's a scroll
+      if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+        drag.mode = "drag";
+        try { drag.card.setPointerCapture(ev.pointerId); } catch (e) {}
+        drag.card.classList.add("sf-dragging", "sf-flipping");
+        drag.x = ev.clientX; drag.lx = ev.clientX; drag.lt = performance.now();
+        dx = 0;
+        if (drag.card.__sf.raf) { cancelAnimationFrame(drag.card.__sf.raf); drag.card.__sf.raf = 0; }
+        if (ev.cancelable) ev.preventDefault();
+      } else return;
+    }
+    var f = drag.card.__sf, now = performance.now();
+    var next = drag.startRy + (ev.clientX - drag.x) / (drag.w * 0.85) * 180;
+    next = Math.max(drag.startRy - 200, Math.min(drag.startRy + 200, next));
+    var dt = Math.max(1, now - drag.lt);
+    drag.vel = 0.7 * drag.vel + 0.3 * ((next - f.ry) / dt * 1000);
+    drag.lt = now;
+    f.ry = next; applyRy(drag.card);
+    // the back's number counts the moment it is more than half turned
+    var n = ((Math.round(next / 180) % 2) + 2) % 2;
+    if (Math.abs(((next % 360) + 360) % 360 - 180) < 90 && f.face !== 1) setFace(drag.card, 1);
+    else if (Math.abs(((next % 360) + 360) % 360 - 180) >= 90 && f.face !== 0 && n === 0) setFace(drag.card, 0);
+  }
+  function dragEnd(ev) {
+    if (!drag || (ev && ev.pointerId !== drag.id)) return;
+    var d = drag; drag = null;
+    if (d.mode !== "drag") return;
+    d.card.classList.remove("sf-dragging");
+    swallow = performance.now() + 450;                   // the click that follows a drag must not open Amazon
+    settle(d.card, d.vel);
+  }
+  document.addEventListener("pointerdown", dragStart, { passive: true });
+  document.addEventListener("pointermove", dragMove, { passive: false });
+  document.addEventListener("pointerup", dragEnd, { passive: true });
+  document.addEventListener("pointercancel", dragEnd, { passive: true });
+  document.addEventListener("click", function (ev) {
+    if (swallow && performance.now() < swallow && cardOf(ev.target)) { ev.preventDefault(); ev.stopPropagation(); swallow = 0; }
+  }, true);
+  document.addEventListener("dragstart", function (ev) {
+    var c = cardOf(ev.target); if (c && c.__sf) ev.preventDefault();
+  });
+
+  // a one-time, very slow "tilt" on the first scored card you see, so people know it turns
+  var teased = false;
+  try { teased = sessionStorage.getItem("sf-flip-tease") === "1"; } catch (e) {}
+  function tease(card) {
+    if (teased || reduce || !card.__sf || card.__sf.raf || card.__sf.ry !== 0) return;
+    teased = true;
+    try { sessionStorage.setItem("sf-flip-tease", "1"); } catch (e) {}
+    var f = card.__sf;
+    setTimeout(function () {
+      if (drag || f.ry !== 0) return;
+      card.classList.add("sf-flipping");
+      f.startRy = 0; f.target = 17; f.v = 0; spring(card);
+      setTimeout(function () { if (!drag && f.face === 0) { f.target = 0; spring(card); } }, 650);
+    }, 700);
+  }
+
   // ---- poster colour -> glass ----
   function wash(card) {
     var img = card.querySelector(".product-image img");
@@ -2125,6 +2339,9 @@
   function adopt(card) {
     if (card.__sfGlass) return;
     card.__sfGlass = true;
+    var faces = [card];
+    var panel = card.querySelector(".spoider-panel");
+    if (panel) { var built = buildFlip(card, panel); if (built) faces = built; }
     var body = card.querySelector(".product-body");
     if (body) {
       var L = document.createElement("div");
@@ -2132,10 +2349,12 @@
       L.innerHTML = '<i class="sf-glare"></i>';
       body.appendChild(L);
     }
-    var R = document.createElement("div");
-    R.className = "sf-rim"; R.setAttribute("aria-hidden", "true");
-    R.innerHTML = "<i></i>";
-    card.appendChild(R);
+    faces.forEach(function (f) {
+      var R = document.createElement("div");
+      R.className = "sf-rim"; R.setAttribute("aria-hidden", "true");
+      R.innerHTML = "<i></i>";
+      f.appendChild(R);
+    });
     wash(card);
     if (ro) ro.observe(card);
     if (io) io.observe(card);
@@ -2157,10 +2376,10 @@
   if ("IntersectionObserver" in window) {
     io = new IntersectionObserver(function (es) {
       es.forEach(function (e) {
-        if (e.isIntersecting) { visible.add(e.target); if (coarse && !reduce) kickPhone(); }
+        if (e.isIntersecting) { visible.add(e.target); if (coarse && !reduce) kickPhone(); if (!teased && e.target.__sf && e.intersectionRatio > 0.6) tease(e.target); }
         else visible.delete(e.target);
       });
-    }, { rootMargin: "80px 0px" });
+    }, { rootMargin: "80px 0px", threshold: [0, 0.6] });
   }
   var pending = 0;
   new MutationObserver(function () {
