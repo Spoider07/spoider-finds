@@ -2049,8 +2049,10 @@
 
   // ---- phones: tilt the phone (gyro) and/or scroll, the light slides along the edges ----
   var tiltOn = false, tiltX = 0, tiltY = 0, b0 = null, g0 = null, sRaf = 0;
+  var touching = false;
   function phoneFrame() {
     sRaf = 0;
+    if (touching) return;
     var vh = window.innerHeight || 800, list = [], i, r;
     visible.forEach(function (card) { if (card.isConnected) list.push(card); else visible.delete(card); });
     var rects = list.map(function (c) { return c.getBoundingClientRect(); });    // all reads first
@@ -2070,6 +2072,25 @@
   if (coarse && !reduce) {
     window.addEventListener("scroll", kickPhone, { passive: true });
     window.addEventListener("resize", kickPhone);
+    // finger: the most reliable phone light. Press and drag on a card and the gold follows your finger
+    // (neighbouring cards glow too); let go and it settles back to the scroll light.
+    function fingerAt(ev) {
+      var t = ev.touches && ev.touches[0];
+      if (!t) return;
+      touching = true; mx = t.clientX; my = t.clientY;
+      setHue(mx / (window.innerWidth || 400));
+      if (!mRaf) mRaf = requestAnimationFrame(mouseFrame);
+    }
+    function fingerUp() {
+      if (!touching) return;
+      touching = false;
+      resetAll();
+      setTimeout(kickPhone, 60);
+    }
+    document.addEventListener("touchstart", function (ev) { if (cardOf(ev.target)) fingerAt(ev); }, { passive: true });
+    document.addEventListener("touchmove", function (ev) { if (touching) fingerAt(ev); }, { passive: true });
+    document.addEventListener("touchend", fingerUp, { passive: true });
+    document.addEventListener("touchcancel", fingerUp, { passive: true });
     // gyroscope: Android browsers deliver it on https with no prompt; iOS needs a permission we deliberately don't ask for
     var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if ("DeviceOrientationEvent" in window && !isIOS) {
