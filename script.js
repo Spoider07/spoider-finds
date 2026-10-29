@@ -2156,13 +2156,15 @@
     var P = [[50, 50 - 45 * v[0]], [50 + 45 * v[1], 50], [50, 50 + 45 * v[2]], [50 - 45 * v[3], 50]];
     node("polygon", { "class": "sf-b-area", points: P.map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") }, grp);
     P.forEach(function (p) { node("circle", { "class": "sf-b-dot", cx: p[0].toFixed(2), cy: p[1].toFixed(2), r: 1.7 }, grp); });
-    wrap.appendChild(svg);
+    var box = el("div", "sf-b-rbox");
+    box.appendChild(svg);
+    wrap.appendChild(box);
     ["t", "r", "b", "l"].forEach(function (pos, i) {
       var a = el("div", "sf-b-ax " + pos);
       a.style.setProperty("--i", i);
       a.appendChild(el("b", null, rows[i].label));
       a.appendChild(el("i", null, rows[i].val.toFixed(1)));
-      wrap.appendChild(a);
+      box.appendChild(a);
     });
     return wrap;
   }
@@ -2197,7 +2199,7 @@
     var svg = document.createElementNS(SVGNS, "svg");
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.setAttribute("aria-hidden", "true");
-    var cs = ["sf-b-track", "sf-b-arc", "sf-b-pulse"].map(function (cls) {
+    var cs = ["sf-b-track", "sf-b-arc", "sf-b-glint", "sf-b-pulse"].map(function (cls) {
       var c = document.createElementNS(SVGNS, "circle");
       c.setAttribute("cx", "50"); c.setAttribute("cy", "50"); c.setAttribute("r", "46"); c.setAttribute("class", cls);
       svg.appendChild(c); return c;
@@ -2212,18 +2214,32 @@
     inn.appendChild(el("span", "sf-b-foot", "View on Amazon \u2192"));
     back.appendChild(inn);
 
+    var heart = front.querySelector(".wishlist-heart");
+    if (heart) {
+      var h2 = heart.cloneNode(true);
+      h2.classList.remove("is-animating");
+      back.appendChild(h2);
+      var mirror = function (from, to) {
+        new MutationObserver(function () { to.classList.toggle("is-wishlisted", from.classList.contains("is-wishlisted")); })
+          .observe(from, { attributes: true, attributeFilter: ["class"] });
+      };
+      mirror(heart, h2); mirror(h2, heart);
+    }
     var flip = el("div", "sf-flip");
-    flip.appendChild(front); flip.appendChild(back);
+    var edge = el("div", "sf-edge"); edge.setAttribute("aria-hidden", "true");
+    flip.appendChild(front); flip.appendChild(edge); flip.appendChild(back);
     card.appendChild(flip);
     card.classList.add("sf-flippable");
     card.style.setProperty("--sf-off", (289 * (1 - Math.max(0, Math.min(10, score)) / 10)).toFixed(1));
-    card.__sf = { flip: flip, num: num, score: score, ry: 0, v: 0, target: 0, raf: 0, face: 0, last: 0, countRaf: 0 };
+    card.style.setProperty("--sf-len", (289 * Math.max(0, Math.min(10, score)) / 10).toFixed(1));
+    card.__sf = { flip: flip, edge: edge, num: num, score: score, ry: 0, v: 0, target: 0, raf: 0, face: 0, last: 0, countRaf: 0 };
     return [front, back];
   }
 
   function applyRy(card) {
     var f = card.__sf, a = f.ry * Math.PI / 180;
     var lift = Math.abs(Math.sin(a)) * 42;
+    f.edge.style.opacity = Math.pow(Math.abs(Math.sin(a)), 10).toFixed(3);
     f.flip.style.transform = "perspective(1200px) translateZ(" + lift.toFixed(1) + "px) rotateY(" + f.ry.toFixed(2) + "deg)";
   }
   function countUp(card, on) {

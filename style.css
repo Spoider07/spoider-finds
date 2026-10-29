@@ -3959,21 +3959,25 @@ html[data-theme="light"] .wishlist-heart { background: rgba(255, 255, 255, .6); 
 }
 .sf-flippable.sf-on .sf-b-why { opacity: 1; transition-delay: .85s; }
 
-/* four scores as one gold diamond; labels are plain HTML so they stay crisp at any card size */
+/* four scores as one gold diamond; the diamond fills the room it has, labels sit right at its tips (plain HTML, so they stay crisp) */
 .sf-b-radar {
   position: relative;
   width: 100%;
-  flex: 1 1 120px;
-  min-height: 104px;
-  margin: 12px 0 6px;
+  flex: 1 1 130px;
+  min-height: 130px;
+  margin: 6px 0 4px;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.sf-b-radar svg {
-  position: absolute;
-  top: 26px; bottom: 26px; left: 62px; right: 62px;
-  width: calc(100% - 124px);
-  height: calc(100% - 52px);
-  overflow: visible;
+.sf-b-rbox {
+  position: relative;
+  flex: none;
+  width: max(60px, min(100cqw - 150px, 100cqh - 64px));
+  aspect-ratio: 1;
 }
+.sf-b-rbox svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .sf-b-grid { fill: none; stroke: rgba(255, 255, 255, .09); stroke-width: .6; vector-effect: non-scaling-stroke; }
 .sf-b-axis { stroke: rgba(255, 255, 255, .07); stroke-width: .6; vector-effect: non-scaling-stroke; }
 .sf-b-poly {
@@ -3991,16 +3995,17 @@ html[data-theme="light"] .wishlist-heart { background: rgba(255, 255, 255, .6); 
   gap: 2px;
   font-family: var(--font-mono);
   line-height: 1.1;
+  white-space: nowrap;
   opacity: 0;
   transition: opacity .8s var(--ease);
 }
 .sf-flippable.sf-on .sf-b-ax { opacity: 1; transition-delay: calc(.7s + var(--i, 0) * .08s); }
-.sf-b-ax b { font-weight: 400; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: rgba(245, 244, 240, .5); }
+.sf-b-ax b { font-weight: 400; font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase; color: rgba(245, 244, 240, .5); }
 .sf-b-ax i { font-style: normal; font-size: 13px; color: rgba(245, 244, 240, .95); font-variant-numeric: tabular-nums; }
-.sf-b-ax.t { top: 0; left: 50%; transform: translateX(-50%); text-align: center; }
-.sf-b-ax.b { bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
-.sf-b-ax.l { left: 0; top: 50%; transform: translateY(-50%); text-align: left; }
-.sf-b-ax.r { right: 0; top: 50%; transform: translateY(-50%); text-align: right; }
+.sf-b-ax.t { bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 3px; text-align: center; }
+.sf-b-ax.b { top: 100%; left: 50%; transform: translateX(-50%); margin-top: 3px; text-align: center; }
+.sf-b-ax.l { right: 100%; top: 50%; transform: translateY(-50%); margin-right: 7px; text-align: right; }
+.sf-b-ax.r { left: 100%; top: 50%; transform: translateY(-50%); margin-left: 7px; text-align: left; }
 
 .sf-b-foot {
   margin-top: 8px;
@@ -4033,3 +4038,47 @@ html[data-theme="light"] .product-card[data-wash] .sf-back::after { opacity: .3;
   .sf-b-arc, .sf-b-poly, .sf-b-eyebrow, .sf-b-verdict, .sf-b-note, .sf-b-why, .sf-b-ax { transition: none; }
   .sf-flippable.sf-on .sf-b-pulse { animation: none; }
 }
+
+
+/* ---- v2 polish ---- */
+/* a gold opening / closing quote around the reason */
+.sf-b-note::before { content: "\201C"; color: rgba(232, 199, 102, .9); margin-right: 2px; }
+.sf-b-note::after { content: "\201D"; color: rgba(232, 199, 102, .9); margin-left: 1px; }
+/* a bright bead of light travels the score ring now and then */
+.sf-b-glint {
+  fill: none;
+  stroke: #fff4dc;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 2.5 286.5;
+  stroke-dashoffset: 0;
+  opacity: 0;
+}
+.sf-flippable.sf-on .sf-b-glint { animation: sfGlint 9s cubic-bezier(.45, 0, .25, 1) 3.6s infinite; }
+@keyframes sfGlint {
+  0%   { stroke-dashoffset: 0; opacity: 0; }
+  3%   { opacity: .95; }
+  22%  { stroke-dashoffset: calc(-1 * var(--sf-len, 200)); opacity: .95; }
+  25%  { stroke-dashoffset: calc(-1 * var(--sf-len, 200)); opacity: 0; }
+  100% { stroke-dashoffset: calc(-1 * var(--sf-len, 200)); opacity: 0; }
+}
+/* the thin gold edge you see when the card is exactly side-on, like real card stock */
+.sf-edge {
+  position: absolute;
+  top: 6px; bottom: 6px;
+  left: 50%;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: rgba(232, 199, 102, .85);
+  transform: rotateY(90deg);
+  opacity: 0;
+  pointer-events: none;
+  -webkit-backface-visibility: visible;
+  backface-visibility: visible;
+}
+/* heart on the back, same button as the front, mirrored in script.js */
+.sf-back > .wishlist-heart { top: 14px; right: 14px; bottom: auto; z-index: 5; }
+@media (prefers-reduced-motion: reduce) { .sf-flippable.sf-on .sf-b-glint { animation: none; } }
+html[data-theme="light"] .sf-b-glint { stroke: #fff; }
+html[data-theme="light"] .sf-b-note::before, html[data-theme="light"] .sf-b-note::after { color: #a47f3c; }
