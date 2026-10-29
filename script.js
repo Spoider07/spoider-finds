@@ -2226,20 +2226,18 @@
       mirror(heart, h2); mirror(h2, heart);
     }
     var flip = el("div", "sf-flip");
-    var edge = el("div", "sf-edge"); edge.setAttribute("aria-hidden", "true");
-    flip.appendChild(front); flip.appendChild(edge); flip.appendChild(back);
+    flip.appendChild(front); flip.appendChild(back);
     card.appendChild(flip);
     card.classList.add("sf-flippable");
     card.style.setProperty("--sf-off", (289 * (1 - Math.max(0, Math.min(10, score)) / 10)).toFixed(1));
     card.style.setProperty("--sf-len", (289 * Math.max(0, Math.min(10, score)) / 10).toFixed(1));
-    card.__sf = { flip: flip, edge: edge, num: num, score: score, ry: 0, v: 0, target: 0, raf: 0, face: 0, last: 0, countRaf: 0 };
+    card.__sf = { flip: flip, num: num, score: score, ry: 0, v: 0, target: 0, raf: 0, face: 0, last: 0, countRaf: 0 };
     return [front, back];
   }
 
   function applyRy(card) {
     var f = card.__sf, a = f.ry * Math.PI / 180;
     var lift = Math.abs(Math.sin(a)) * 42;
-    f.edge.style.opacity = Math.pow(Math.abs(Math.sin(a)), 10).toFixed(3);
     f.flip.style.transform = "perspective(1200px) translateZ(" + lift.toFixed(1) + "px) rotateY(" + f.ry.toFixed(2) + "deg)";
   }
   function countUp(card, on) {

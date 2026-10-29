@@ -4062,21 +4062,6 @@ html[data-theme="light"] .product-card[data-wash] .sf-back::after { opacity: .3;
   25%  { stroke-dashoffset: calc(-1 * var(--sf-len, 200)); opacity: 0; }
   100% { stroke-dashoffset: calc(-1 * var(--sf-len, 200)); opacity: 0; }
 }
-/* the thin gold edge you see when the card is exactly side-on, like real card stock */
-.sf-edge {
-  position: absolute;
-  top: 6px; bottom: 6px;
-  left: 50%;
-  width: 3px;
-  margin-left: -1.5px;
-  border-radius: 2px;
-  background: rgba(232, 199, 102, .85);
-  transform: rotateY(90deg);
-  opacity: 0;
-  pointer-events: none;
-  -webkit-backface-visibility: visible;
-  backface-visibility: visible;
-}
 /* heart on the back, same button as the front, mirrored in script.js */
 .sf-back > .wishlist-heart { top: 14px; right: 14px; bottom: auto; z-index: 5; }
 @media (prefers-reduced-motion: reduce) { .sf-flippable.sf-on .sf-b-glint { animation: none; } }
