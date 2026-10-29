@@ -3613,7 +3613,7 @@ html[data-theme="light"] .hero-mark-glint {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
+  padding: 2px;
   z-index: 6;
   overflow: hidden;
   pointer-events: none;
@@ -3624,9 +3624,9 @@ html[data-theme="light"] .hero-mark-glint {
 .sf-rim i {
   position: absolute;
   left: 0; top: 0;
-  width: 340px; height: 340px;
+  width: 640px; height: 640px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, #fff 0, hsl(var(--sf-h) 100% 74%) 14%, hsl(var(--sf-h) 100% 56% / .85) 42%, hsl(var(--sf-h) 100% 50% / 0));
+  background: radial-gradient(closest-side, hsl(var(--sf-h) 100% 88%) 0, hsl(var(--sf-h) 100% 64%) 10%, hsl(var(--sf-h) 100% 54%) 34%, hsl(var(--sf-h) 100% 50% / .5) 62%, hsl(var(--sf-h) 100% 50% / 0));
   opacity: 0;
   transform: translate3d(-9999px, 0, 0);
   will-change: transform, opacity;

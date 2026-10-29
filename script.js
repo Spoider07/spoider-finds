@@ -1969,7 +1969,7 @@
     var d = size.get(card);
     if (!d || !s.glint) return;
     var px = s.x * d.w, py = s.y * d.h;
-    s.glint.style.transform = "translate3d(" + (px - 170).toFixed(1) + "px," + (py - 170).toFixed(1) + "px,0)";
+    s.glint.style.transform = "translate3d(" + (px - 320).toFixed(1) + "px," + (py - 320).toFixed(1) + "px,0)";
     s.glint.style.opacity = Math.max(0, Math.min(1, s.s)).toFixed(3);
     if (s.glare) {
       s.glare.style.transform = "translate3d(" + (px - 260).toFixed(1) + "px," + (py - (d.bt || 0) - 260).toFixed(1) + "px,0)";
@@ -2060,8 +2060,8 @@
       if (!size.get(list[i]) && r.width) measure(list[i], r);
       var t = Math.max(0, Math.min(1, (r.top + r.height / 2) / vh));
       var bx = 0.18 + 0.64 * (1 - t), by = -0.06 + 0.46 * (1 - t);
-      if (tiltOn) { s.tx = Math.max(-0.2, Math.min(1.2, 0.5 * bx + 0.25 + tiltX * 0.55)); s.ty = Math.max(-0.2, Math.min(1.2, 0.5 * by + 0.18 + tiltY * 0.5)); s.ts = 0.7; }
-      else { s.tx = bx; s.ty = by; s.ts = 0.55; }
+      if (tiltOn) { s.tx = Math.max(-0.2, Math.min(1.2, 0.5 * bx + 0.25 + tiltX * 0.55)); s.ty = Math.max(-0.2, Math.min(1.2, 0.5 * by + 0.18 + tiltY * 0.5)); s.ts = 0.95; }
+      else { s.tx = bx; s.ty = by; s.ts = 0.85; }
       s.follow = true;
       wake(list[i]);
     }
