@@ -1960,7 +1960,7 @@
     var s = st.get(card);
     if (!s) {
       s = { x: REST.x, y: REST.y, s: 0, tx: REST.x, ty: REST.y, ts: 0, follow: false, cold: true,
-            glare: card.querySelector(".sf-glare"), glints: card.querySelectorAll(".sf-rim i") };
+            glares: card.querySelectorAll(".sf-glare"), glints: card.querySelectorAll(".sf-rim i") };
       st.set(card, s);
     }
     return s;
@@ -1972,9 +1972,11 @@
     var tr = "translate3d(" + (px - 320).toFixed(1) + "px," + (py - 320).toFixed(1) + "px,0)";
     var op = Math.max(0, Math.min(1, s.s)).toFixed(3);
     for (var i = 0; i < s.glints.length; i++) { s.glints[i].style.transform = tr; s.glints[i].style.opacity = op; }
-    if (s.glare) {
-      s.glare.style.transform = "translate3d(" + (px - 260).toFixed(1) + "px," + (py - (d.bt || 0) - 260).toFixed(1) + "px,0)";
-      s.glare.style.opacity = op;
+    for (var g = 0; g < s.glares.length; g++) {
+      var gl = s.glares[g];
+      if (gl.__back === undefined) gl.__back = !!gl.closest(".sf-back");
+      gl.style.transform = "translate3d(" + (px - 260).toFixed(1) + "px," + (py - (gl.__back ? 0 : (d.bt || 0)) - 260).toFixed(1) + "px,0)";
+      gl.style.opacity = op;
     }
   }
   function loop() {
@@ -2120,6 +2122,50 @@
     if (text != null) n.textContent = text;
     return n;
   }
+  function buildBars(rows) {
+    var bars = el("div", "sf-b-bars");
+    bars.style.cssText = "width:100%;margin-top:auto;display:grid;gap:9px";
+    rows.forEach(function (r, i) {
+      var row = el("div", "sf-b-row");
+      row.style.cssText = "display:grid;grid-template-columns:78px 1fr 28px;gap:10px;align-items:center";
+      row.appendChild(el("span", "sf-b-label", r.label));
+      row.appendChild(el("span", "sf-b-label", r.val.toFixed(1)));
+      bars.appendChild(row);
+    });
+    return bars;
+  }
+  function buildRadar(rows) {
+    var wrap = el("div", "sf-b-radar");
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("aria-hidden", "true");
+    function node(tag, attrs, parent) {
+      var n = document.createElementNS(SVGNS, tag);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      (parent || svg).appendChild(n); return n;
+    }
+    function pts(f) {
+      return [[50, 50 - 45 * f], [50 + 45 * f, 50], [50, 50 + 45 * f], [50 - 45 * f, 50]]
+        .map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ");
+    }
+    [1, 0.66, 0.33].forEach(function (f) { node("polygon", { "class": "sf-b-grid", points: pts(f) }); });
+    node("line", { "class": "sf-b-axis", x1: 50, y1: 5, x2: 50, y2: 95 });
+    node("line", { "class": "sf-b-axis", x1: 5, y1: 50, x2: 95, y2: 50 });
+    var grp = node("g", { "class": "sf-b-poly" });
+    var v = rows.map(function (r) { return Math.max(0.08, Math.min(1, r.val / 10)); });
+    var P = [[50, 50 - 45 * v[0]], [50 + 45 * v[1], 50], [50, 50 + 45 * v[2]], [50 - 45 * v[3], 50]];
+    node("polygon", { "class": "sf-b-area", points: P.map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ") }, grp);
+    P.forEach(function (p) { node("circle", { "class": "sf-b-dot", cx: p[0].toFixed(2), cy: p[1].toFixed(2), r: 1.7 }, grp); });
+    wrap.appendChild(svg);
+    ["t", "r", "b", "l"].forEach(function (pos, i) {
+      var a = el("div", "sf-b-ax " + pos);
+      a.style.setProperty("--i", i);
+      a.appendChild(el("b", null, rows[i].label));
+      a.appendChild(el("i", null, rows[i].val.toFixed(1)));
+      wrap.appendChild(a);
+    });
+    return wrap;
+  }
   function buildFlip(card, panel) {
     var numEl = panel.querySelector(".spoider-num");
     var score = numEl ? parseFloat(numEl.textContent) : NaN;
@@ -2143,34 +2189,27 @@
     panel.remove();
 
     var back = el("div", "sf-face sf-back");
+    var lb = el("div", "sf-light"); lb.setAttribute("aria-hidden", "true"); lb.innerHTML = '<i class="sf-glare"></i>';
+    back.appendChild(lb);
     var inn = el("div", "sf-back-in");
     inn.appendChild(el("span", "sf-b-eyebrow", "Spoider Score"));
     var g = el("div", "sf-b-gauge");
     var svg = document.createElementNS(SVGNS, "svg");
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.setAttribute("aria-hidden", "true");
-    var c1 = document.createElementNS(SVGNS, "circle"), c2 = document.createElementNS(SVGNS, "circle");
-    [c1, c2].forEach(function (c) { c.setAttribute("cx", "50"); c.setAttribute("cy", "50"); c.setAttribute("r", "46"); });
-    c1.setAttribute("class", "sf-b-track"); c2.setAttribute("class", "sf-b-arc");
-    svg.appendChild(c1); svg.appendChild(c2);
+    var cs = ["sf-b-track", "sf-b-arc", "sf-b-pulse"].map(function (cls) {
+      var c = document.createElementNS(SVGNS, "circle");
+      c.setAttribute("cx", "50"); c.setAttribute("cy", "50"); c.setAttribute("r", "46"); c.setAttribute("class", cls);
+      svg.appendChild(c); return c;
+    });
     g.appendChild(svg);
     var num = el("span", "sf-b-num", score.toFixed(1));
     g.appendChild(num);
     inn.appendChild(g);
-    if (note) inn.appendChild(el("p", "sf-b-note", note));
-    var bars = el("div", "sf-b-bars");
-    rows.forEach(function (r, i) {
-      var row = el("div", "sf-b-row");
-      row.style.setProperty("--i", i);
-      row.style.setProperty("--f", Math.max(0, Math.min(1, r.val / 10)).toFixed(3));
-      row.appendChild(el("span", "sf-b-label", r.label));
-      var t = el("span", "sf-b-track2"); t.appendChild(el("span", "sf-b-fill"));
-      row.appendChild(t);
-      row.appendChild(el("span", "sf-b-val", r.val.toFixed(1)));
-      bars.appendChild(row);
-    });
-    inn.appendChild(bars);
-    inn.appendChild(el("span", "sf-b-foot", "View on Amazon →"));
+    inn.appendChild(el("span", "sf-b-verdict", score >= 9 ? "Exceptional" : score >= 8.5 ? "Outstanding" : score >= 8 ? "Excellent" : score >= 7 ? "Great" : "Solid"));
+    if (note) { inn.appendChild(el("span", "sf-b-why", "Why we picked it")); inn.appendChild(el("p", "sf-b-note", note)); }
+    inn.appendChild(rows.length === 4 ? buildRadar(rows) : buildBars(rows));
+    inn.appendChild(el("span", "sf-b-foot", "View on Amazon \u2192"));
     back.appendChild(inn);
 
     var flip = el("div", "sf-flip");
@@ -2184,20 +2223,21 @@
 
   function applyRy(card) {
     var f = card.__sf, a = f.ry * Math.PI / 180;
-    var lift = Math.abs(Math.sin(a)) * 46;
-    f.flip.style.transform = "perspective(1100px) translateZ(" + lift.toFixed(1) + "px) rotateY(" + f.ry.toFixed(2) + "deg)";
+    var lift = Math.abs(Math.sin(a)) * 42;
+    f.flip.style.transform = "perspective(1200px) translateZ(" + lift.toFixed(1) + "px) rotateY(" + f.ry.toFixed(2) + "deg)";
   }
   function countUp(card, on) {
     var f = card.__sf;
     cancelAnimationFrame(f.countRaf);
-    if (!on) { f.num.textContent = f.score.toFixed(1); return; }
-    if (reduce) { f.num.textContent = f.score.toFixed(1); return; }
-    var t0 = performance.now(), dur = 1100;
+    if (!on || reduce) { f.num.textContent = f.score.toFixed(1); return; }
+    var t0 = performance.now() + 250, dur = 1300;
+    f.num.textContent = "0.0";
     (function tick(now) {
-      var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      var k = Math.max(0, Math.min(1, (now - t0) / dur)), e = 1 - Math.pow(1 - k, 4);
       f.num.textContent = (f.score * e).toFixed(1);
       if (k < 1) f.countRaf = requestAnimationFrame(tick);
-    })(t0);
+      else if (navigator.vibrate) { try { navigator.vibrate(9); } catch (e2) {} }
+    })(performance.now());
   }
   function setFace(card, face) {
     var f = card.__sf;
@@ -2205,27 +2245,27 @@
     f.face = face;
     if (face === 1) {
       card.classList.add("sf-on");
-      f.num.textContent = "0.0";
       countUp(card, true);
-      if (navigator.vibrate && !reduce) { try { navigator.vibrate(6); } catch (e) {} }
     } else {
       card.classList.remove("sf-on");
       countUp(card, false);
     }
   }
-  // critically-damped-ish spring toward the target angle, carrying the finger's speed
+  function faceOf(ry) { var n = ((ry % 360) + 360) % 360; return n > 90 && n < 270 ? 1 : 0; }
+  // spring toward the target angle, carrying the finger's speed (slightly under-damped: it settles with a tiny, real-feeling give)
   function spring(card) {
     var f = card.__sf;
     if (f.raf) return;
     f.last = performance.now();
     (function step(now) {
-      var dt = Math.min(0.032, (now - f.last) / 1000); f.last = now;
-      var k = 150, c = 21;
+      var dt = Math.min(0.032, Math.max(0.001, (now - f.last) / 1000)); f.last = now;
+      var k = 170, c = 22;
       f.v += (-k * (f.ry - f.target) - c * f.v) * dt;
       f.ry += f.v * dt;
       applyRy(card);
-      if (Math.abs(f.ry - f.target) < 0.15 && Math.abs(f.v) < 2) {
-        f.ry = f.target; f.v = 0; f.raf = 0;
+      setFace(card, faceOf(f.ry));
+      if (Math.abs(f.ry - f.target) < 0.12 && Math.abs(f.v) < 1.5) {
+        f.raf = 0; f.v = 0;
         var n = ((Math.round(f.target / 180) % 2) + 2) % 2;      // fold back to 0 / 180 so it never winds up
         f.ry = f.target = n * 180; applyRy(card);
         card.classList.remove("sf-flipping");
@@ -2236,13 +2276,15 @@
   }
   function settle(card, vel) {
     var f = card.__sf, start = f.startRy;
-    var proj = f.ry + vel * 0.16;                       // vel in deg/s, a flick carries it ~0.16s further
-    var t = Math.round(proj / 180) * 180;
+    var t = Math.round((f.ry + vel * 0.15) / 180) * 180;           // a flick carries it a little further
     t = Math.max(start - 180, Math.min(start + 180, t));
     f.target = t;
-    f.v = reduce ? 0 : vel * 0.35;
-    setFace(card, ((Math.round(t / 180) % 2) + 2) % 2);
-    if (reduce) { f.ry = t; applyRy(card); var n = ((Math.round(t / 180) % 2) + 2) % 2; f.ry = f.target = n * 180; applyRy(card); card.classList.remove("sf-flipping"); return; }
+    f.v = reduce ? 0 : vel;
+    if (reduce) {
+      var n = ((Math.round(t / 180) % 2) + 2) % 2;
+      f.ry = f.target = n * 180; applyRy(card); setFace(card, n); card.classList.remove("sf-flipping");
+      return;
+    }
     spring(card);
   }
 
@@ -2253,45 +2295,46 @@
     var card = cardOf(ev.target);
     if (!card || !card.__sf) return;
     var f = card.__sf;
-    if (f.raf) { cancelAnimationFrame(f.raf); f.raf = 0; f.startRy = f.ry; }
-    drag = { card: card, id: ev.pointerId, x: ev.clientX, y: ev.clientY, mode: "wait", w: card.getBoundingClientRect().width || 320,
-             startRy: f.ry, lx: ev.clientX, lt: performance.now(), vel: 0 };
+    if (f.raf) { cancelAnimationFrame(f.raf); f.raf = 0; f.v = 0; }       // catch it mid-turn
     f.startRy = f.ry;
+    drag = { card: card, id: ev.pointerId, x: ev.clientX, y: ev.clientY, mode: "wait", w: card.getBoundingClientRect().width || 320, vel: 0, raf: 0, t: 0 };
+  }
+  function dragLoop(d) {
+    var f = d.card.__sf, now = performance.now(), dt = Math.max(1, now - d.t); d.t = now;
+    var prev = f.ry;
+    f.ry += (f.tgt - f.ry) * Math.min(1, dt / 16 * 0.42);          // the card follows the finger with a hair of drag
+    d.vel = d.vel * 0.55 + ((f.ry - prev) / dt * 1000) * 0.45;
+    applyRy(d.card);
+    setFace(d.card, faceOf(f.ry));
+    d.raf = requestAnimationFrame(function () { dragLoop(d); });
   }
   function dragMove(ev) {
     if (!drag || ev.pointerId !== drag.id) return;
-    var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y, f = drag.card.__sf;
     if (drag.mode === "wait") {
       if (Math.abs(dy) > 9 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }       // it's a scroll
       if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.15) {
         drag.mode = "drag";
         try { drag.card.setPointerCapture(ev.pointerId); } catch (e) {}
         drag.card.classList.add("sf-dragging", "sf-flipping");
-        drag.x = ev.clientX; drag.lx = ev.clientX; drag.lt = performance.now();
-        dx = 0;
-        if (drag.card.__sf.raf) { cancelAnimationFrame(drag.card.__sf.raf); drag.card.__sf.raf = 0; }
+        drag.x = ev.clientX; f.tgt = f.ry; drag.t = performance.now();
         if (ev.cancelable) ev.preventDefault();
+        dragLoop(drag);
       } else return;
     }
-    var f = drag.card.__sf, now = performance.now();
-    var next = drag.startRy + (ev.clientX - drag.x) / (drag.w * 0.85) * 180;
-    next = Math.max(drag.startRy - 200, Math.min(drag.startRy + 200, next));
-    var dt = Math.max(1, now - drag.lt);
-    drag.vel = 0.7 * drag.vel + 0.3 * ((next - f.ry) / dt * 1000);
-    drag.lt = now;
-    f.ry = next; applyRy(drag.card);
-    // the back's number counts the moment it is more than half turned
-    var n = ((Math.round(next / 180) % 2) + 2) % 2;
-    if (Math.abs(((next % 360) + 360) % 360 - 180) < 90 && f.face !== 1) setFace(drag.card, 1);
-    else if (Math.abs(((next % 360) + 360) % 360 - 180) >= 90 && f.face !== 0 && n === 0) setFace(drag.card, 0);
+    var raw = f.startRy + (ev.clientX - drag.x) / (drag.w * 0.85) * 180, lo = f.startRy - 180, hi = f.startRy + 180;
+    if (raw > hi) raw = hi + (raw - hi) * 0.22; else if (raw < lo) raw = lo + (raw - lo) * 0.22;   // rubber-band past a full turn
+    f.tgt = raw;
+    if (ev.cancelable) ev.preventDefault();
   }
   function dragEnd(ev) {
     if (!drag || (ev && ev.pointerId !== drag.id)) return;
     var d = drag; drag = null;
     if (d.mode !== "drag") return;
+    cancelAnimationFrame(d.raf);
     d.card.classList.remove("sf-dragging");
     swallow = performance.now() + 450;                   // the click that follows a drag must not open Amazon
-    settle(d.card, d.vel);
+    settle(d.card, Math.max(-900, Math.min(900, d.vel)));
   }
   document.addEventListener("pointerdown", dragStart, { passive: true });
   document.addEventListener("pointermove", dragMove, { passive: false });
@@ -2315,7 +2358,7 @@
     setTimeout(function () {
       if (drag || f.ry !== 0) return;
       card.classList.add("sf-flipping");
-      f.startRy = 0; f.target = 17; f.v = 0; spring(card);
+      f.startRy = 0; f.target = 16; f.v = 0; spring(card);
       setTimeout(function () { if (!drag && f.face === 0) { f.target = 0; spring(card); } }, 650);
     }, 700);
   }
